@@ -1,4 +1,6 @@
 import { expect, mock, test } from 'claude-code/testing'
+// @ts-ignore: plain JS module
+import { commandParts } from '../hooks/register.js'
 
 // A fake disk: path -> { mtimeMs, size }. A Bash command that the stub runs
 // can change it, and the test can change it to play another session.
@@ -119,4 +121,29 @@ test('watched_files adds names, with * for any run of name characters', { option
   // CLAUDE.md is not in this list, so it is not watched
   const claude = await $.tool.call({ tool: 'Bash', command: 'echo x >> CLAUDE.md' })
   expect(claude).toEqual({ result: 'ok' })
+})
+
+test('commandParts splits at unquoted &&, ||, ; and |, and keeps a heredoc whole', () => {
+  expect(commandParts("sed -i '' 's/a/b/' x.txt && grep -i y STATUS.md")).toEqual(["sed -i '' 's/a/b/' x.txt", 'grep -i y STATUS.md'])
+  expect(commandParts("echo 'a && b' >> STATUS.md")).toEqual(["echo 'a && b' >> STATUS.md"])
+  expect(commandParts('cat a | tee STATUS.md; git status')).toEqual(['cat a', 'tee STATUS.md', 'git status'])
+  const heredoc = "python3 - <<'EOF'\nopen('STATUS.md','w'); x = 1\nEOF"
+  expect(commandParts(heredoc)).toEqual([heredoc])
+})
+
+test('a write and a read of a shared file in different parts of one command is not refused', async ($, on) => {
+  const ran: string[] = []
+  engine(on, fresh(), ran)
+  const out = await $.tool.call({ tool: 'Bash', command: "sed -i '' 's/a/b/' notes.txt && grep -n x STATUS.md" })
+  expect(out).toEqual({ result: 'ok' })
+  const pull = await $.tool.call({ tool: 'Bash', command: 'git pull -q && grep -c x STATUS.md' })
+  expect(pull).toEqual({ result: 'ok' })
+})
+
+test('a write to the shared file in its own part is still refused', async ($, on) => {
+  const ran: string[] = []
+  engine(on, fresh(), ran)
+  const out = await $.tool.call({ tool: 'Bash', command: 'grep -n x notes.txt && cat a | tee STATUS.md' })
+  expect(out.deny).toContain('has not been read in this session')
+  expect(ran).toEqual([])
 })

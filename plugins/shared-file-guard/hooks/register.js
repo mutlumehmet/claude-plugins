@@ -67,9 +67,13 @@ export function register(on, options) {
     const paths = await sharedPaths($, e.command)
     if (!paths.length) return next(e)
 
-    if (isOn && looksLikeWrite(e.command)) {
+    // Only a shared file named in the same part of the command as the write is checked, so
+    // "sed -i ... other.txt && grep x CLAUDE.md" is a write to other.txt and a read of CLAUDE.md
+    const writing = commandParts(e.command).filter(looksLikeWrite).join('\n')
+    const targets = writing ? await sharedPaths($, writing) : []
+    if (isOn && targets.length) {
       const problems = []
-      for (const p of paths) {
+      for (const p of targets) {
         const now = await version($, p)
         if (now === null) continue // does not exist yet: creating it is fine
         const before = seen.get(p)
@@ -103,6 +107,42 @@ function looksLikeWrite(command) {
 }
 
 // Absolute paths of the shared files a command names that exist on disk now
+// The parts of a shell command that run separately: split at unquoted &&, ||, ; and |. A command
+// with a heredoc stays whole, because the script inside it can write anywhere.
+export function commandParts(command) {
+  const text = String(command)
+  if (/<<-?\s*['"]?\w/.test(text)) return [text]
+  const parts = []
+  let cur = '', quote = null
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i]
+    if (quote) {
+      if (c === quote) quote = null
+      cur += c
+      continue
+    }
+    if (c === "'" || c === '"') {
+      quote = c
+      cur += c
+      continue
+    }
+    if ((c === '&' || c === '|') && text[i + 1] === c) {
+      parts.push(cur)
+      cur = ''
+      i++
+      continue
+    }
+    if (c === ';' || c === '|' || c === '\n') {
+      parts.push(cur)
+      cur = ''
+      continue
+    }
+    cur += c
+  }
+  parts.push(cur)
+  return parts.map((x) => x.trim()).filter(Boolean)
+}
+
 async function sharedPaths($, command) {
   const tokens = String(command).match(TOKEN) ?? []
   if (!tokens.length) return []

@@ -1,6 +1,6 @@
 {
   "name": "shared-file-guard",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Refuses a shell write to a shared file (STATUS.md, CLAUDE.md, MEMORY.md, or the files you name) that this session has not read, or that another session changed since",
   "author": {
     "name": "Mehmet Mutlu"
