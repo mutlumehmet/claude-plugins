@@ -1,4 +1,0 @@
-{
-  "description": "browser-guard hooks module",
-  "modules": ["./register.js"]
-}

@@ -1,4 +1,0 @@
-{
-  "description": "secret-guard hooks module",
-  "modules": ["./register.js"]
-}

@@ -22,8 +22,6 @@ Each plugin has its own page with what it does, its settings and its known gaps.
 | Plugin | Kind | What it does |
 |---|---|---|
 | [`project-workflow`](plugins/project-workflow) | skills | [`create-project`](plugins/project-workflow/skills/create-project) sets up a new project folder the same way every time; [`save-context`](plugins/project-workflow/skills/save-context) saves what a session decided, changed and left open before you close it |
-| [`secret-guard`](plugins/secret-guard) | mod | Masks secrets in tool output before Claude reads them, and asks before showing the original |
-| [`browser-guard`](plugins/browser-guard) | mod | Holds browser actions that could submit, send or pay until you pick Continue |
 | [`subtask-icons`](plugins/subtask-icons) | mod | A `⑂` icon per item under the last answer that puts `/subtask <item>` in the prompt box |
 | [`context-alarm`](plugins/context-alarm) | mod | Warns as the context fills up and suggests `/save-context` before compaction |
 | [`answer-buttons`](plugins/answer-buttons) | mod | Plain English, Shorter and Plain & short buttons under the last answer |

@@ -11,16 +11,6 @@
       "description": "Start a project the same way every time (create-project) and save what a session decided before you close it (save-context)."
     },
     {
-      "name": "secret-guard",
-      "source": "./plugins/secret-guard",
-      "description": "Masks secrets in tool results before Claude reads them, and asks whether Claude may read that result unmasked"
-    },
-    {
-      "name": "browser-guard",
-      "source": "./plugins/browser-guard",
-      "description": "Holds browser clicks, Enter presses and scripts that would submit, send, apply, pay or move a form forward until you pick Devam et"
-    },
-    {
       "name": "subtask-icons",
       "source": "./plugins/subtask-icons",
       "description": "Small ⑂ icons under Claude's last answer, one per item; a press puts /subtask with that item's text in the prompt box"
