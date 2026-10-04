@@ -176,9 +176,9 @@ function tick($: EngineInterface) {
   sim.coins = sim.coins.filter(c => c.age < 30 && c.y < H && c.x >= 0 && c.x < W)
 }
 
-const hueColour = (h: number) => {
+const hueColour = (hue: number) => {
   const f = (n: number) => {
-    const k = (n + h / 60) % 6
+    const k = (n + hue / 60) % 6
     return Math.round(255 * (1 - Math.max(0, Math.min(k, 4 - k, 1))))
   }
   return (f(5) << 16) | (f(3) << 8) | f(1)

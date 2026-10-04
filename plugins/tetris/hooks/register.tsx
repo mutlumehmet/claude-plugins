@@ -115,8 +115,8 @@ function choose(shape: number): Piece | null {
           else if (isUnder) holes += 1
         }
       }
-      const bump = heights.slice(1).reduce((s, h, i) => s + Math.abs(h - heights[i]!), 0)
-      const value = -0.51 * heights.reduce((s, h) => s + h, 0) + 0.76 * lines - 0.36 * holes - 0.18 * bump
+      const bump = heights.slice(1).reduce((s, height, i) => s + Math.abs(height - heights[i]!), 0)
+      const value = -0.51 * heights.reduce((s, height) => s + height, 0) + 0.76 * lines - 0.36 * holes - 0.18 * bump
       if (!best || value > best.value) {
         const start = Math.floor((G - widthOf(cells)) / 2)
         best = { piece: { cells, col: start, targetCol: col, row: -2, targetRow: row }, value }

@@ -110,7 +110,7 @@ function moodOf(a: Activity): Mood {
 }
 
 // One line under the dragon: ◆ gold, ★ wins (commits, pushes, passing tests, PRs), ⚒ every tool Claude ran.
-const statsLine = (h: Hoard) => `Lv ${levelOf(h.gold)}  ◆ ${h.gold}  ★ ${h.feats}  ⚒ ${h.meals}`
+const statsLine = (stash: Hoard) => `Lv ${levelOf(stash.gold)}  ◆ ${stash.gold}  ★ ${stash.feats}  ⚒ ${stash.meals}`
 
 // Centred under the dragon's body, not the whole canvas (the flame room sits to its right).
 const centred = (text: string) => ' '.repeat(Math.max(0, Math.floor((DRAGON_WIDTH - text.length) / 2))) + text
@@ -475,7 +475,8 @@ export const register: Register = (on, options) => {
           }
           for (const a of agents) {
             const isLive = a.status === 'pending' || a.status === 'running' || a.status === 'waiting'
-            if (isLive && !sim.babies.some(b => b.id === a.id)) hatch(`agent:${a.id}`, a.description, a.type, a.id, false)
+            // A new subagent: an egg is laid, and hatches.
+            if (isLive && !sim.babies.some(b => b.id === a.id)) hatch(`agent:${a.id}`, a.description, a.type, a.id)
           }
           for (const b of sim.babies) {
             if (b.state !== 'egg' && b.state !== 'fly') continue
@@ -515,13 +516,6 @@ export const register: Register = (on, options) => {
     const ran = await next(e)
     await celebrateAll($, subagentMilestones())
     return ran
-  })
-
-  // A subagent starts: an egg is laid, and hatches.
-  // It only watches: the spawn goes on unchanged, and the roster poll learns the agent's id.
-  on('agent.spawn', (_$, e, next) => {
-    hatch(`spawn:${e.tool_use_id}`, e.description, e.subagentType)
-    return next(e)
   })
 
   on('command.run', { command: 'dragon' }, async ($, e) => {
