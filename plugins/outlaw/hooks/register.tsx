@@ -84,6 +84,8 @@ const CACTUS_PIXELS = CACTUS_ART.flatMap((row, y) =>
 for (const at of CACTUS_PIXELS) sim.cactus.add(at)
 
 function say(x: number, y: number, text: string, frames: number) {
+  // Kept inside the scene, so a word near the edge is never cut off.
+  x = Math.max(0, Math.min(W - text.length, x))
   text.split('').forEach((ch, i) => sim.glyphs.push({ x: x + i, y, ch, until: sim.t + frames }))
 }
 

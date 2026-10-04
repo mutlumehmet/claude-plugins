@@ -249,7 +249,8 @@ function frame(): string {
 
   // The win text, in the headroom above the cabinet.
   if (isWinning) {
-    const text = isJackpot ? cycle(['JACKPOT!', `+${sim.payout}`], 8) : sim.payout > 0 ? `+${sim.payout}` : ''
+    // A practice pull pays nothing, so it shows the word alone.
+    const text = isJackpot ? (sim.payout > 0 ? cycle(['JACKPOT!', `+${sim.payout}`], 8) : 'JACKPOT!') : sim.payout > 0 ? `+${sim.payout}` : ''
     const start = Math.floor((W - text.length) / 2)
     const fg = isJackpot ? hueColour((sim.t * 40) % 360) : 0xffd34d
     text.split('').forEach((ch, i) => over.set(start + i, { ch, fg }))
