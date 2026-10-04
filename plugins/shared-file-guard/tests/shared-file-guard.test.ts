@@ -22,6 +22,16 @@ function engine(on, disk: Map<string, { mtimeMs: number; size: number }>, ran: s
 const S = '/work/STATUS.md'
 const fresh = () => new Map([[S, { mtimeMs: 1000, size: 10 }]])
 
+test('grep -i only reads; sed -i still counts as a write', async ($, on) => {
+  const ran: string[] = []
+  engine(on, fresh(), ran)
+  // sed first: once grep has run, the file counts as read and a later write is allowed
+  const sed = await $.tool.call({ tool: 'Bash', command: "sed -i '' 's/a/b/' STATUS.md" })
+  expect(sed.deny).toContain('has not been read in this session')
+  const grep = await $.tool.call({ tool: 'Bash', command: 'grep -n -i "next" STATUS.md' })
+  expect(grep).toEqual({ result: 'ok' })
+})
+
 test('a shell write to a shared file this session never read is refused', async ($, on) => {
   const ran: string[] = []
   engine(on, fresh(), ran)

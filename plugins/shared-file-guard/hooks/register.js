@@ -23,10 +23,10 @@ export function configure(options) {
   TOKEN = new RegExp('[~\\w./-]*(?:' + alt('[\\w.-]*') + ')', 'gi')
 }
 
-// Anything that can change a file. Redirects to a file descriptor or
-// /dev/null are removed before this runs. Interpreters count as writes,
-// because a script can open the file for writing.
-const WRITES = /(>|\btee\b|\s-i\b|\s-i['"]|--in-place|\bmv\b|\bcp\b|\brm\b|\btruncate\b|\bdd\b|\bpython3?\b|\bnode\b|\bperl\b|\bruby\b|\bosascript\b|\bgit\s+(checkout|restore|reset|stash|apply|merge|rebase|pull|mv|rm)\b)/
+// Anything that can change a file. -i counts only after sed or perl (an in place edit); for grep
+// it means ignore case. Redirects to a file descriptor or /dev/null are removed before this runs.
+// Interpreters count as writes, because a script can open the file for writing.
+const WRITES = /(>|\btee\b|\b(?:sed|perl)\b[^|;&]*\s-i(?:\b|['"])|--in-place|\bmv\b|\bcp\b|\brm\b|\btruncate\b|\bdd\b|\bpython3?\b|\bnode\b|\bperl\b|\bruby\b|\bosascript\b|\bgit\s+(checkout|restore|reset|stash|apply|merge|rebase|pull|mv|rm)\b)/
 
 // What this session last saw of each shared file: absolute path -> "mtimeMs:size"
 const seen = new Map()
