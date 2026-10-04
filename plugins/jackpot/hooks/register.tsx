@@ -327,8 +327,7 @@ function startLoop($: EngineInterface) {
     const requestId = sim.requestId
     if (requestId === null || sim.isBlitting) return
     sim.isBlitting = true
-    void $.ui
-      .blit({ requestId, key: RASTER, cells: frame() })
+    void $.ui.blit({ requestId, key: RASTER, cells: frame() })
       .then(r => {
         if (r.deny !== undefined) sim.requestId = null
       })

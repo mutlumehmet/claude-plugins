@@ -452,8 +452,7 @@ export const register: Register = (on, options) => {
       step(a)
       if (sim.isBlitting) return
       sim.isBlitting = true
-      void $.ui
-        .blit({ requestId, key: RASTER, cells: frame(a) })
+      void $.ui.blit({ requestId, key: RASTER, cells: frame(a) })
         .then(r => {
           if (r.deny !== undefined) sim.requestId = null
         })
@@ -519,10 +518,10 @@ export const register: Register = (on, options) => {
   })
 
   // A subagent starts: an egg is laid, and hatches.
-  on('agent.spawn', async ($, e, next) => {
-    const ran = await next(e)
-    if (ran.deny === undefined) hatch(`spawn:${e.tool_use_id}`, e.description, e.subagentType, ran.agentId)
-    return ran
+  // It only watches: the spawn goes on unchanged, and the roster poll learns the agent's id.
+  on('agent.spawn', (_$, e, next) => {
+    hatch(`spawn:${e.tool_use_id}`, e.description, e.subagentType)
+    return next(e)
   })
 
   on('command.run', { command: 'dragon' }, async ($, e) => {
