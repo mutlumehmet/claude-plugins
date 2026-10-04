@@ -1,6 +1,6 @@
 {
   "name": "jackpot",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A pixel slot machine above the prompt: every finished turn pulls the lever, and the moments worth celebrating (a commit, a skill run, a deploy, a finished task list) earn golden spins.",
   "author": {
     "name": "Mehmet Mutlu"
@@ -39,5 +39,6 @@
     }
   },
   "homepage": "https://github.com/mutlumehmet/claude-plugins/tree/main/plugins/jackpot",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": "https://github.com/mutlumehmet/claude-plugins"
 }

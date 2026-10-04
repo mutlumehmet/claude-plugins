@@ -1,6 +1,6 @@
 {
   "name": "answer-buttons",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Three small buttons under Claude's last answer: Plain English, Shorter, and Plain & short",
   "author": {
     "name": "Mehmet Mutlu"
@@ -14,5 +14,6 @@
       "description": "A skill to run for Plain English and Plain & short, such as my-plugin:plain-english. Empty sends a built in prompt instead.",
       "default": ""
     }
-  }
+  },
+  "repository": "https://github.com/mutlumehmet/claude-plugins"
 }

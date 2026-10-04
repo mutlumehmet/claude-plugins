@@ -1,6 +1,6 @@
 {
   "name": "dragon-lair",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A small pixel dragon above the prompt that acts out what Claude is doing and breathes fire at the moments worth celebrating: a commit, a merge, a finished task list, a PDF made.",
   "author": {
     "name": "Mehmet Mutlu"
@@ -39,5 +39,6 @@
     }
   },
   "homepage": "https://github.com/mutlumehmet/claude-plugins/tree/main/plugins/dragon-lair",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": "https://github.com/mutlumehmet/claude-plugins"
 }

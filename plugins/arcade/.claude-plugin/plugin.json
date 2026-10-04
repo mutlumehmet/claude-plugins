@@ -1,6 +1,6 @@
 {
   "name": "arcade",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The Claude Code Arcade in one install: dragon-lair, jackpot, outlaw, tama and tetris, five games above the prompt that your work plays.",
   "author": {
     "name": "Mehmet Mutlu"
@@ -13,5 +13,6 @@
     "outlaw",
     "tama",
     "tetris"
-  ]
+  ],
+  "repository": "https://github.com/mutlumehmet/claude-plugins"
 }

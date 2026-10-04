@@ -1,6 +1,6 @@
 {
   "name": "skill-stats",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Counts how often each skill runs, lists the ones that never trigger, and hands a weak description to skill-creator",
   "author": {
     "name": "Mehmet Mutlu"
@@ -26,5 +26,6 @@
       "description": "Comma separated folders to search for a skill's SKILL.md, so /skill-fix points skill-creator at the source and not at the installed copy.",
       "default": ""
     }
-  }
+  },
+  "repository": "https://github.com/mutlumehmet/claude-plugins"
 }

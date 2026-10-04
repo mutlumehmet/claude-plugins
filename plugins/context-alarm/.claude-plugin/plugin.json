@@ -1,6 +1,6 @@
 {
   "name": "context-alarm",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Warns when the context window passes a threshold (80% by default) and suggests /save-context before compaction",
   "author": {
     "name": "Mehmet Mutlu"
@@ -17,5 +17,6 @@
   "license": "MIT",
   "dependencies": [
     "project-workflow"
-  ]
+  ],
+  "repository": "https://github.com/mutlumehmet/claude-plugins"
 }

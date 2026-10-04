@@ -1,6 +1,6 @@
 {
   "name": "tetris",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A classic Tetris in a small handheld screen above the prompt, played by Claude's work: every tool drops a piece, failed tools push up garbage, and the moments worth celebrating clear rows.",
   "author": {
     "name": "Mehmet Mutlu"
@@ -39,5 +39,6 @@
     }
   },
   "homepage": "https://github.com/mutlumehmet/claude-plugins/tree/main/plugins/tetris",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": "https://github.com/mutlumehmet/claude-plugins"
 }

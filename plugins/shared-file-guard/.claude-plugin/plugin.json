@@ -1,6 +1,6 @@
 {
   "name": "shared-file-guard",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Refuses a shell write to a shared file (STATUS.md, CLAUDE.md, MEMORY.md, or the files you name) that this session has not read, or that another session changed since",
   "author": {
     "name": "Mehmet Mutlu"
@@ -14,5 +14,6 @@
       "description": "Comma separated file names that several sessions share; * matches any run of name characters (such as *register*.md). Empty means STATUS.md, CLAUDE.md and MEMORY.md.",
       "default": ""
     }
-  }
+  },
+  "repository": "https://github.com/mutlumehmet/claude-plugins"
 }

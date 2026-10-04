@@ -1,6 +1,6 @@
 {
   "name": "outlaw",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "An Atari Outlaw duel above the prompt: your gunslinger fires at the moments worth celebrating, the bug fires when a tool fails, and the cactus between them gets shot to pieces.",
   "author": {
     "name": "Mehmet Mutlu"
@@ -39,5 +39,6 @@
     }
   },
   "homepage": "https://github.com/mutlumehmet/claude-plugins/tree/main/plugins/outlaw",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": "https://github.com/mutlumehmet/claude-plugins"
 }
