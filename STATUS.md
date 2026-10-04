@@ -1,39 +1,47 @@
 # claude-plugins: current state
 
-Last updated: **5 October 2026**. The Claude Code Arcade added: five game mods (`dragon-lair`,
-`jackpot`, `outlaw`, `tama`, `tetris`), each with its own copy of the shared moment detector
-(`shared/arcade/milestones.ts`, copied by `scripts/sync-arcade-milestones.sh`, checked in CI). Not
-pushed yet. Open before launch: the `arcade` and `toolkit` meta plugins (install through
-`dependencies` not yet verified from the marketplace), the banner, GIFs, and a live check of every
-game. The sections below predate the plugin layout.
-
-Last updated: **1 October 2026**. Two skills: `create-project` (public since 30 September 2026) and
-`save-context` (added 1 October 2026, tested with no config, a full config and `commit: false`).
+Last updated: **5 October 2026**. The marketplace holds 14 plugins: one skills plugin
+(`project-workflow`), the Claude Code Toolkit (six mods), the Claude Code Arcade (five game mods) and
+two meta plugins, `toolkit` and `arcade`, that install each collection in one go through
+`dependencies` (verified in an isolated install on 5 October 2026: installing a meta plugin installs
+its dependencies; uninstalling it leaves them, `claude plugin prune` cleans up). Banner re-rendered
+with "6 tools" and "5 games" chips; `docs/images/social-preview.png` is the 1280 by 640 copy for
+GitHub's social preview, not uploaded yet. Nothing from 5 October is pushed yet. Launch is planned
+for 6 October 2026.
 
 ## At a glance
 
 | Item | State |
 |---|---|
-| Repository | Public, with social preview image, description and topics |
-| Funding | GitHub Sponsors and Buy Me a Coffee (`.github/FUNDING.yml`) |
-| License | MIT, added |
-| README | Written: index, install, config reference, optional integrations |
-| `create-project` | Written and tested: configurable storage, GitHub accounts, languages, optional account tool and registry |
+| Repository | Public, MIT, GitHub Sponsors and Buy Me a Coffee (`.github/FUNDING.yml`) |
+| Marketplace | `.claude-plugin/marketplace.json`, passes `claude plugin validate` |
+| Skills | `project-workflow`: `create-project`, `save-context` |
+| Claude Code Toolkit | `subtask-icons`, `context-alarm`, `answer-buttons`, `skill-stats`, `dash-guard`, `shared-file-guard`; meta plugin `toolkit` |
+| Claude Code Arcade | `dragon-lair`, `jackpot`, `outlaw`, `tama`, `tetris`, each with its own copy of `shared/arcade/milestones.ts` (`scripts/sync-arcade-milestones.sh`, checked in CI); meta plugin `arcade` |
+| CI | `.github/workflows/plugins.yml`: milestones copies match, validate the marketplace and every plugin, test every mod |
 | Personal-content check | `scripts/check-personal.sh`, installed as a pre-commit hook |
-| `save-context` | Written and tested: optional `tasks_skill` and `commit` settings, works with no config |
-| Plugin marketplace manifest | Added, passes `claude plugin validate` |
 
-## Next actions
+## Open before launch (6 October 2026)
 
-1. Add the next skill.
+1. Push the 5 October commits.
+2. Upload `docs/images/social-preview.png` as the repository's social preview.
+3. Record the GIFs and add them to the Arcade and Toolkit READMEs.
+4. Install from the marketplace in a clean setup and check every game live, light and dark theme.
 
 ## Decision log
 
+- **5 October 2026:** Two collections, the Claude Code Toolkit and the Claude Code Arcade, each with a
+  code-free meta plugin that installs it in one command. Every game also installs alone: the moment
+  detector is copied into each game rather than shared through a dependency, so a single install
+  never misses it.
+- **5 October 2026:** Arcade games added. Turkish praise words left out of the built-in list (the
+  repo's personal check refuses Turkish letters); users add their own with the `praise_words` setting.
+- **4 October 2026:** Renamed from `agent-skills` to `claude-plugins` and turned into a public
+  marketplace; mods added as plugins.
+- **1 October 2026:** `save-context` added. Banner re-rendered with its chip.
 - **30 September 2026:** One collection repository for all skills rather than one repository per
-  skill, following the common pattern (Anthropic's and Vercel's skill collections). Installing once
-  brings every skill, and larger standalone tools get their own repositories.
+  skill, following the common pattern (Anthropic's and Vercel's skill collections).
 - **30 September 2026:** MIT license. English only. Per-user values live in a config file outside the
   repo, so the published skill and its author's own copy share the same code.
-- **1 October 2026:** `save-context` added. Banner re-rendered with its chip.
 - **30 September 2026:** Made public. Install commands from the README tested on a clean setup:
   marketplace add, plugin install, and a plain clone all work.

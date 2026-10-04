@@ -1,0 +1,18 @@
+{
+  "name": "toolkit",
+  "version": "0.1.0",
+  "description": "The Claude Code Toolkit in one install: subtask-icons, context-alarm, answer-buttons, skill-stats, dash-guard and shared-file-guard, six small mods for long sessions.",
+  "author": {
+    "name": "Mehmet Mutlu"
+  },
+  "homepage": "https://github.com/mutlumehmet/claude-plugins/tree/main/plugins/toolkit",
+  "license": "MIT",
+  "dependencies": [
+    "subtask-icons",
+    "context-alarm",
+    "answer-buttons",
+    "skill-stats",
+    "dash-guard",
+    "shared-file-guard"
+  ]
+}

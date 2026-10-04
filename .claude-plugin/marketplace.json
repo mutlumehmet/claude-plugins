@@ -64,6 +64,16 @@
       "name": "tetris",
       "source": "./plugins/tetris",
       "description": "A classic Tetris in a small handheld screen above the prompt, played by Claude's work: every tool drops a piece, failed tools push up garbage, and the moments worth celebrating clear rows."
+    },
+    {
+      "name": "arcade",
+      "source": "./plugins/arcade",
+      "description": "The Claude Code Arcade in one install: dragon-lair, jackpot, outlaw, tama and tetris, five games above the prompt that your work plays."
+    },
+    {
+      "name": "toolkit",
+      "source": "./plugins/toolkit",
+      "description": "The Claude Code Toolkit in one install: subtask-icons, context-alarm, answer-buttons, skill-stats, dash-guard and shared-file-guard."
     }
   ]
 }

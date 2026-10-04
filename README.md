@@ -22,7 +22,15 @@ Each plugin has its own page with what it does, its settings and its known gaps.
 | Plugin | Kind | What it does |
 |---|---|---|
 | [`project-workflow`](plugins/project-workflow) | skills | [`create-project`](plugins/project-workflow/skills/create-project) sets up a new project folder the same way every time; [`save-context`](plugins/project-workflow/skills/save-context) saves what a session decided, changed and left open before you close it |
-| [`subtask-icons`](plugins/subtask-icons) | mod | A `⑂` icon per item under the last answer that puts `/subtask <item>` in the prompt box |
+
+### Claude Code Toolkit
+
+Six small mods for long sessions. Install all six with `/plugin install toolkit@mehmetmutlu`
+([`toolkit`](plugins/toolkit)), or any one by name.
+
+| Plugin | Kind | What it does |
+|---|---|---|
+| [`subtask-icons`](plugins/subtask-icons) | mod | A `⑂ Subtask` button under the last answer that puts `/subtask <item>` in the prompt box |
 | [`context-alarm`](plugins/context-alarm) | mod | Warns as the context fills up and suggests `/save-context` before compaction |
 | [`answer-buttons`](plugins/answer-buttons) | mod | Plain English, Shorter and Plain & short buttons under the last answer |
 | [`skill-stats`](plugins/skill-stats) | mod | Which skills run, which never trigger, and a hand off to skill-creator |
@@ -34,7 +42,8 @@ Each plugin has its own page with what it does, its settings and its known gaps.
 Five games that live above your prompt and are played by your work. Each one spots the moments
 worth celebrating on its own, coding or not: small (a turn done, a file saved), medium (a commit, a
 skill run, a message sent) and big (a merge, a deploy, a finished task list, a PDF made). Install one
-or all; each works alone.
+or all; each works alone. Install all five with `/plugin install arcade@mehmetmutlu`
+([`arcade`](plugins/arcade)); with several showing, hide some with `/<game> hide`.
 
 | Plugin | Kind | What it does |
 |---|---|---|
