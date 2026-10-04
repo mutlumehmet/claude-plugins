@@ -1,0 +1,18 @@
+{
+  "name": "browser-guard",
+  "version": "0.2.0",
+  "description": "Holds browser clicks, Enter presses and scripts that would submit, send, apply, pay or move a form forward until you pick Continue",
+  "author": {
+    "name": "Mehmet Mutlu"
+  },
+  "homepage": "https://github.com/mutlumehmet/claude-plugins/tree/main/plugins/browser-guard",
+  "license": "MIT",
+  "userConfig": {
+    "extra_words": {
+      "type": "string",
+      "title": "Extra risky words",
+      "description": "Words on buttons in other languages that should be held, as regex fragments separated by |. Each matches as a stem with any ending. Empty means English words only.",
+      "default": ""
+    }
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "description": "subtask-icons hooks module",
+  "modules": ["./register.tsx"]
+}

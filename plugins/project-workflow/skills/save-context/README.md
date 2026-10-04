@@ -1,9 +1,9 @@
 # save-context
 
 Saves what a working session decided, changed and learned, so the next conversation starts with it
-already in context. Part of [agent-skills](../../README.md).
+already in context. Part of [claude-plugins](../../../../README.md).
 
-![save-context: harvests, saves, ready](../../docs/images/save-context-flow.png)
+![save-context: harvests, saves, ready](../../../../docs/images/save-context-flow.png)
 
 At the end of every session I used to ask the same question: "did you update everything? Status,
 memory, whatever the next session needs?" The answer was usually "mostly". This skill turns that
@@ -70,8 +70,8 @@ uses whatever memory location the environment describes.
 As a Claude Code plugin:
 
 ```
-/plugin marketplace add mutlumehmet/agent-skills
-/plugin install save-context@mutlumehmet-agent-skills
+/plugin marketplace add mutlumehmet/claude-plugins
+/plugin install project-workflow@mehmetmutlu
 ```
 
 Plugin skills are namespaced, so it runs as `/save-context:save-context`, or just say "wrap up" or
@@ -80,14 +80,14 @@ Plugin skills are namespaced, so it runs as `/save-context:save-context`, or jus
 As a plain skill: copy or symlink this folder into your skills directory.
 
 ```bash
-git clone https://github.com/mutlumehmet/agent-skills.git
-ln -s "$PWD/agent-skills/skills/save-context" ~/.claude/skills/save-context
+git clone https://github.com/mutlumehmet/claude-plugins.git
+ln -s "$PWD/claude-plugins/plugins/project-workflow/skills/save-context" ~/.claude/skills/save-context
 ```
 
 Then say "save context" at the end of a session.
 
 ## About
 
-[![Mehmet Mutlu: work that's shipped, at mehmetmutlu.dev](../../docs/images/site-banner.png)](https://www.mehmetmutlu.dev)
+[![Mehmet Mutlu: work that's shipped, at mehmetmutlu.dev](../../../../docs/images/site-banner.png)](https://www.mehmetmutlu.dev)
 
-Made by Mehmet Mutlu, part of [agent-skills](../../README.md). More of his work at [mehmetmutlu.dev](https://www.mehmetmutlu.dev). If it saves you time, you can [sponsor me on GitHub](https://github.com/sponsors/mutlumehmet) or [buy me a coffee](https://buymeacoffee.com/mutlumehmet).
+Made by Mehmet Mutlu, part of [claude-plugins](../../../../README.md). More of his work at [mehmetmutlu.dev](https://www.mehmetmutlu.dev). If it saves you time, you can [sponsor me on GitHub](https://github.com/sponsors/mutlumehmet) or [buy me a coffee](https://buymeacoffee.com/mutlumehmet).

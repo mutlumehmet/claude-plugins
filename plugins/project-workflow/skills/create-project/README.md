@@ -1,9 +1,9 @@
 # create-project
 
 Sets up a new project folder the same way every time, for code or for a folder of notes and documents.
-Part of [agent-skills](../../README.md).
+Part of [claude-plugins](../../../../README.md).
 
-![create-project: asks, builds, ready](../../docs/images/create-project-flow.png)
+![create-project: asks, builds, ready](../../../../docs/images/create-project-flow.png)
 
 I start a separate folder for everything I get AI help with: code, but also family paperwork,
 accounting, a house move. This skill makes every one of them start the same way, so that a new agent
@@ -76,8 +76,8 @@ Windows is not supported yet (symlinks need admin rights there).
 As a Claude Code plugin:
 
 ```
-/plugin marketplace add mutlumehmet/agent-skills
-/plugin install create-project@mutlumehmet-agent-skills
+/plugin marketplace add mutlumehmet/claude-plugins
+/plugin install project-workflow@mehmetmutlu
 ```
 
 Plugin skills are namespaced, so it runs as `/create-project:create-project`, or just ask Claude to
@@ -86,14 +86,14 @@ Plugin skills are namespaced, so it runs as `/create-project:create-project`, or
 As a plain skill: copy or symlink this folder into your skills directory.
 
 ```bash
-git clone https://github.com/mutlumehmet/agent-skills.git
-ln -s "$PWD/agent-skills/skills/create-project" ~/.claude/skills/create-project
+git clone https://github.com/mutlumehmet/claude-plugins.git
+ln -s "$PWD/claude-plugins/plugins/project-workflow/skills/create-project" ~/.claude/skills/create-project
 ```
 
 Then run `/create-project`, or ask Claude to "set up a new project for my house move".
 
 ## About
 
-[![Mehmet Mutlu: work that's shipped, at mehmetmutlu.dev](../../docs/images/site-banner.png)](https://www.mehmetmutlu.dev)
+[![Mehmet Mutlu: work that's shipped, at mehmetmutlu.dev](../../../../docs/images/site-banner.png)](https://www.mehmetmutlu.dev)
 
-Made by Mehmet Mutlu, part of [agent-skills](../../README.md). More of his work at [mehmetmutlu.dev](https://www.mehmetmutlu.dev). If it saves you time, you can [sponsor me on GitHub](https://github.com/sponsors/mutlumehmet) or [buy me a coffee](https://buymeacoffee.com/mutlumehmet).
+Made by Mehmet Mutlu, part of [claude-plugins](../../../../README.md). More of his work at [mehmetmutlu.dev](https://www.mehmetmutlu.dev). If it saves you time, you can [sponsor me on GitHub](https://github.com/sponsors/mutlumehmet) or [buy me a coffee](https://buymeacoffee.com/mutlumehmet).

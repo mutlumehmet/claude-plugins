@@ -1,0 +1,25 @@
+name: plugins
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+      - name: Validate the marketplace and every plugin
+        run: |
+          claude plugin validate .
+          for p in plugins/*/; do claude plugin validate "$p"; done
+      - name: Test every mod
+        run: |
+          for p in plugins/*/; do
+            if [ -d "$p/tests" ]; then (cd "$p" && claude plugin test); fi
+          done

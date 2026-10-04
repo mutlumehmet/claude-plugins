@@ -1,0 +1,4 @@
+{
+  "description": "context-alarm hooks module",
+  "modules": ["./register.js"]
+}

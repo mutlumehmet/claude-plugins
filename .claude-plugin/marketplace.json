@@ -1,27 +1,34 @@
 {
-  "name": "mutlumehmet-agent-skills",
-  "description": "Agent Skills for everyday work with Claude",
+  "name": "mehmetmutlu",
+  "description": "Claude Code plugins by Mehmet Mutlu: skills and mods I use every day, cleaned up so they work on anyone's machine",
   "owner": {
     "name": "Mehmet Mutlu"
   },
   "plugins": [
     {
-      "name": "create-project",
-      "description": "Sets up a new project folder the same way every time: asks a few questions, then creates the folder, an optional cloud-synced assets folder git never sees, CLAUDE.md and STATUS.md, and an optional private GitHub repo.",
-      "source": "./",
-      "strict": false,
-      "skills": [
-        "./skills/create-project"
-      ]
+      "name": "project-workflow",
+      "source": "./plugins/project-workflow",
+      "description": "Start a project the same way every time (create-project) and save what a session decided before you close it (save-context)."
     },
     {
-      "name": "save-context",
-      "description": "Before you close a session, saves what it decided, changed and left open: shows one plan, writes STATUS.md, memory and registers after approval, hands items to the skills that own them, and commits only what it touched without pushing.",
-      "source": "./",
-      "strict": false,
-      "skills": [
-        "./skills/save-context"
-      ]
+      "name": "secret-guard",
+      "source": "./plugins/secret-guard",
+      "description": "Masks secrets in tool results before Claude reads them, and asks whether Claude may read that result unmasked"
+    },
+    {
+      "name": "browser-guard",
+      "source": "./plugins/browser-guard",
+      "description": "Holds browser clicks, Enter presses and scripts that would submit, send, apply, pay or move a form forward until you pick Devam et"
+    },
+    {
+      "name": "subtask-icons",
+      "source": "./plugins/subtask-icons",
+      "description": "Small ⑂ icons under Claude's last answer, one per item; a press puts /subtask with that item's text in the prompt box"
+    },
+    {
+      "name": "context-alarm",
+      "source": "./plugins/context-alarm",
+      "description": "Warns when the context window passes a threshold (80% by default) and suggests /save-context before compaction"
     }
   ]
 }
