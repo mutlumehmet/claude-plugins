@@ -20,7 +20,7 @@ set -uo pipefail
 LIST="${AGENT_SKILLS_FORBIDDEN:-$HOME/.config/agent-skills/forbidden.txt}"
 AUTHOR_LIST="${AGENT_SKILLS_AUTHOR:-$HOME/.config/agent-skills/author.txt}"
 # Files allowed to name the author
-CREDIT_FILES='^(LICENSE|README\.md|plugins/[^/]+/README\.md|plugins/[^/]+/skills/[^/]+/README\.md|plugins/[^/]+/\.claude-plugin/plugin\.json|\.claude-plugin/marketplace\.json|\.github/FUNDING\.yml)$'
+CREDIT_FILES='^(LICENSE|README\.md|skills/[^/]+/README\.md|plugins/[^/]+/README\.md|plugins/[^/]+/skills/[^/]+/README\.md|plugins/[^/]+/\.claude-plugin/plugin\.json|\.claude-plugin/marketplace\.json|\.github/FUNDING\.yml)$'
 
 if [ ! -f "$LIST" ]; then
   echo "check-personal: no forbidden list at $LIST, skipping (create one to enable the check)" >&2
