@@ -14,6 +14,8 @@ jobs:
           node-version: 22
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
+      - name: Arcade games share one milestones.ts
+        run: scripts/sync-arcade-milestones.sh --check
       - name: Validate the marketplace and every plugin
         run: |
           claude plugin validate .

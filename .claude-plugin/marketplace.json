@@ -39,6 +39,31 @@
       "name": "shared-file-guard",
       "source": "./plugins/shared-file-guard",
       "description": "Refuses a shell write to a shared file (STATUS.md, CLAUDE.md, MEMORY.md, or the files you name) that this session has not read, or that another session changed since"
+    },
+    {
+      "name": "dragon-lair",
+      "source": "./plugins/dragon-lair",
+      "description": "A small pixel dragon above the prompt that acts out what Claude is doing and breathes fire at the moments worth celebrating: a commit, a merge, a finished task list, a PDF made."
+    },
+    {
+      "name": "jackpot",
+      "source": "./plugins/jackpot",
+      "description": "A pixel slot machine above the prompt: every finished turn pulls the lever, and the moments worth celebrating (a commit, a skill run, a deploy, a finished task list) earn golden spins."
+    },
+    {
+      "name": "outlaw",
+      "source": "./plugins/outlaw",
+      "description": "An Atari Outlaw duel above the prompt: your gunslinger fires at the moments worth celebrating, the bug fires when a tool fails, and the cactus between them gets shot to pieces."
+    },
+    {
+      "name": "tama",
+      "source": "./plugins/tama",
+      "description": "A classic Tamagotchi above the prompt: it gets hungry, bored and messy in real time, finished turns feed it, the moments worth celebrating cheer it up, and failed tools leave a mess."
+    },
+    {
+      "name": "tetris",
+      "source": "./plugins/tetris",
+      "description": "A classic Tetris in a small handheld screen above the prompt, played by Claude's work: every tool drops a piece, failed tools push up garbage, and the moments worth celebrating clear rows."
     }
   ]
 }

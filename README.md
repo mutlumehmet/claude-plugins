@@ -29,6 +29,21 @@ Each plugin has its own page with what it does, its settings and its known gaps.
 | [`dash-guard`](plugins/dash-guard) | mod | Refuses prose with em dashes, en dashes or double hyphens |
 | [`shared-file-guard`](plugins/shared-file-guard) | mod | Refuses shell writes to shared files another session changed |
 
+### Claude Code Arcade
+
+Five games that live above your prompt and are played by your work. Each one spots the moments
+worth celebrating on its own, coding or not: small (a turn done, a file saved), medium (a commit, a
+skill run, a message sent) and big (a merge, a deploy, a finished task list, a PDF made). Install one
+or all; each works alone.
+
+| Plugin | Kind | What it does |
+|---|---|---|
+| [`dragon-lair`](plugins/dragon-lair) | mod | A pixel dragon that acts out what Claude does and breathes fire when you ship |
+| [`jackpot`](plugins/jackpot) | mod | A slot machine: every finished turn pulls the lever |
+| [`outlaw`](plugins/outlaw) | mod | An Atari duel: your bugs shoot back |
+| [`tama`](plugins/tama) | mod | A Tamagotchi your work feeds, or it packs its bags |
+| [`tetris`](plugins/tetris) | mod | Tetris where Claude's tools drop the pieces |
+
 ## Install
 
 Add this repo as a marketplace once, then install the plugins you want:

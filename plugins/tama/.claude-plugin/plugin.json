@@ -1,0 +1,43 @@
+{
+  "name": "tama",
+  "version": "0.1.0",
+  "description": "A classic Tamagotchi above the prompt: it gets hungry, bored and messy in real time, finished turns feed it, the moments worth celebrating cheer it up, and failed tools leave a mess.",
+  "author": {
+    "name": "Mehmet Mutlu"
+  },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "big_skills": {
+      "type": "string",
+      "title": "Big skills",
+      "description": "Comma separated skill names whose run is a big moment, such as release-notes. Every other skill is a medium one.",
+      "default": ""
+    },
+    "quiet_skills": {
+      "type": "string",
+      "title": "Quiet skills",
+      "description": "Comma separated skill names that celebrate nothing.",
+      "default": ""
+    },
+    "big_commands": {
+      "type": "string",
+      "title": "Big shell commands",
+      "description": "A regular expression of shell commands whose success is a big moment, on top of merges, releases and production deploys.",
+      "default": ""
+    },
+    "medium_commands": {
+      "type": "string",
+      "title": "Medium shell commands",
+      "description": "A regular expression of shell commands whose success is a medium moment, on top of commits, pushes, pull requests and passing tests.",
+      "default": ""
+    },
+    "praise_words": {
+      "type": "string",
+      "title": "Praise words",
+      "description": "Comma separated words that count as praise in your messages, on top of the built-in list.",
+      "default": ""
+    }
+  },
+  "homepage": "https://github.com/mutlumehmet/claude-plugins/tree/main/plugins/tama",
+  "license": "MIT"
+}

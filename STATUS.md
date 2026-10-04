@@ -1,4 +1,11 @@
-# agent-skills: current state
+# claude-plugins: current state
+
+Last updated: **5 October 2026**. The Claude Code Arcade added: five game mods (`dragon-lair`,
+`jackpot`, `outlaw`, `tama`, `tetris`), each with its own copy of the shared moment detector
+(`shared/arcade/milestones.ts`, copied by `scripts/sync-arcade-milestones.sh`, checked in CI). Not
+pushed yet. Open before launch: the `arcade` and `toolkit` meta plugins (install through
+`dependencies` not yet verified from the marketplace), the banner, GIFs, and a live check of every
+game. The sections below predate the plugin layout.
 
 Last updated: **1 October 2026**. Two skills: `create-project` (public since 30 September 2026) and
 `save-context` (added 1 October 2026, tested with no config, a full config and `commit: false`).
