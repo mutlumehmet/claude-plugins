@@ -1,0 +1,24 @@
+{
+  "name": "dash-guard",
+  "version": "0.2.0",
+  "description": "Refuses prose that Claude writes with an em dash, an en dash or a double hyphen, and tells Claude which lines to rewrite",
+  "author": {
+    "name": "Mehmet Mutlu"
+  },
+  "homepage": "https://github.com/mutlumehmet/claude-plugins/tree/main/plugins/dash-guard",
+  "license": "MIT",
+  "userConfig": {
+    "banned": {
+      "type": "string",
+      "title": "Marks to refuse",
+      "description": "Comma separated: em, en, double (two hyphens used as punctuation). Empty means all three.",
+      "default": ""
+    },
+    "tools": {
+      "type": "string",
+      "title": "MCP tools to check",
+      "description": "A regular expression of MCP tool names whose text is checked too, such as ^mcp__notion__.*create.*$. Empty checks Write and Edit only.",
+      "default": ""
+    }
+  }
+}

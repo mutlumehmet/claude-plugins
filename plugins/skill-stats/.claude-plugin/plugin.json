@@ -1,0 +1,30 @@
+{
+  "name": "skill-stats",
+  "version": "0.2.0",
+  "description": "Counts how often each skill runs, lists the ones that never trigger, and hands a weak description to skill-creator",
+  "author": {
+    "name": "Mehmet Mutlu"
+  },
+  "homepage": "https://github.com/mutlumehmet/claude-plugins/tree/main/plugins/skill-stats",
+  "license": "MIT",
+  "userConfig": {
+    "config_dirs": {
+      "type": "string",
+      "title": "Config dirs to read history from",
+      "description": "Comma separated Claude Code config dirs whose transcripts count, such as ~/.claude,~/.claude-work. Empty means this account only.",
+      "default": ""
+    },
+    "own_marketplaces": {
+      "type": "string",
+      "title": "Your marketplaces",
+      "description": "Comma separated marketplace names whose plugin skills count as yours in the table. Skills from a skills folder always count.",
+      "default": ""
+    },
+    "source_dirs": {
+      "type": "string",
+      "title": "Where your skills' source lives",
+      "description": "Comma separated folders to search for a skill's SKILL.md, so /skill-fix points skill-creator at the source and not at the installed copy.",
+      "default": ""
+    }
+  }
+}

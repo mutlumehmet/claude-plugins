@@ -29,6 +29,26 @@
       "name": "context-alarm",
       "source": "./plugins/context-alarm",
       "description": "Warns when the context window passes a threshold (80% by default) and suggests /save-context before compaction"
+    },
+    {
+      "name": "answer-buttons",
+      "source": "./plugins/answer-buttons",
+      "description": "Three small buttons under Claude's last answer: Plain English, Shorter, and Plain & short"
+    },
+    {
+      "name": "skill-stats",
+      "source": "./plugins/skill-stats",
+      "description": "Counts how often each skill runs, lists the ones that never trigger, and hands a weak description to skill-creator"
+    },
+    {
+      "name": "dash-guard",
+      "source": "./plugins/dash-guard",
+      "description": "Refuses prose that Claude writes with an em dash, an en dash or a double hyphen, and tells Claude which lines to rewrite"
+    },
+    {
+      "name": "shared-file-guard",
+      "source": "./plugins/shared-file-guard",
+      "description": "Refuses a shell write to a shared file (STATUS.md, CLAUDE.md, MEMORY.md, or the files you name) that this session has not read, or that another session changed since"
     }
   ]
 }

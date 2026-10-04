@@ -26,6 +26,10 @@ Each plugin has its own page with what it does, its settings and its known gaps.
 | [`browser-guard`](plugins/browser-guard) | mod | Holds browser actions that could submit, send or pay until you pick Continue |
 | [`subtask-icons`](plugins/subtask-icons) | mod | A `⑂` icon per item under the last answer that puts `/subtask <item>` in the prompt box |
 | [`context-alarm`](plugins/context-alarm) | mod | Warns as the context fills up and suggests `/save-context` before compaction |
+| [`answer-buttons`](plugins/answer-buttons) | mod | Plain English, Shorter and Plain & short buttons under the last answer |
+| [`skill-stats`](plugins/skill-stats) | mod | Which skills run, which never trigger, and a hand off to skill-creator |
+| [`dash-guard`](plugins/dash-guard) | mod | Refuses prose with em dashes, en dashes or double hyphens |
+| [`shared-file-guard`](plugins/shared-file-guard) | mod | Refuses shell writes to shared files another session changed |
 
 ## Install
 
