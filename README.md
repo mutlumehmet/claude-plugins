@@ -39,6 +39,8 @@ Six small mods for long sessions. Install all six with `/plugin install toolkit@
 
 ### Claude Code Arcade
 
+![The Claude Code Arcade: the dragon, the slot machine, the duel, the Tamagotchi and Tetris, played by a session's work](docs/images/arcade-hero.gif)
+
 Five games that live above your prompt and are played by your work. Each one spots the moments
 worth celebrating on its own, coding or not: small (a turn done, a file saved), medium (a commit, a
 skill run, a message sent) and big (a merge, a deploy, a finished task list, a PDF made). Install one
