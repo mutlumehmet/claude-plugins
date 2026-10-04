@@ -57,7 +57,7 @@ Then read, in this order:
 2. `STATUS.md` if it exists.
 3. `MEMORY.md` in the memory directory, plus any memory file whose description touches what this
    session worked on.
-4. Every other context file the CLAUDE.md reading order names (registers, "where we stand"
+4. Every other context file the CLAUDE.md reading order names (registers, release logs, "where we stand"
    summaries, context folders such as `context/`, `docs/`, `notes/`). Only the ones this session
    could have made stale.
 
@@ -92,6 +92,7 @@ anything that only mattered for this conversation.
 | Lasting non-obvious project facts, constraints, traps | memory, type `project` or `reference` |
 | A lasting rule or decision that every session must obey | `CLAUDE.md` (rare; routine progress never goes here) |
 | A row in a project register (findings, decisions, incidents) | the register, through its owning skill if one exists |
+| Something that shipped this session: a capability, a fix, a hardening, or a document delivered to someone | the project's release log, if it has one, through its owning skill if one exists |
 | A summary or context file this session made stale | that file, edited in place |
 | A dated promise to someone, a thing to do later | `tasks_skill` if set, otherwise STATUS.md next steps |
 
@@ -103,6 +104,13 @@ Rules for routing:
   places in sync or apply checks you would skip.
 - **One home per fact.** If the project separates registers from tasks (a fact vs a promise), keep
   each item in exactly one place.
+- **A release log is not a copy of the register.** The register says what is wrong and whether it
+  is fixed; the release log says what shipped, on what date, in which category, and whose work it
+  was. A fixed finding can earn a line in both, and its owning skill usually writes both. Work that
+  is not a finding at all, such as a plan, a specification, an audit or a runbook, has no register
+  row, so the release log is its only dated record and the easiest thing to lose. Catch it here.
+- **Record whose work it was.** Every release log line names who built the thing, so the log can
+  answer "what did I ship last month" even when other people work in the same repo.
 - **Update, don't duplicate.** If an existing memory or STATUS line covers it, change that line.
   Delete memories this session proved wrong. Fix a stale line rather than appending a contradicting
   one below it.
