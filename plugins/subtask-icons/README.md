@@ -30,7 +30,8 @@ A mod runs inside Claude Code with your permissions. Read the code before you in
 
 ## Known gaps
 
-- Plain fact bullets get icons too; the 12 item cap keeps it short.
+- Plain fact bullets count as items too, so the picker can list a few lines that are not tasks; the
+  12 item cap keeps it short.
 - After editing the mod while a session is open, restart the session: a hot reload has dropped the
   `/st` command once.
 
