@@ -1,18 +1,19 @@
 # subtask-icons
 
-A Claude Code mod that draws a small `⑂` icon for each item under Claude's last answer. A press puts
-`/subtask <the item's text>` in the prompt box and sends nothing, so you can add your own words and
-press Enter. Part of [claude-plugins](../../README.md).
+A Claude Code mod that puts one small `⑂ Subtask` button under Claude's last answer. It opens a
+picker of the answer's items; a pick puts `/subtask <the item's text>` in the prompt box and sends
+nothing, so you can add your own words and press Enter. Part of [claude-plugins](../../README.md).
 
 ## What it does
 
-- **Icons**: one per numbered item or top level bullet of the last answer (at most 12; code blocks
-  are skipped).
-- **Several items into one subtask**: if the prompt box already holds a `/subtask`, a press adds the
-  item on a new line.
-- **`/st`**: opens a picker with every item's full first line; click one or press its number, Esc
-  closes it.
-- **`/st 3`**: puts item 3 in the prompt box directly.
+- **One button**: a quiet `⑂ Subtask (N)` under Claude's last answer, where N is the number of items
+  (numbered items and top level bullets, at most 12; code blocks are skipped).
+- **The picker**: pressing it opens a small pane with every item's full first line. Click one or
+  press its number; `/subtask <item>` goes into the prompt box and nothing is sent, so you can add
+  your own words and press Enter. Esc closes it.
+- **Several items into one subtask**: if the prompt box already holds a `/subtask`, the next pick
+  is added on a new line.
+- **From the keyboard**: `/st` opens the same picker; `/st 3` puts item 3 in the prompt box directly.
 
 Nothing is drawn in the VS Code chat panel; use `/st` there.
 

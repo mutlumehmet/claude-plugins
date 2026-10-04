@@ -1,5 +1,5 @@
-// subtask-icons: one small ⑂ icon per item under Claude's last answer. A press
-// puts "/subtask <the item's text>" in the prompt box and sends nothing, so
+// subtask-icons: one small "⑂ Subtask" button under Claude's last answer. A press
+// opens a picker of the answer's items; picking one puts "/subtask <the item's text>" in the prompt box and sends nothing, so
 // you can add your own words ("let's do it", "but make it interactive") before
 // Enter. A second press while the box already holds a /subtask adds that item
 // on a new line, so several items go to one subtask.
@@ -158,6 +158,19 @@ async function fillItem($: Api, item: string) {
   if (!done.isFilled) $.ui.toast('⑂ Could not fill the prompt box (a dialog may be open)')
 }
 
+// Opens the Subtask picker with these items; true when the pane is drawn
+async function openPicker($: Api, units: Unit[]): Promise<boolean> {
+  pickerUnits = units
+  const opened = await $.ui.open({
+    id: PICKER,
+    title: 'Subtask',
+    focus: true,
+    closeOnEscape: true,
+    rows: Math.min(units.length + 2, 16),
+  })
+  return opened.isPlaced
+}
+
 async function pick($: Api, item: string) {
   await $.ui.close({ id: PICKER })
   await fillItem($, item)
@@ -194,15 +207,7 @@ export const register: Register = (on) => {
     if (units.length === 0) return { text: 'The last answer has no items.' }
     const n = Number.parseInt(String(e.args ?? '').trim(), 10)
     if (!Number.isInteger(n)) {
-      pickerUnits = units
-      const opened = await $.ui.open({
-        id: PICKER,
-        title: 'Subtask',
-        focus: true,
-        closeOnEscape: true,
-        rows: Math.min(units.length + 2, 16),
-      })
-      if (opened.isPlaced) return {}
+      if (await openPicker($, units)) return {}
       // Where no pane can be drawn, the list in full as text
       return { text: units.map((u, i) => i + 1 + '. ' + u.title).join('\n') + '\n\n/st N puts item N in the prompt box.' }
     }
@@ -238,20 +243,19 @@ export const register: Register = (on) => {
     const own = await next(e)
     if (isWorking || e.surface === 'vscode' || e.surface === 'mobile') return own
     if (!isLastBlock(e.props.text, lastAnswer)) return own
-    const units = findUnits(e.props.text)
+    const units = findUnits(lastAnswer)
     if (units.length === 0) return own
 
+    // One quiet button; the items are picked in the pane it opens
     const { Box, Button } = $.ui.resolve(e)
     return (
       <Box flexDirection="column">
         {own}
-        <Box flexDirection="row" flexWrap="wrap" columnGap={2}>
-          {units.map((u, i) => (
-            <Button key={'st-' + i} plain dimColor onPress={() => fillItem($, u.text)}>
-              {'⑂ ' + u.label}
-            </Button>
-          ))}
-        </Box>
+        <Button key="st-open" plain dimColor onPress={async () => {
+          if (!(await openPicker($, units))) $.ui.toast('⑂ Use /st to list the items')
+        }}>
+          {'⑂ Subtask (' + units.length + ')'}
+        </Button>
       </Box>
     )
   })

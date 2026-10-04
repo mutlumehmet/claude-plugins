@@ -87,27 +87,42 @@ function engine(on: any, filled: string[], draft = '') {
   })
 }
 
-test('the last answer gets one icon per item, and a press fills the prompt box', async ($, on) => {
+test('the last answer gets one Subtask button that opens the picker, and a pick fills the prompt box', async ($, on) => {
   const filled: string[] = []
+  const opened: string[] = []
   engine(on, filled)
+  on('ui.open', ($: unknown, e: any) => {
+    opened.push(e.id)
+    return { value: { isPlaced: true } }
+  })
+  on('ui.close', () => ({ value: undefined }))
   await $.turn.start({ turnId: 't1', text: 'q' })
   await $.turn.complete({ turnId: 't1', answer: NUMBERED_LIST, durationMs: 5, isAborted: false, reason: 'answer' })
 
   const ui = await $.ui.mount(message(NUMBERED_LIST))
   expect(await ui.find({ type: 'Text', text: 'drawn by Claude Code' })).toBeDefined()
-  expect(await ui.find({ key: 'st-3' })).toBeDefined()
-  expect(await ui.find({ key: 'st-4' })).toBeUndefined()
-  await ui.press({ key: 'st-2' })
+  expect(await ui.find({ key: 'st-open' })).toBeDefined()
+  expect(await ui.find({ key: 'st-0' })).toBeUndefined()
+  await ui.press({ key: 'st-open' })
+  expect(opened).toEqual(['st-picker'])
+  await ui.unmount()
+
+  const pane = await $.ui.mount({
+    plugin: 'subtask-icons', surface: 'terminal', component: 'Pane', requestId: 'st-picker',
+    viewport: { columns: 100, rows: 30 },
+    props: { title: 'Subtask', isFocused: true, bodyColumns: 80, placement: 'inline', scroll: { offset: 0, bodyRows: 10 }, view: {} },
+  } as any)
+  await pane.press({ key: 'pick-3' })
   expect(filled).toEqual(['/subtask Browser send guard: asks before Submit. '])
 })
 
-test('no icons while Claude is working', async ($, on) => {
+test('no button while Claude is working', async ($, on) => {
   engine(on, [])
   await $.turn.start({ turnId: 't1', text: 'q' })
   await $.turn.complete({ turnId: 't1', answer: NUMBERED_LIST, durationMs: 5, isAborted: false, reason: 'answer' })
   await $.turn.start({ turnId: 't2', text: 'q' })
   const ui = await $.ui.mount(message(NUMBERED_LIST))
-  expect(await ui.find({ key: 'st-0' })).toBeUndefined()
+  expect(await ui.find({ key: 'st-open' })).toBeUndefined()
 })
 
 test('/st lists the items in full where no pane can open, and /st 2 fills item 2 after the box clears', async ($, on) => {
