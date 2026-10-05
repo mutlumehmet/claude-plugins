@@ -2960,6 +2960,18 @@ ${rows.join("\n")}
 }
 const over = (options) => `${String(options.mode ?? "")}|${String(options.pool ?? "")}`;
 async function save2($, options, mode, pool) {
+  try {
+    const keys = new Set((await $.config.list()).map((row) => row.key));
+    if (keys.has("arcade.mode") && keys.has("arcade.pool")) {
+      const a = await $.config.set({ key: "arcade.mode", value: mode });
+      const b = await $.config.set({ key: "arcade.pool", value: pool.join(",") });
+      if (a.deny === void 0 && b.deny === void 0) {
+        await $.store.delete("setting");
+        return;
+      }
+    }
+  } catch {
+  }
   const saved = { mode, pool: pool.join(","), over: over(options) };
   await $.store.set("setting", saved);
 }

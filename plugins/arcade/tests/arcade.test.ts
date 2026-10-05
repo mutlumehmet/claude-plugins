@@ -67,6 +67,20 @@ test('/arcade tetris pins Tetris in this terminal and for new ones', { options: 
   expect(await showing($)).toEqual(['tetris'])
 })
 
+test('/arcade tetris writes the mode and pool settings where the settings menu has them', { options: { mode: 'random', pool: 'outlaw,tetris' } }, async ($, on) => {
+  const written: Record<string, unknown> = {}
+  world(on)
+  on('config.list', () => ({ value: [{ key: 'arcade.mode' }, { key: 'arcade.pool' }] }) as never)
+  on('config.set', (_$, e) => {
+    written[e.key] = e.value
+    return { value: e.value }
+  })
+  await begin($, on)
+  await $.command.run({ command: 'arcade', args: 'tetris' } as never)
+  expect(written).toEqual({ 'arcade.mode': 'fixed', 'arcade.pool': 'tetris,outlaw' })
+  expect(await showing($)).toEqual(['tetris'])
+})
+
 test('a new terminal follows what /arcade saved', { options: { mode: 'random', pool: '' } }, async ($, on) => {
   world(on, { setting: { mode: 'fixed', pool: 'tama,outlaw', over: 'random|' } })
   await begin($, on)

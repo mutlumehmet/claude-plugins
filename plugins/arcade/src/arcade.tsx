@@ -131,16 +131,29 @@ async function status($: EngineInterface, mode: Mode, pool: string[]) {
   )
 }
 
-// What /arcade chose, kept in the plugin store: a file in this Claude Code config directory, so
-// each account keeps its own. `over` is the settings it was chosen over: once the mode or pool in
-// /plugin changes, those win again. ($.config.set would be neater, but on 2.1.289 a plugin's
-// userConfig fields were not rows $.config.list or $.config.set knew in a headless session,
-// checked 5 October 2026.)
+// Saves what /arcade chose. First choice: the plugin's own mode and pool settings, written the way
+// the /config menu writes them, so the menu shows the choice and each Claude Code config directory
+// keeps its own. Where those rows do not exist (checked 5 October 2026 on 2.1.289: an interactive
+// session has them, `claude -p` has none), the choice goes to the plugin store instead, also kept
+// per config directory. `over` records the settings it was chosen over: once they change, they win.
 type Saved = { mode: string; pool: string; over: string }
 
 const over = (options: PluginOptions) => `${String(options.mode ?? '')}|${String(options.pool ?? '')}`
 
 async function save($: EngineInterface, options: PluginOptions, mode: Mode, pool: string[]) {
+  try {
+    const keys = new Set((await $.config.list()).map(row => row.key))
+    if (keys.has('arcade.mode') && keys.has('arcade.pool')) {
+      const a = await $.config.set({ key: 'arcade.mode', value: mode })
+      const b = await $.config.set({ key: 'arcade.pool', value: pool.join(',') })
+      if (a.deny === undefined && b.deny === undefined) {
+        await $.store.delete('setting')
+        return
+      }
+    }
+  } catch {
+    // No settings rows here; the store below keeps the choice.
+  }
   const saved: Saved = { mode, pool: pool.join(','), over: over(options) }
   await $.store.set('setting', saved)
 }

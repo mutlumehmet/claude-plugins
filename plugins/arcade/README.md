@@ -31,7 +31,8 @@ random from all six.
 
 The setting lives in Claude Code's settings (`pluginConfigs`), so the `/config` menu shows it too, and
 each Claude Code config directory keeps its own: a work and a personal account can show different
-games. A hidden game keeps playing and keeps its score; it only stops drawing and stays quiet.
+games. Where there is no settings menu (`claude -p`), `/arcade` keeps the choice in the plugin's own
+store, still per config directory, until the settings change. A hidden game keeps playing and keeps its score; it only stops drawing and stays quiet.
 
 ## The games
 
