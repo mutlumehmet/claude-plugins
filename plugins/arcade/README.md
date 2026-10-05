@@ -119,6 +119,15 @@ Both GIFs are drawn by the mod's own code from a scripted session (a read, an ed
 A marsh the full width of the line above the prompt, with the grass along the bottom, a tree, a dog
 and ducks. Your work does the shooting.
 
+![Duck Hunt in a terminal: a test fails and the dog laughs, the tests go green for a double, a commit shoots a duck, a merge is a perfect round](../../docs/images/duck-hunt-terminal.gif)
+
+The strip on its own, as the mod draws it:
+
+![The Duck Hunt strip: a marsh the width of the terminal, the dog in the grass, ducks flushed and shot down](../../docs/images/duck-hunt.gif)
+
+Both GIFs are drawn by the Arcade's own code from a scripted session (a read, a failing test, an
+edit, passing tests, a commit, a merge); the window around the strip is a mock up of a terminal.
+
 - **While Claude works** the dog sniffs along the grass, faster while a tool runs, and now and then flushes a duck that flaps across the sky.
 - **Moments**: a small one is a shot (a flash of the crosshair), a medium one shoots a duck down and the dog pops up from the grass holding it, a big one is a double (`DOUBLE!`, the dog holds two), and a merge, release, deploy, streak or record is a `PERFECT!` round with feathers everywhere.
 - **A failed tool** lets the duck in the air get away (`FLY AWAY`), and the dog comes up laughing. **Two minutes of quiet** and the dog lies down asleep.
