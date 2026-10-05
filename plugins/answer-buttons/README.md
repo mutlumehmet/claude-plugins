@@ -25,6 +25,8 @@ The buttons show only under the last answer, never while Claude is working. From
 - **Reads**: whether Claude is answering and which answer is the latest, to draw the buttons under it.
 - **Does**: on a press, sends a fixed prompt as your message (Plain English, Shorter, Plain & short), or runs the skill named in `plain_skill`.
 - **Hooks**: `turn.start` and `turn.complete` only track whether a turn is running. `ui.render` on the answer adds the button row under the last answer and leaves the answer itself unchanged.
+- **Commands it runs**: only when you press a Plain button and the `plain_skill` setting names a skill, it runs that one skill (`/<plain_skill>` with the fixed argument "re-explain the last answer" or "re-explain the last answer in 2 or 3 sentences"). With `plain_skill` empty it runs no command at all. It never runs a command on its own, only on your press.
+- **What goes into the prompts it submits**: one of three fixed sentences written in this mod's code (ask Claude to re-explain the last answer in plain English, to say it shorter, or both), sent as your own message in the same session. It reads the conversation only to find which answer is the latest, and copies none of its text into the prompt.
 - **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
 - **Never**: sends anything anywhere (no network calls, no telemetry).
 
