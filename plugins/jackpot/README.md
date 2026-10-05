@@ -45,6 +45,8 @@ All optional; every one is empty by default. Set them in `/plugin` (the plugin's
   count; skill names; the words of your message (only to spot praise); subagent start and finish.
 - **Keeps**: its own score and state in Claude Code's plugin store on your machine.
 - **Draws**: one block at the right end of the line above the prompt, and an occasional notice.
+- **Hooks**: `skill.prompt` only notes which skill ran, so a finished skill can count as a moment; it passes the skill's prompt on unchanged. `command.run` answers its own `/jackpot` command and no other.
+- **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
 - **Never**: changes, blocks or delays a tool call or a message; sends anything anywhere (no network
   calls, no telemetry); reads file contents beyond counting lines of a file Claude writes.
 
