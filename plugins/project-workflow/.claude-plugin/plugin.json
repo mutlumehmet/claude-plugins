@@ -1,6 +1,6 @@
 {
   "name": "project-workflow",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Start a project the same way every time (create-project) and save what a session decided before you close it (save-context).",
   "author": {
     "name": "Mehmet Mutlu"

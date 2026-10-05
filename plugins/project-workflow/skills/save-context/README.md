@@ -40,6 +40,7 @@ Every key is optional.
 | Key | What it is for | Default |
 |---|---|---|
 | `commit` | Commit the touched files at the end. `false` leaves them uncommitted | `true` |
+| `confirm` | Show the plan and wait for approval. `false` writes everything straight away and lists it in the final report, for when you say "save context" and leave | `true` |
 
 ## Optional integrations
 
@@ -52,7 +53,7 @@ tracker) is used for that destination automatically, after you approve the plan.
 
 ## What it will never do
 
-- Write anything before you approve the plan.
+- Write anything before you approve the plan (unless you set `confirm: false`).
 - Push to a remote.
 - Stage with `git add -A`, or commit files that were already modified or untracked before it ran.
 - Create a `CLAUDE.md` without asking.

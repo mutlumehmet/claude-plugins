@@ -14,3 +14,9 @@ tasks_skill: ""
 # Set to false to leave them uncommitted. The skill never pushes, whatever this says.
 # Default: true
 commit: true
+
+# Show the plan and wait for your approval before writing anything.
+# Set to false to write everything straight away with no question, for when you say "save context"
+# and leave the session. The plan then appears in the final report instead.
+# Default: true
+confirm: true

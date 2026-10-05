@@ -1,6 +1,6 @@
 ---
 name: save-context
-description: Saves what a working session decided, changed, learned or left open, so the next conversation starts with it already in context. Discovers what the project keeps (STATUS.md, CLAUDE.md, the agent's memory files, registers, context folders), maps each item from the conversation to the one place it belongs, shows the user the plan in one list, writes it after approval, hands items to other skills that own a destination, and commits only the files it touched without pushing. Works in any project. Use at the end of a session, or as a checkpoint before switching to a different task. Triggers on "save context", "save-context", "wrap up", "wrap-up", "close the session", "did you update everything", "update status and memory", "save the context", "before we close", "before I close this", "handoff", "checkpoint", "make sure the next session knows".
+description: Saves what a working session decided, changed, learned or left open, so the next conversation starts with it already in context. Discovers what the project keeps (STATUS.md, CLAUDE.md, the agent's memory files, registers, context folders), maps each item from the conversation to the one place it belongs, shows the user the plan in one list, writes it after approval (or straight away when the config turns approval off), hands items to other skills that own a destination, and commits only the files it touched without pushing. Works in any project. Use at the end of a session, or as a checkpoint before switching to a different task. Triggers on "save context", "save-context", "wrap up", "wrap-up", "close the session", "did you update everything", "update status and memory", "save the context", "before we close", "before I close this", "handoff", "checkpoint", "make sure the next session knows".
 allowed-tools:
   - Read
   - AskUserQuestion
@@ -40,6 +40,7 @@ documents each key.
 |---|---|---|
 | `tasks_skill` | empty | Skill that records dated promises and to-dos (for example a Notion or Todoist task skill). Empty: such items go to STATUS.md under next steps |
 | `commit` | `true` | Commit the touched files at the end. `false`: leave them uncommitted and say so. Pushing never happens either way |
+| `confirm` | `true` | Show the plan and wait for approval (Step 4). `false`: write everything straight away with no question, for users who say "save context" and walk away from the session |
 
 ## Step 1: Discover what this project keeps
 
@@ -152,6 +153,15 @@ Ask with `AskUserQuestion`: write all / let me adjust / skip. Do not write befor
 step is the point of the skill: the user sees what will be remembered, and can catch a wrong or
 missing item while the conversation is still fresh.
 
+**When `confirm: false`:** do not show the plan and do not ask anything. Saying "save context"
+already was the approval, and the user has often left the session by then, so a question would sit
+unanswered and nothing would get saved. Go straight to Step 5 and treat it as "write all". The plan
+list moves into the Step 7 report instead, so the user still sees what was remembered when they come
+back. The same applies to everything after this point: never stop to ask. When an item is unsure,
+save it (the user can delete a line more easily than recover a lost fact); when a handoff to another
+skill would itself need the user's input, skip that handoff and record the item in STATUS.md as
+pending, as Step 5 describes.
+
 ## Step 5: Write
 
 Order matters, because STATUS.md should describe what actually happened, not what was planned:
@@ -215,7 +225,8 @@ git diff --stat
 ## Step 7: Report
 
 Three or four lines: what was written where, the commit hash, anything left uncommitted and why,
-and anything handed to another skill that is still waiting on the user. Then stop.
+and anything handed to another skill that is still waiting on the user. With `confirm: false`, put
+the full Step 4 list here (including "Nothing to save"), since the user never saw it. Then stop.
 
 Keep the plan and the report short, one line per item, and follow the user's own style rules from
 their global instructions.
