@@ -54,6 +54,7 @@ or all; each works alone. Install all five with `/plugin install arcade@mehmetmu
 | [`outlaw`](plugins/outlaw) | mod | An Atari duel: your bugs shoot back |
 | [`tama`](plugins/tama) | mod | A Tamagotchi your work feeds, or it packs its bags |
 | [`tetris`](plugins/tetris) | mod | Tetris where Claude's tools drop the pieces |
+| [`octo-invader`](plugins/octo-invader) | mod | A pixel octopus invades a full width city: smashes buildings, downs planes. Install on its own, not in `arcade` |
 
 ## Install
 

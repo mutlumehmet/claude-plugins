@@ -9,7 +9,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 SOURCE=shared/arcade/milestones.ts
-GAMES=(dragon-lair jackpot outlaw tama tetris)
+GAMES=(dragon-lair jackpot outlaw tama tetris octo-invader)
 
 status=0
 for game in "${GAMES[@]}"; do
