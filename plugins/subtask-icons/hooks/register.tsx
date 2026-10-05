@@ -188,6 +188,17 @@ export function remember(candidates: readonly string[], answer: string): string[
   return [...candidates.filter((a) => a !== answer), answer].slice(-KEEP_ANSWERS)
 }
 
+// The remembered answers with a list, newest first
+export function recentLists(candidates: readonly string[]): string[] {
+  return [...candidates].reverse().filter((a) => findUnits(a).length > 0)
+}
+
+// One line naming a list: its first item and how many there are
+export function listLabel(answer: string): string {
+  const units = findUnits(answer)
+  return (units[0]?.label ?? '') + ' (' + units.length + ' items)'
+}
+
 // The newest answer with a list: the last one, or an earlier one when the last had none
 async function listAnswer($: Api): Promise<string> {
   if (findUnits(lastAnswer).length > 0) return lastAnswer
@@ -253,7 +264,7 @@ export const register: Register = (on) => {
     await $.command.register({
       name: 'st',
       description: 'Pick an item of the last answer for /subtask, or put item N in the prompt box',
-      argumentHint: '[N]',
+      argumentHint: '[N | pin | pin N | pins | unpin]',
     })
     return next(e)
   })
@@ -298,6 +309,25 @@ export const register: Register = (on) => {
     }
     if (arg === 'pin') {
       return { text: (await pinAnswer($, await listAnswer($))) ? 'Pinned the list.' : 'No answer with a list to pin.' }
+    }
+    // An earlier answer's list: /st pins shows the recent lists, /st pin N pins one of them
+    if (arg === 'pins') {
+      const lists = recentLists(await read($, answers))
+      if (lists.length === 0) return { text: 'No recent answer with a list.' }
+      return {
+        text:
+          lists.map((a, i) => i + 1 + '. ' + listLabel(a)).join('\n') +
+          '\n\n/st pin N pins list N (1 is the newest).',
+      }
+    }
+    const pinN = /^pin\s+(\d+)$/.exec(arg)
+    if (pinN) {
+      const lists = recentLists(await read($, answers))
+      const n = Number(pinN[1])
+      const answer = lists[n - 1]
+      if (!answer) return { text: 'No list ' + n + '. There are ' + lists.length + ' recent lists (/st pins shows them).' }
+      await pinAnswer($, answer)
+      return { text: 'Pinned list ' + n + ': ' + listLabel(answer) }
     }
     const units = findUnits(await listAnswer($))
     if (units.length === 0) return { text: 'The last answer has no items.' }
