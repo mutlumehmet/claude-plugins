@@ -39,6 +39,8 @@ Six small mods for long sessions. Install all six with `/plugin install toolkit@
 
 ### Claude Code Arcade
 
+![Octo Invader in a terminal: a pixel octopus smashes a city above the prompt while Claude edits, commits and merges](docs/images/octo-invader-terminal.gif)
+
 ![The Claude Code Arcade: the dragon, the slot machine, the duel, the Tamagotchi and Tetris, played by a session's work](docs/images/arcade-hero.gif)
 
 Seven games that live above your prompt and are played by your work, in one plugin,
