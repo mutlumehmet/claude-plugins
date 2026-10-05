@@ -23,6 +23,14 @@ Claude without their description, and hands a weak description to skill-creator.
 | `own_marketplaces` | empty | Comma separated marketplace names whose plugin skills count as yours |
 | `source_dirs` | empty | Comma separated folders where your skills' source lives, so `/skill-fix` points at the file to edit and not the installed copy |
 
+## What it reads and does
+
+- **Reads**: skill names in your local Claude Code transcripts (`projects/*.jsonl` under your config directory, or the folders in `config_dirs`) and those files' dates, the skills listed in this session with their size, and the marketplaces in your settings.
+- **Does**: shows use counts in `/skill-stats`; `/skill-fix` fills the prompt box with a skill-creator request and never sends it.
+- **Hooks**: `skill.prompt` counts a skill as used and passes its prompt on unchanged. `command.run` answers its own `/skill-stats` and `/skill-fix` commands and no other.
+- **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
+- **Never**: sends anything anywhere (no network calls, no telemetry).
+
 ## Install
 
 Needs Claude Code 2.1.287 or later (mods). Tested on 2.1.289.

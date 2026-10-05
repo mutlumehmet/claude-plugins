@@ -25,6 +25,14 @@ itself for `unpin`; every other `/subtask` runs as usual. It sends nothing anywh
 
 Nothing is drawn in the VS Code chat panel; use `/st` there.
 
+## What it reads and does
+
+- **Reads**: the text of the last answer, to find its list items, and the prompt box, to add an item to it.
+- **Does**: draws the Subtask button, the item picker and the pinned list above the prompt; fills the prompt box and never sends it.
+- **Hooks**: `turn.start` and `turn.complete` track the latest answer. `command.run` answers `/subtask unpin` and `/st`; every other `/subtask` passes on unchanged. `ui.render` adds its rows and leaves the answer unchanged.
+- **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
+- **Never**: sends anything anywhere (no network calls, no telemetry).
+
 ## Install
 
 Needs Claude Code 2.1.287 or later (mods). Tested on 2.1.289.

@@ -20,6 +20,14 @@ The buttons show only under the last answer, never while Claude is working. From
 |---|---|---|
 | `plain_skill` | empty | A skill the two Plain buttons run instead of the built in prompt, such as `my-plugin:plain-english` |
 
+## What it reads and does
+
+- **Reads**: whether Claude is answering and which answer is the latest, to draw the buttons under it.
+- **Does**: on a press, sends a fixed prompt as your message (Plain English, Shorter, Plain & short), or runs the skill named in `plain_skill`.
+- **Hooks**: `turn.start` and `turn.complete` only track whether a turn is running. `ui.render` on the answer adds the button row under the last answer and leaves the answer itself unchanged.
+- **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
+- **Never**: sends anything anywhere (no network calls, no telemetry).
+
 ## Install
 
 Needs Claude Code 2.1.287 or later (mods). Tested on 2.1.289.

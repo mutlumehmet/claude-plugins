@@ -21,6 +21,14 @@ used as punctuation, and tells Claude which lines to rewrite. Part of
 | `banned` | all three | Comma separated: `em`, `en`, `double` |
 | `tools` | empty | A regular expression of MCP tool names to check too, such as `^mcp__notion__.*(create\|update).*$` |
 
+## What it reads and does
+
+- **Reads**: the text Claude is about to write with Write and Edit, the current file for an Edit (to tell new dashes from ones already there), and the text of MCP tools named in the `tools` setting.
+- **Does**: refuses a write that adds an em dash, an en dash or a double hyphen in prose, and tells Claude which lines to rewrite.
+- **Hooks**: `tool.call` on Write, Edit and the matching MCP tools may refuse that one call; it never changes a call's input. `command.run` answers its own `/dash-guard` command and no other.
+- **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
+- **Never**: sends anything anywhere (no network calls, no telemetry).
+
 ## Install
 
 Needs Claude Code 2.1.287 or later (mods). Tested on 2.1.289.

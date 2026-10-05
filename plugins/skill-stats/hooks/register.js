@@ -91,9 +91,9 @@ async function collect($, all) {
       // A plugin skill is called as plugin:name, a user skill by its bare name
       const key = s.pluginName && !s.name.includes(':') ? s.pluginName + ':' + s.name : s.name
       // Synced claude.ai skills are called with a prefix (anthropic-skills:pdf), so add up every key ending in :name too
-      const h = sum(history, key, s.name)
+      const past = sum(history, key, s.name)
       const l = sum(new Map(Object.entries(live)), key, s.name)
-      return { name: s.name, key, source: s.source, tokens: s.tokens, nameOnly: s.tokens < NAME_ONLY_TOKENS, uses: h.n, liveUses: l.n, last: Math.max(h.last, l.last) }
+      return { name: s.name, key, source: s.source, tokens: s.tokens, nameOnly: s.tokens < NAME_ONLY_TOKENS, uses: past.n, liveUses: l.n, last: Math.max(past.last, l.last) }
     })
     .sort((a, b) => b.uses + b.liveUses - (a.uses + a.liveUses) || a.name.localeCompare(b.name))
   return { list: rows, listing }

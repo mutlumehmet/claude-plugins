@@ -20,6 +20,14 @@ never read it, or another session changed it since. Part of [claude-plugins](../
 |---|---|---|
 | `watched_files` | `STATUS.md,CLAUDE.md,MEMORY.md` | Comma separated file names; `*` matches any run of name characters, such as `*register*.md` |
 
+## What it reads and does
+
+- **Reads**: which shared files (the project's status, instructions, memory and register files) this session read and when they last changed on disk, and the command line of each shell command.
+- **Does**: refuses a shell write to a shared file that another session changed since this one read it, and logs a line saying so.
+- **Hooks**: `tool.call` on Read, Edit and Write only records what was read. `tool.call` on Bash may refuse that one command; it never changes it. `command.run` answers its own `/shared-file-guard` command and no other.
+- **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
+- **Never**: sends anything anywhere (no network calls, no telemetry).
+
 ## Install
 
 Needs Claude Code 2.1.287 or later (mods). Tested on 2.1.289.

@@ -16,6 +16,14 @@ decisions with `/save-context` before automatic compaction summarises them away.
 It installs `project-workflow` from the same marketplace as a dependency, which provides
 `/save-context`.
 
+## What it reads and does
+
+- **Reads**: how full the context window is, whether `/save-context` ran, and when an automatic compaction starts.
+- **Does**: notices, a status line under the prompt, and `/save-context` suggested in the empty prompt box. It never runs save-context itself.
+- **Hooks**: `skill.prompt` (save-context only) notes that it ran and passes the skill's prompt on unchanged. `session.compact` only warns; the compaction still runs. `command.run` answers its own `/context-alarm` command and no other.
+- **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
+- **Never**: sends anything anywhere (no network calls, no telemetry).
+
 ## Install
 
 Needs Claude Code 2.1.287 or later (mods). Tested on 2.1.289.
