@@ -1,6 +1,6 @@
 # claude-plugins: current state
 
-**5 October 2026, evening:** `arcade` 0.5.0: `/arcade <game>` now swaps only this terminal; `/arcade <game> all` pins it for every terminal (the old `/arcade <game>`). 47 tests pass, validates. Committed on `main`, not pushed.
+**5 October 2026, evening:** `arcade` 0.5.0: `/arcade <game>` now swaps only this terminal; `/arcade <game> all` pins it for every terminal (the old `/arcade <game>`). 47 tests pass, validates. Pushed (`5b93c60`), installed 0.5.0 in both accounts; open terminals need `/reload-plugins`.
 
 Last updated: **5 October 2026, afternoon**, on branch `arcade-one-plugin` (worktree
 `~/Projects/claude-plugins-arcade`, not merged, not pushed). Seventh game: Duck Hunt (`/duck`,
