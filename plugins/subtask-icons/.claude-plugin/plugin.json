@@ -1,11 +1,12 @@
 {
   "name": "subtask-icons",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "A single ⑂ Subtask button under Claude's last answer opens a picker of its items; picking one puts /subtask <item> in the prompt box",
   "author": {
     "name": "Mehmet Mutlu"
   },
   "homepage": "https://github.com/mutlumehmet/claude-plugins/tree/main/plugins/subtask-icons",
   "license": "MIT",
+  "types": "./types/index.d.ts",
   "repository": "https://github.com/mutlumehmet/claude-plugins"
 }

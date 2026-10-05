@@ -1,6 +1,6 @@
 import { expect, mock, test } from 'claude-code/testing'
 // @ts-ignore: the test kit loads .tsx paths; tsc wants allowImportingTsExtensions
-import { composeDraft, findUnits, labelOf } from '../hooks/register.tsx'
+import { composeDraft, findUnits, labelOf, pickAnswer, remember } from '../hooks/register.tsx'
 
 // Shapes like real answers: numbered bold sections, numbered lists, bullets, fences
 const NUMBERED_SECTIONS = [
@@ -235,4 +235,49 @@ test('a long list shows the first rows and a +N more line; the Unpin button clea
   await ui.unmount()
   const after = await $.ui.mount(band())
   expect(await after.find({ key: 'pin-unpin' })).toBeUndefined()
+})
+
+
+const OTHER_LIST = ['Two options:', '1. **Rename the band:** shorter label.', '2. **Move the stats:** one row up.'].join('\n')
+
+test('a later short answer without a list does not stop /subtask pinning the earlier list', async ($, on) => {
+  engine(on, [])
+  on('command.run', { command: 'subtask' }, () => ({ text: 'forked' }))
+  await $.turn.start({ turnId: 't1', text: 'q' })
+  await $.turn.complete({ turnId: 't1', answer: NUMBERED_LIST, durationMs: 5, isAborted: false, reason: 'answer' })
+  await $.turn.start({ turnId: 't2', text: 'q' })
+  await $.turn.complete({ turnId: 't2', answer: 'Noted, the records are updated.', durationMs: 5, isAborted: false, reason: 'answer' })
+  await $.command.run({ command: 'subtask', args: 'Dash guard: refuses an em dash.' } as any)
+  const ui = await $.ui.mount(band())
+  expect(await ui.find({ key: 'pin-unpin' })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: '⑂ 1. Dash guard: refuses an em dash.' })).toBeDefined()
+})
+
+test('the pin candidates live in the host state, so a reload keeps them', { plugins: [{
+  name: 'state-reader',
+  register: (on: any) => {
+    on('command.run', { command: 'peek' }, async ($: any) => {
+      const { value } = await $.state.get({ plugin: 'subtask-icons', key: 'answers' })
+      return { text: String((value ?? []).length) }
+    })
+  },
+}] }, async ($, on) => {
+  engine(on, [])
+  await $.turn.start({ turnId: 't1', text: 'q' })
+  await $.turn.complete({ turnId: 't1', answer: NUMBERED_LIST, durationMs: 5, isAborted: false, reason: 'answer' })
+  await $.turn.start({ turnId: 't2', text: 'q' })
+  await $.turn.complete({ turnId: 't2', answer: 'No list here.', durationMs: 5, isAborted: false, reason: 'answer' })
+  const peek = await $.command.run({ command: 'peek', args: '' } as any)
+  expect(peek.text).toBe('1')
+})
+
+test('matching picks the answer the /subtask was taken from, else the newest list', () => {
+  const candidates = remember(remember(remember([], NUMBERED_SECTIONS), NUMBERED_LIST), OTHER_LIST)
+  expect(candidates.length).toBe(3)
+  expect(pickAnswer(candidates, 'Session bridge (most useful)')).toBe(NUMBERED_SECTIONS)
+  expect(pickAnswer(candidates, 'Dash guard: refuses an em dash.')).toBe(NUMBERED_LIST)
+  expect(pickAnswer(candidates, 'something else entirely')).toBe(OTHER_LIST)
+  expect(remember(candidates, 'no list').length).toBe(3)
+  const many = Array.from({ length: 12 }, (_, i) => '- only item ' + i).reduce((c, a) => remember(c, a), [] as string[])
+  expect(many.length).toBe(10)
 })
