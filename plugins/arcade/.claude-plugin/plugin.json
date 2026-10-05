@@ -1,18 +1,63 @@
 {
   "name": "arcade",
-  "version": "0.1.1",
-  "description": "The Claude Code Arcade in one install: dragon-lair, jackpot, outlaw, tama and tetris, five games above the prompt that your work plays.",
+  "version": "0.2.0",
+  "description": "The Claude Code Arcade: six pixel games above the prompt, played by your work (a dragon, a slot machine, an Outlaw duel, a Tamagotchi, Tetris and an invading octopus). Pin one, rotate them, or get a random one in every terminal.",
   "author": {
     "name": "Mehmet Mutlu"
   },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "mode": {
+      "type": "string",
+      "title": "Which game",
+      "description": "How each new terminal picks its game: random (one from the pool), rotate (the next one in the pool), fixed (always the first in the pool), all (every game in the pool at once), off. \"/arcade <game>\" pins one game for you.",
+      "default": "random",
+      "options": [
+        "random",
+        "rotate",
+        "fixed",
+        "all",
+        "off"
+      ]
+    },
+    "pool": {
+      "type": "string",
+      "title": "Game pool",
+      "description": "Comma separated games to pick from: dragon, jackpot, outlaw, tama, tetris, octopus. Empty means all of them.",
+      "default": ""
+    },
+    "big_skills": {
+      "type": "string",
+      "title": "Big skills",
+      "description": "Comma separated skill names whose run is a big moment, such as release-notes. Every other skill is a medium one.",
+      "default": ""
+    },
+    "quiet_skills": {
+      "type": "string",
+      "title": "Quiet skills",
+      "description": "Comma separated skill names that celebrate nothing.",
+      "default": ""
+    },
+    "big_commands": {
+      "type": "string",
+      "title": "Big shell commands",
+      "description": "A regular expression of shell commands whose success is a big moment, on top of merges, releases and production deploys.",
+      "default": ""
+    },
+    "medium_commands": {
+      "type": "string",
+      "title": "Medium shell commands",
+      "description": "A regular expression of shell commands whose success is a medium moment, on top of commits, pushes, pull requests and passing tests.",
+      "default": ""
+    },
+    "praise_words": {
+      "type": "string",
+      "title": "Praise words",
+      "description": "Comma separated words that count as praise in your messages, on top of the built-in list.",
+      "default": ""
+    }
+  },
   "homepage": "https://github.com/mutlumehmet/claude-plugins/tree/main/plugins/arcade",
   "license": "MIT",
-  "dependencies": [
-    "dragon-lair",
-    "jackpot",
-    "outlaw",
-    "tama",
-    "tetris"
-  ],
   "repository": "https://github.com/mutlumehmet/claude-plugins"
 }

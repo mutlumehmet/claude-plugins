@@ -41,20 +41,16 @@ Six small mods for long sessions. Install all six with `/plugin install toolkit@
 
 ![The Claude Code Arcade: the dragon, the slot machine, the duel, the Tamagotchi and Tetris, played by a session's work](docs/images/arcade-hero.gif)
 
-Five games that live above your prompt and are played by your work. Each one spots the moments
-worth celebrating on its own, coding or not: small (a turn done, a file saved), medium (a commit, a
-skill run, a message sent) and big (a merge, a deploy, a finished task list, a PDF made). Install one
-or all; each works alone. Install all five with `/plugin install arcade@mehmetmutlu`
-([`arcade`](plugins/arcade)); with several showing, hide some with `/<game> hide` and bring them back with `/<game> show`.
+Six games that live above your prompt and are played by your work, in one plugin,
+[`arcade`](plugins/arcade): a pixel dragon, a slot machine, an Atari duel, a Tamagotchi, Tetris and an
+octopus that invades a city. The Arcade spots the moments worth celebrating, coding or not: small (a
+turn done, a file saved), medium (a commit, a skill run, a message sent) and big (a merge, a deploy,
+a finished task list, a PDF made). Pin one game with `/arcade tetris`, get a random one in every new
+terminal (the default), rotate through them, or limit the choice with `/arcade pool dragon tetris`.
 
 | Plugin | Kind | What it does |
 |---|---|---|
-| [`dragon-lair`](plugins/dragon-lair) | mod | A pixel dragon that acts out what Claude does and breathes fire when you ship |
-| [`jackpot`](plugins/jackpot) | mod | A slot machine: every finished turn pulls the lever |
-| [`outlaw`](plugins/outlaw) | mod | An Atari duel: your bugs shoot back |
-| [`tama`](plugins/tama) | mod | A Tamagotchi your work feeds, or it packs its bags |
-| [`tetris`](plugins/tetris) | mod | Tetris where Claude's tools drop the pieces |
-| [`octo-invader`](plugins/octo-invader) | mod | A pixel octopus invades a full width city: smashes buildings, downs planes. Install on its own, not in `arcade` |
+| [`arcade`](plugins/arcade) | mod | Six games above the prompt (`/dragon`, `/jackpot`, `/outlaw`, `/tama`, `/tetris`, `/octopus`), one or several per terminal, chosen with `/arcade` |
 
 ## Install
 

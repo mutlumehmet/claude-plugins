@@ -1,6 +1,17 @@
 # claude-plugins: current state
 
-Last updated: **5 October 2026**. The marketplace holds 14 plugins: one skills plugin
+Last updated: **5 October 2026, afternoon**, on branch `arcade-one-plugin` (worktree
+`~/Projects/claude-plugins-arcade`, not merged, not pushed). The six games (dragon-lair, jackpot,
+outlaw, tama, tetris, octo-invader) are one plugin, `arcade` 0.2.0: settings `mode` (random,
+rotate, fixed, all, off) and `pool` choose which games a new terminal shows, `/arcade` shows and
+changes it (`/arcade tetris`, `/arcade pool dragon tetris`, `/arcade next`), `/<game> hide|show`
+is this terminal only. One moment detector (`src/milestones.ts`) feeds every game, so
+`shared/arcade/` and `scripts/sync-arcade-milestones.sh` are gone; CI checks
+`plugins/arcade/scripts/build.sh --check` instead. 37 tests pass, every plugin validates, `tsc`
+clean. The six single game plugins are removed from the marketplace; their Directory submissions
+are to be withdrawn and `arcade` resubmitted. Scores of the single games do not carry over.
+
+Before that, 5 October 2026: the marketplace held 14 plugins: one skills plugin
 (`project-workflow`), the Claude Code Toolkit (six mods), the Claude Code Arcade (five game mods) and
 two meta plugins, `toolkit` and `arcade`, that install each collection in one go through
 `dependencies` (verified in an isolated install on 5 October 2026: installing a meta plugin installs
@@ -17,8 +28,8 @@ for 6 October 2026.
 | Marketplace | `.claude-plugin/marketplace.json`, passes `claude plugin validate` |
 | Skills | `project-workflow`: `create-project`, `save-context` |
 | Claude Code Toolkit | `subtask-icons`, `context-alarm`, `answer-buttons`, `skill-stats`, `dash-guard`, `shared-file-guard`; meta plugin `toolkit` |
-| Claude Code Arcade | `dragon-lair`, `jackpot`, `outlaw`, `tama`, `tetris`, each with its own copy of `shared/arcade/milestones.ts` (`scripts/sync-arcade-milestones.sh`, checked in CI); meta plugin `arcade` |
-| CI | `.github/workflows/plugins.yml`: milestones copies match, validate the marketplace and every plugin, test every mod |
+| Claude Code Arcade | `arcade` 0.2.0: six games in one plugin (`src/` built into `hooks/arcade.js` by `scripts/build.sh`) |
+| CI | `.github/workflows/plugins.yml`: the Arcade build is current, validate the marketplace and every plugin, test every mod |
 | Personal-content check | `scripts/check-personal.sh`, installed as a pre-commit hook |
 
 ## Open before launch (6 October 2026)
