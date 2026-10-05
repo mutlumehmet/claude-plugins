@@ -5,11 +5,12 @@
 // on a new line, so several items go to one subtask.
 // From the keyboard: /st opens a picker pane with every item in full (a press
 // or the item's number fills it), /st 3 fills the third directly.
-// When /subtask runs, the items of the answer it was taken from are pinned in the
-// band above the prompt, so the list stays in view however the conversation scrolls;
-// items already sent to a subtask get a ⑂. /subtask unpin (or /st unpin, or the Unpin
-// button) clears it. The pin candidates (the last answers that had a list) and the pin
-// live in the host's state, so a later short answer or a hot reload does not lose them.
+// A "Pin list" button beside it pins that answer's items in the band above the prompt,
+// so the list stays in view however the conversation scrolls, until you unpin it or
+// pin another answer; nothing pins by itself. /st pin pins the newest list from the
+// keyboard. Items later sent with /subtask get a ⑂. /subtask unpin, /st unpin or the
+// Unpin button clears it. The pin and the recent lists live in the host's state, so a
+// later answer or a hot reload does not move or lose it.
 
 import { atom, read, update } from 'claude-code'
 import type { Hook, Register } from 'claude-code'
@@ -194,20 +195,26 @@ async function listAnswer($: Api): Promise<string> {
   return all[all.length - 1] ?? ''
 }
 
-// Pins the items of the answer this /subtask came from (or keeps the pin, when it is
-// the same answer) and marks the items it names
-async function pinFor($: Api, args: string): Promise<boolean> {
-  const answer = pickAnswer(await read($, answers), args)
-  if (answer === null) return false
-  const units = findUnits(answer)
-  if (units.length === 0) return false
-  await update($, pinnedAtom, (old) => {
-    const base = old && old.answer === answer ? old : { answer, sent: [] as number[] }
-    const sent = new Set(base.sent)
-    for (const i of sentItems(units, args)) sent.add(i)
-    return { answer, sent: [...sent].sort((a, b) => a - b) }
-  })
+// Pins this answer's items; pinning the answer already pinned keeps its marks
+async function pinAnswer($: Api, answer: string): Promise<boolean> {
+  if (findUnits(answer).length === 0) return false
+  await update($, pinnedAtom, (old) => (old && old.answer === answer ? old : { answer, sent: [] }))
+  $.ui.invalidate('ui.render')
   return true
+}
+
+// Marks the items a /subtask names on the pinned list; the pin itself never moves here
+async function markSent($: Api, args: string) {
+  const pinned = await read($, pinnedAtom)
+  if (!pinned) return
+  const hits = sentItems(findUnits(pinned.answer), args)
+  if (hits.length === 0) return
+  await update($, pinnedAtom, (old) => {
+    if (!old) return old
+    const sent = new Set([...old.sent, ...hits])
+    return { ...old, sent: [...sent].sort((a, b) => a - b) }
+  })
+  $.ui.invalidate('ui.render')
 }
 
 async function unpin($: Api) {
@@ -271,21 +278,26 @@ export const register: Register = (on) => {
     return next(e)
   })
 
-  // /subtask belongs to Claude Code; the mod watches it, and answers only "unpin"
+  // /subtask belongs to Claude Code; the mod watches it to mark pinned items sent,
+  // and answers only "unpin"
   on('command.run', { command: 'subtask' }, async ($, e, next) => {
     const args = String(e.args ?? '').trim()
     if (args === 'unpin') {
       await unpin($)
       return { text: 'Unpinned the list.' }
     }
-    if (await pinFor($, args)) $.ui.invalidate('ui.render')
+    await markSent($, args)
     return next(e)
   })
 
   on('command.run', { command: 'st' }, async ($, e) => {
-    if (String(e.args ?? '').trim() === 'unpin') {
+    const arg = String(e.args ?? '').trim()
+    if (arg === 'unpin') {
       await unpin($)
       return { text: 'Unpinned the list.' }
+    }
+    if (arg === 'pin') {
+      return { text: (await pinAnswer($, await listAnswer($))) ? 'Pinned the list.' : 'No answer with a list to pin.' }
     }
     const units = findUnits(await listAnswer($))
     if (units.length === 0) return { text: 'The last answer has no items.' }
@@ -361,16 +373,25 @@ export const register: Register = (on) => {
     const units = findUnits(lastAnswer)
     if (units.length === 0) return own
 
-    // One quiet button; the items are picked in the pane it opens
-    const { Box, Button } = $.ui.resolve(e)
+    // Two quiet buttons: Subtask opens the picker, Pin keeps this list in the band
+    const { Box, Button, Text } = $.ui.resolve(e)
+    const answer = lastAnswer
+    const pinned = await read($, pinnedAtom)
+    const isPinned = pinned?.answer === answer
     return (
       <Box flexDirection="column">
         {own}
-        <Button key="st-open" plain dimColor onPress={async () => {
-          if (!(await openPicker($, units))) $.ui.toast('⑂ Use /st to list the items')
-        }}>
-          {'⑂ Subtask (' + units.length + ')'}
-        </Button>
+        <Box flexDirection="row">
+          <Button key="st-open" plain dimColor onPress={async () => {
+            if (!(await openPicker($, units))) $.ui.toast('⑂ Use /st to list the items')
+          }}>
+            {'⑂ Subtask (' + units.length + ')'}
+          </Button>
+          <Text dimColor>{'   '}</Text>
+          <Button key="st-pin" plain dimColor onPress={() => (isPinned ? unpin($) : pinAnswer($, answer))}>
+            {isPinned ? 'Unpin list' : 'Pin list'}
+          </Button>
+        </Box>
       </Box>
     )
   })

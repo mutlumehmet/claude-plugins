@@ -191,7 +191,7 @@ function band() {
   } as any
 }
 
-test('/subtask pins the answer list in the band, marks the item sent, and /subtask unpin clears it', async ($, on) => {
+test('/subtask alone pins nothing; the Pin list button pins, /subtask marks the item, /subtask unpin clears it', async ($, on) => {
   const forked: string[] = []
   engine(on, [])
   on('command.run', { command: 'subtask' }, ($: unknown, e: any) => {
@@ -201,12 +201,18 @@ test('/subtask pins the answer list in the band, marks the item sent, and /subta
   await $.turn.start({ turnId: 't1', text: 'q' })
   await $.turn.complete({ turnId: 't1', answer: NUMBERED_LIST, durationMs: 5, isAborted: false, reason: 'answer' })
 
+  await $.command.run({ command: 'subtask', args: 'Dash guard: refuses an em dash.' } as any)
   const empty = await $.ui.mount(band())
   expect(await empty.find({ key: 'pin-unpin' })).toBeUndefined()
   await empty.unmount()
 
+  const msg = await $.ui.mount(message(NUMBERED_LIST))
+  expect(await msg.find({ key: 'st-pin' })).toBeDefined()
+  await msg.press({ key: 'st-pin' })
+  await msg.unmount()
+
   await $.command.run({ command: 'subtask', args: 'Ask first buttons: Haiku scans the answer.' } as any)
-  expect(forked).toEqual(['Ask first buttons: Haiku scans the answer.'])
+  expect(forked.length).toBe(2)
   const ui = await $.ui.mount(band())
   expect(await ui.find({ key: 'pin-unpin' })).toBeDefined()
   expect(await ui.find({ type: 'Text', text: '  1. Dash guard: refuses an em dash.' })).toBeDefined()
@@ -215,18 +221,18 @@ test('/subtask pins the answer list in the band, marks the item sent, and /subta
 
   const r = await $.command.run({ command: 'subtask', args: 'unpin' } as any)
   expect(r.text).toBe('Unpinned the list.')
-  expect(forked.length).toBe(1)
+  expect(forked.length).toBe(2)
   const after = await $.ui.mount(band())
   expect(await after.find({ key: 'pin-unpin' })).toBeUndefined()
 })
 
 test('a long list shows the first rows and a +N more line; the Unpin button clears it', async ($, on) => {
   engine(on, [])
-  on('command.run', { command: 'subtask' }, () => ({ text: 'forked' }))
   const many = Array.from({ length: 8 }, (_, i) => '- item ' + (i + 1)).join('\n')
   await $.turn.start({ turnId: 't1', text: 'q' })
   await $.turn.complete({ turnId: 't1', answer: many, durationMs: 5, isAborted: false, reason: 'answer' })
-  await $.command.run({ command: 'subtask', args: 'item 1' } as any)
+  const pinned = await $.command.run({ command: 'st', args: 'pin' } as any)
+  expect(pinned.text).toBe('Pinned the list.')
   const ui = await $.ui.mount(band())
   expect(await ui.find({ type: 'Text', text: '  5. item 5' })).toBeDefined()
   expect(await ui.find({ type: 'Text', text: '  6. item 6' })).toBeUndefined()
@@ -237,20 +243,22 @@ test('a long list shows the first rows and a +N more line; the Unpin button clea
   expect(await after.find({ key: 'pin-unpin' })).toBeUndefined()
 })
 
-
 const OTHER_LIST = ['Two options:', '1. **Rename the band:** shorter label.', '2. **Move the stats:** one row up.'].join('\n')
 
-test('a later short answer without a list does not stop /subtask pinning the earlier list', async ($, on) => {
+test('a pinned list stays put through later answers, with or without a list', async ($, on) => {
   engine(on, [])
   on('command.run', { command: 'subtask' }, () => ({ text: 'forked' }))
   await $.turn.start({ turnId: 't1', text: 'q' })
   await $.turn.complete({ turnId: 't1', answer: NUMBERED_LIST, durationMs: 5, isAborted: false, reason: 'answer' })
+  await $.command.run({ command: 'st', args: 'pin' } as any)
   await $.turn.start({ turnId: 't2', text: 'q' })
   await $.turn.complete({ turnId: 't2', answer: 'Noted, the records are updated.', durationMs: 5, isAborted: false, reason: 'answer' })
-  await $.command.run({ command: 'subtask', args: 'Dash guard: refuses an em dash.' } as any)
+  await $.turn.start({ turnId: 't3', text: 'q' })
+  await $.turn.complete({ turnId: 't3', answer: OTHER_LIST, durationMs: 5, isAborted: false, reason: 'answer' })
+  await $.command.run({ command: 'subtask', args: 'Rename the band: shorter label.' } as any)
   const ui = await $.ui.mount(band())
-  expect(await ui.find({ key: 'pin-unpin' })).toBeDefined()
-  expect(await ui.find({ type: 'Text', text: '⑂ 1. Dash guard: refuses an em dash.' })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: '  1. Dash guard: refuses an em dash.' })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: '  1. Rename the band: shorter label.' })).toBeUndefined()
 })
 
 test('the pin candidates live in the host state, so a reload keeps them', { plugins: [{

@@ -14,15 +14,14 @@ nothing, so you can add your own words and press Enter. Part of [claude-plugins]
 - **Several items into one subtask**: if the prompt box already holds a `/subtask`, the next pick
   is added on a new line.
 - **From the keyboard**: `/st` opens the same picker; `/st 3` puts item 3 in the prompt box directly.
-- **Pinned list**: when `/subtask` runs, the items of the answer it was taken from are pinned in the
-  band above the prompt, so the list stays in view however the conversation scrolls. The mod keeps
-  the last 10 answers that had a list and picks the one whose items the `/subtask` text names, else
-  the newest one with a list, so a short answer in between does not lose the list. Items already
-  sent to a subtask get a `⑂`; the first 5 show, then a `+N more` line. `/subtask unpin`,
-  `/st unpin` or the `Unpin` button clears it.
+- **Pinned list**: the `Pin list` button beside Subtask (or `/st pin` for the newest list) pins that
+  answer's items in the band above the prompt, so the list stays in view however the conversation
+  scrolls. Nothing pins by itself: the pin stays on that list through later answers until you unpin
+  it or pin another one. Items you then send with `/subtask` get a `⑂`; the first 5 show, then a
+  `+N more` line. `Unpin list`, `/subtask unpin`, `/st unpin` or the `Unpin` button clears it.
 
 What it reads and does: Claude's last answer (to find the items), the prompt box (to add a pick), and
-the text of each `/subtask` you run (to pin and mark items). It watches `/subtask` and only answers it
+the text of each `/subtask` you run (to mark pinned items as sent). It watches `/subtask` and only answers it
 itself for `unpin`; every other `/subtask` runs as usual. It sends nothing anywhere.
 
 Nothing is drawn in the VS Code chat panel; use `/st` there.
@@ -31,8 +30,8 @@ Nothing is drawn in the VS Code chat panel; use `/st` there.
 
 - **Reads**: the text of the last answers, to find their list items, and the prompt box, to add an item to it.
 - **Keeps**: the last 10 answers that had a list, and the pin, in Claude Code's session state (in memory, this session only), so a hot reload keeps them.
-- **Does**: draws the Subtask button, the item picker and the pinned list above the prompt; fills the prompt box and never sends it.
-- **Hooks**: `turn.start` and `turn.complete` track the latest answer. `command.run` answers `/subtask unpin` and `/st`; every other `/subtask` passes on unchanged. `ui.render` adds its rows and leaves the answer unchanged.
+- **Does**: draws the Subtask and Pin list buttons, the item picker and the pinned list above the prompt; fills the prompt box and never sends it.
+- **Hooks**: `turn.start` and `turn.complete` track the latest answer. `command.run` answers `/subtask unpin` and `/st` (including `/st pin`); every other `/subtask` passes on unchanged. `ui.render` adds its rows and leaves the answer unchanged.
 - **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
 - **Never**: sends anything anywhere (no network calls, no telemetry).
 
@@ -54,8 +53,7 @@ A mod runs inside Claude Code with your permissions. Read the code before you in
 - After editing the mod while a session is open, restart the session: a hot reload has dropped the
   `/st` command once.
 - An item counts as sent when the `/subtask` text holds its whole first line; an edited pick is not
-  marked, and a `/subtask` whose text names no item pins the newest list. A new session starts with
-  no pin.
+  marked. A new session starts with no pin.
 
 ## About
 
