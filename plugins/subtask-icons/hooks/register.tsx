@@ -343,25 +343,36 @@ export const register: Register = (on) => {
     const units = findUnits(pinned.answer)
     if (units.length === 0) return below
     const { Box, Button, Text } = $.ui.resolve(e)
-    const width = Math.max(20, (e.props.bodyColumns ?? 80) - 12)
+    // A column at the right end of the band, like the Arcade games, so the rest of the band keeps its place.
+    const columns = e.props.bodyColumns ?? 80
+    const width = Math.max(24, Math.min(44, Math.floor(columns / 3)))
     const shown = units.slice(0, PIN_ROWS)
     const more = units.length - shown.length
     const sent = new Set(pinned.sent)
-    return (
-      <Box flexDirection="column">
+    const list = (
+      <Box flexDirection="column" flexShrink={0} width={width} marginLeft={2}>
         <Box flexDirection="row">
-          <Text dimColor>{'⑂ Pinned list  '}</Text>
+          <Text dimColor>{'⑂ Pinned  '}</Text>
           <Button key="pin-unpin" plain dimColor onPress={() => unpin($)}>
             Unpin
           </Button>
         </Box>
         {shown.map((u, i) => (
-          <Text key={'pin-' + (i + 1)} dimColor>
+          // Each item is a button: a press puts /subtask <item> in the prompt box, as the picker does.
+          <Button key={'pin-' + (i + 1)} plain dimColor onPress={() => fillItem($, u.text)}>
             {fit((sent.has(i) ? '⑂ ' : '  ') + (i + 1) + '. ' + u.title, width)}
-          </Text>
+          </Button>
         ))}
-        {more > 0 && <Text key="pin-more" dimColor>{'   +' + more + ' more (/st lists them all)'}</Text>}
-        {below ?? null}
+        {more > 0 && <Text key="pin-more" dimColor>{fit('   +' + more + ' more (/st lists them all)', width)}</Text>}
+      </Box>
+    )
+    if (!below) return <Box flexDirection="row" justifyContent="flex-end">{list}</Box>
+    return (
+      <Box flexDirection="row" alignItems="flex-end">
+        <Box flexGrow={1} flexDirection="column">
+          {below}
+        </Box>
+        {list}
       </Box>
     )
   })

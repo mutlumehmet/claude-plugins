@@ -19,6 +19,8 @@ nothing, so you can add your own words and press Enter. Part of [claude-plugins]
   scrolls. Nothing pins by itself: the pin stays on that list through later answers until you unpin
   it or pin another one. Items you then send with `/subtask` get a `⑂`; the first 5 show, then a
   `+N more` line. `Unpin list`, `/subtask unpin`, `/st unpin` or the `Unpin` button clears it.
+  The list sits at the right end of the band, beside the other band mods (an Arcade game, the
+  account line), and every item is a button: a press puts `/subtask <item>` in the prompt box.
 
 What it reads and does: Claude's last answer (to find the items), the prompt box (to add a pick), and
 the text of each `/subtask` you run (to mark pinned items as sent). It watches `/subtask` and only answers it
