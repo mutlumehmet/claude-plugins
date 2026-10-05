@@ -25,7 +25,7 @@ Each plugin has its own page with what it does, its settings and its known gaps.
 
 ### Claude Code Toolkit
 
-Seven small mods for long sessions. Install all seven with `/plugin install toolkit@mehmetmutlu`
+Small mods for long sessions. Install them all with `/plugin install toolkit@mehmetmutlu`
 ([`toolkit`](plugins/toolkit)), or any one by name.
 
 | Plugin | Kind | What it does |

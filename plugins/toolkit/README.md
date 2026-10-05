@@ -1,7 +1,7 @@
 # toolkit
 
-The Claude Code Toolkit in one install. This plugin holds no code of its own: it lists seven small
-mods as dependencies, so installing it installs all seven. Part of [claude-plugins](../../README.md).
+The Claude Code Toolkit in one install. This plugin holds no code of its own: it lists small mods
+for long sessions as dependencies, so installing it installs them all. Part of [claude-plugins](../../README.md).
 
 | Mod | What it does |
 |---|---|

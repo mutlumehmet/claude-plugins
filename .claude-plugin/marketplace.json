@@ -53,7 +53,7 @@
     {
       "name": "toolkit",
       "source": "./plugins/toolkit",
-      "description": "The Claude Code Toolkit in one install: subtask-icons, context-alarm, answer-buttons, skill-stats, dash-guard, shared-file-guard and fork-lineage."
+      "description": "The Claude Code Toolkit in one install: small mods for long sessions, each also installable on its own."
     }
   ]
 }
