@@ -3,7 +3,7 @@ import type { EngineInterface, Hook, MatchedHook } from 'claude-code'
 
 import type { Tally } from '../../types'
 import type { Milestone } from '../milestones'
-import { isShown, setShown } from '../shown'
+import { isShown } from '../shown'
 import type { Game } from '../shown'
 
 // A classic Tetris in a small handheld screen at the right end of the band above the
@@ -311,7 +311,7 @@ export const start: Hook<'session.start'> = async ($, e, next) => {
   if (saved) await update($, tally, () => saved)
   await $.command.register({
     name: 'tetris',
-    description: 'The Tetris above the prompt: the score. "/tetris drop" adds pieces, "/tetris clear" clears a row, "/tetris hide|show" to put it away or bring it back.',
+    description: 'The Tetris above the prompt: the score. "/tetris drop" adds pieces, "/tetris clear" clears a row.',
   })
   $.clock.every(FPS_MS, () => {
     step($)
@@ -354,15 +354,6 @@ export const command: MatchedHook<'command.run', { command: 'tetris' }> = async 
   if (arg === 'clear') {
     sim.bombs.push(1)
     return { text: 'One row cleared from the bottom.' }
-  }
-  // Two explicit commands, not a toggle, so a repeat never flips it back by surprise.
-  if (arg === 'hide' || arg === 'show') {
-    const wantHidden = arg === 'hide'
-    if (!(await isShown($, ID)) === wantHidden) {
-      return { text: wantHidden ? 'The handheld is already hidden. "/tetris show" brings it back.' : 'The handheld is already showing.' }
-    }
-    await setShown($, ID, !wantHidden)
-    return { text: wantHidden ? 'The handheld goes in your pocket.' : 'The handheld is back.' }
   }
   const t = await read($, tally)
 

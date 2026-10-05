@@ -40,14 +40,14 @@ test('the marsh fills the band and keeps what was there below it', ONLY, async (
   await ui.unmount()
 })
 
-test('/duck hide takes it out of the band, show brings it back', ONLY, async ($, on) => {
+test('/arcade hide takes the duck out of the band, /arcade next brings it back', ONLY, async ($, on) => {
   world(on)
   await begin($, on)
-  expect((await $.command.run({ command: 'duck', args: 'hide' } as never)).text).toMatch(/goes home/)
+  expect((await $.command.run({ command: 'arcade', args: 'hide' } as never)).text).toMatch(/No game in this terminal/)
   let ui = await $.ui.mount(BAND)
   expect(await ui.find({ type: 'Raster' })).toBeUndefined()
   await ui.unmount()
-  expect((await $.command.run({ command: 'duck', args: 'show' } as never)).text).toMatch(/back/)
+  expect((await $.command.run({ command: 'arcade', args: 'next' } as never)).text).toMatch(/in this terminal/)
   ui = await $.ui.mount(BAND)
   expect(await ui.find({ type: 'Raster' })).toBeDefined()
   await ui.unmount()

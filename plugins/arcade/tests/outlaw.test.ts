@@ -34,10 +34,10 @@ test('the duel sits in the band with the score under it', ONLY, async ($, on) =>
   await ui.unmount()
 })
 
-test('/outlaw hide takes it out of the band', ONLY, async ($, on) => {
+test('/arcade hide takes the outlaw out of the band', ONLY, async ($, on) => {
   world(on)
   await begin($, on)
-  await $.command.run({ command: 'outlaw', args: 'hide' } as never)
+  await $.command.run({ command: 'arcade', args: 'hide' } as never)
   const ui = await $.ui.mount(BAND)
   expect(await ui.find({ type: 'Raster' })).toBeUndefined()
   await ui.unmount()

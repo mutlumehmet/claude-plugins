@@ -1,9 +1,9 @@
 // Built by scripts/build.sh from src/ with esbuild@0.25.10. Do not edit: edit src/ and rebuild.
 // src/arcade.tsx
-import { atom as atom9, read as read9, update as update9 } from "claude-code";
+import { atom as atom9, read as read9, update as update8 } from "claude-code";
 
 // src/games/dragon-lair.tsx
-import { atom as atom2, read as read2, update as update2 } from "claude-code";
+import { atom as atom2, read as read2, update } from "claude-code";
 
 // src/games/dragon-sprite.ts
 const DRAGON_WIDTH = 26;
@@ -94,13 +94,10 @@ function drawBaby(ink, columns, x, y, frame8) {
 }
 
 // src/shown.ts
-import { atom, read, update } from "claude-code";
+import { atom, read } from "claude-code";
 const shown = atom({ plugin: "arcade", key: "shown" }, []);
 async function isShown($, id) {
   return (await read($, shown)).includes(id);
-}
-async function setShown($, id, isOn) {
-  await update($, shown, (ids) => isOn ? [...ids.filter((x) => x !== id), id] : ids.filter((x) => x !== id));
 }
 
 // src/games/dragon-lair.tsx
@@ -426,9 +423,9 @@ async function celebrate($, label, gold, show, isQuiet = false) {
   sim.show = { kind: show, until: sim.t + SHOW_FRAMES[show] };
   sim.lastActivity = sim.t;
   const before = levelOf((await read2($, hoard)).gold);
-  const next = await update2($, hoard, (old) => ({ ...old, gold: old.gold + gold, feats: old.feats + 1 }));
+  const next = await update($, hoard, (old) => ({ ...old, gold: old.gold + gold, feats: old.feats + 1 }));
   const after = levelOf(next.gold);
-  await update2($, feat, () => `${label}: +${gold} gold`);
+  await update($, feat, () => `${label}: +${gold} gold`);
   await $.store.set("dragon.hoard", next);
   if (after > before) {
     sim.level = after;
@@ -450,10 +447,10 @@ async function celebrateMoments($, found) {
 }
 const start = async ($, e, next) => {
   const saved = await $.store.get("dragon.hoard");
-  if (saved) await update2($, hoard, () => saved);
+  if (saved) await update($, hoard, () => saved);
   await $.command.register({
     name: "dragon",
-    description: 'The dragon above the prompt: its hoard. "/dragon puff|fire|blaze|roar" to show off, "/dragon hide|show" to put it away or bring it back.'
+    description: 'The dragon above the prompt: its hoard. "/dragon puff|fire|blaze|roar" to show off.'
   });
   $.clock.every(FPS_MS, () => {
     sim.t += 1;
@@ -461,7 +458,7 @@ const start = async ($, e, next) => {
     const m = moodOf(a);
     if (m !== sim.mood) {
       sim.mood = m;
-      void update2($, mood, () => m);
+      void update($, mood, () => m);
     }
     const requestId = sim.requestId;
     if (requestId === null) return;
@@ -496,7 +493,7 @@ const start = async ($, e, next) => {
           if (a?.status === "completed" || a?.status === "idle" || isGone) {
             b.state = "home";
             b.since = sim.t;
-            const fed = await update2($, hoard, (old) => ({ ...old, gold: old.gold + 2 }));
+            const fed = await update($, hoard, (old) => ({ ...old, gold: old.gold + 2 }));
             await $.store.set("dragon.hoard", fed);
           } else if (a?.status === "failed" || a?.status === "killed") {
             b.state = "fall";
@@ -518,14 +515,6 @@ const command = async ($, e) => {
   if (show) {
     await celebrate($, "Practice", 1, show);
     return { text: "The dragon breathes fire." };
-  }
-  if (arg === "hide" || arg === "show") {
-    const wantHidden = arg === "hide";
-    if (!await isShown($, ID) === wantHidden) {
-      return { text: wantHidden ? 'The dragon is already hidden. "/dragon show" brings it back.' : "The dragon is already showing." };
-    }
-    await setShown($, ID, !wantHidden);
-    return { text: wantHidden ? "The dragon goes to sleep out of sight." : "The dragon is back." };
   }
   const last2 = await read2($, feat);
   return { text: `${statsLine(await read2($, hoard))}${last2 ? `
@@ -558,7 +547,7 @@ const tool = async ($, e, next) => {
     sim.lastActivity = sim.t;
   });
   if (ran.deny !== void 0) return ran;
-  const snack = await update2($, hoard, (old) => ({ ...old, meals: old.meals + 1 }));
+  const snack = await update($, hoard, (old) => ({ ...old, meals: old.meals + 1 }));
   if (snack.meals % 10 === 0) void $.store.set("dragon.hoard", snack);
   if (ran.isError === true) {
     sim.sadUntil = sim.t + 30;
@@ -581,7 +570,7 @@ const render = async ($, e, next) => {
 const game = { id: ID, title: "Dragon Lair" };
 
 // src/games/duck-hunt.tsx
-import { read as read3, update as update3, atom as atom3 } from "claude-code";
+import { read as read3, update as update2, atom as atom3 } from "claude-code";
 const ID2 = "duck";
 const RASTER2 = "marsh";
 const ROWS2 = 8;
@@ -907,7 +896,7 @@ function base642(bytes) {
   return out;
 }
 async function save($, change2) {
-  const next = await update3($, score, change2);
+  const next = await update2($, score, change2);
   sim2.stats = statsLine2(next);
   await $.store.set("duck.score", next);
   return next;
@@ -918,7 +907,7 @@ async function celebrate2($, label, show, isQuiet = false) {
   if (running === null || RANK[show] >= RANK[running]) sim2.show = { kind: show, until: sim2.t + SHOW_FRAMES2[show] };
   sim2.lastActivity = sim2.t;
   const what = { shot: "a shot", hunt: "a duck down", double: "a double", perfect: "a perfect round" };
-  await update3($, feat2, () => `${label}: ${what[show]}`);
+  await update2($, feat2, () => `${label}: ${what[show]}`);
   if (!isQuiet) {
     const say2 = {
       shot: "Bang",
@@ -941,12 +930,12 @@ async function celebrateMoments2($, found) {
 }
 const start2 = async ($, e, next) => {
   const saved = await $.store.get("duck.score");
-  if (saved) await update3($, score, () => saved);
+  if (saved) await update2($, score, () => saved);
   sim2.stats = statsLine2(saved ?? await read3($, score));
   sim2.round = roundOf((saved ?? await read3($, score)).hits);
   await $.command.register({
     name: "duck",
-    description: 'The duck hunt above the prompt: the score. "/duck shot|hunt|double|perfect|flyaway" to show off, "/duck hide|show" to put it away or bring it back.'
+    description: 'The duck hunt above the prompt: the score. "/duck shot|hunt|double|perfect|flyaway" to show off.'
   });
   $.clock.every(FPS_MS2, () => {
     const requestId = sim2.requestId;
@@ -986,14 +975,6 @@ const command2 = async ($, e) => {
     flyAway(true);
     return { text: "The duck gets away, and the dog laughs." };
   }
-  if (arg === "hide" || arg === "show") {
-    const wantHidden = arg === "hide";
-    if (!await isShown($, ID2) === wantHidden) {
-      return { text: wantHidden ? 'The hunt is already hidden. "/duck show" brings it back.' : "The hunt is already showing." };
-    }
-    await setShown($, ID2, !wantHidden);
-    return { text: wantHidden ? "The dog goes home." : "The hunt is back." };
-  }
   const last2 = await read3($, feat2);
   return {
     text: `${statsLine2(await read3($, score))}${last2 ? `
@@ -1020,7 +1001,7 @@ const tool2 = async ($, e, next) => {
     sim2.lastActivity = sim2.t;
   });
   if (ran.deny !== void 0) return ran;
-  const counted = await update3($, score, (old) => ({ ...old, tools: old.tools + 1 }));
+  const counted = await update2($, score, (old) => ({ ...old, tools: old.tools + 1 }));
   sim2.stats = statsLine2(counted);
   if (counted.tools % 10 === 0) void $.store.set("duck.score", counted);
   if (ran.isError === true) flyAway(false);
@@ -1041,7 +1022,7 @@ const render2 = async ($, e, next) => {
 const game2 = { id: ID2, title: "Duck Hunt" };
 
 // src/games/jackpot.tsx
-import { atom as atom4, read as read4, update as update4 } from "claude-code";
+import { atom as atom4, read as read4, update as update3 } from "claude-code";
 
 // src/games/jackpot-symbols.ts
 const PALETTE = {
@@ -1183,7 +1164,7 @@ async function finishSpin($) {
     }
   }
   if (spin.isPractice) return;
-  const next = await update4($, bank, (old) => ({
+  const next = await update3($, bank, (old) => ({
     ...old,
     chips: old.chips + payout,
     spins: old.spins + 1,
@@ -1192,7 +1173,7 @@ async function finishSpin($) {
   }));
   await $.store.set("jackpot.bank", next);
   const names = sim3.result.join(" ");
-  await update4($, last, () => payout > 0 ? `${names}: +${payout}` : names);
+  await update3($, last, () => payout > 0 ? `${names}: +${payout}` : names);
   if (win === "jackpot") void notify3($, `\u{1F3B0} JACKPOT! 7 7 7 pays ${payout} chips`);
   else if (win === "triple") void notify3($, `\u{1F3B0} Three ${sim3.result[0]}s! +${payout} chips`);
 }
@@ -1203,7 +1184,7 @@ function tick($) {
     if (isDone) void finishSpin($);
   } else if (sim3.t >= sim3.winUntil && sim3.queue.length > 0) {
     const spin = sim3.queue.shift();
-    if (spin.isGolden && !spin.isPractice) void update4($, golden, (n) => Math.max(0, n - 1));
+    if (spin.isGolden && !spin.isPractice) void update3($, golden, (n) => Math.max(0, n - 1));
     startSpin(spin);
   }
   for (const c of sim3.coins) {
@@ -1356,7 +1337,7 @@ async function onMilestone3($, tier, _kind, label) {
   const spins = tier === "big" ? 3 : tier === "medium" ? 1 : 0;
   if (spins === 0) return;
   for (let i = 0; i < spins; i++) pull($, { isGolden: true, isPractice: false });
-  await update4($, golden, (n) => n + spins);
+  await update3($, golden, (n) => n + spins);
   void notify3($, `\u2726 ${label}: ${spins} golden spin${spins > 1 ? "s" : ""} queued`);
 }
 async function celebrateMoments3($, found) {
@@ -1364,10 +1345,10 @@ async function celebrateMoments3($, found) {
 }
 const start3 = async ($, e, next) => {
   const saved = await $.store.get("jackpot.bank");
-  if (saved) await update4($, bank, () => ({ ...saved, streak: saved.streak ?? 0 }));
+  if (saved) await update3($, bank, () => ({ ...saved, streak: saved.streak ?? 0 }));
   await $.command.register({
     name: "jackpot",
-    description: 'The slot machine above the prompt: your chips. "/jackpot spin|golden|demo" to try it, "/jackpot hide|show" to put it away or bring it back.'
+    description: 'The slot machine above the prompt: your chips. "/jackpot spin|golden|demo" to try it.'
   });
   startLoop($);
   return next(e);
@@ -1389,14 +1370,6 @@ const command3 = async ($, e) => {
   if (arg === "demo") {
     pull($, { isGolden: true, isPractice: true, forced: ["seven", "seven", "seven"] });
     return { text: "A practice jackpot: it pays nothing." };
-  }
-  if (arg === "hide" || arg === "show") {
-    const wantHidden = arg === "hide";
-    if (!await isShown($, ID3) === wantHidden) {
-      return { text: wantHidden ? 'The machine is already hidden. "/jackpot show" brings it back.' : "The machine is already showing." };
-    }
-    await setShown($, ID3, !wantHidden);
-    return { text: wantHidden ? "The machine is covered." : "The machine is back." };
   }
   const b = await read4($, bank);
   const g = await read4($, golden);
@@ -1421,7 +1394,7 @@ const turn3 = async ($, e, next) => {
   if (e.agentId !== void 0 || e.isAborted) return ran;
   const hadError = sim3.hadError;
   sim3.hadError = false;
-  const b = await update4($, bank, (old) => ({ ...old, streak: hadError ? 0 : old.streak + 1 }));
+  const b = await update3($, bank, (old) => ({ ...old, streak: hadError ? 0 : old.streak + 1 }));
   await $.store.set("jackpot.bank", b);
   pull($, { isGolden: false, isPractice: false });
   return ran;
@@ -1442,7 +1415,7 @@ const render3 = async ($, e, next) => {
 const game3 = { id: ID3, title: "Jackpot" };
 
 // src/games/octo-invader.tsx
-import { atom as atom5, read as read5, update as update5 } from "claude-code";
+import { atom as atom5, read as read5, update as update4 } from "claude-code";
 
 // src/games/octo-sprite.ts
 const OCTO_WIDTH = 16;
@@ -2000,7 +1973,7 @@ function base644(bytes) {
 }
 let lastStats = statsLine4({ xp: 0, toppled: 0, planes: 0, tools: 0 });
 async function save2($, change2) {
-  const next = await update5($, score3, change2);
+  const next = await update4($, score3, change2);
   lastStats = statsLine4(next);
   await $.store.set("octopus.score", next);
   return next;
@@ -2013,7 +1986,7 @@ async function celebrate3($, label, xp, show, isQuiet = false) {
   const before = levelOf2((await read5($, score3)).xp);
   const next = await save2($, (old) => ({ ...old, xp: old.xp + xp }));
   const after = levelOf2(next.xp);
-  await update5($, feat3, () => `${label}: +${xp} xp`);
+  await update4($, feat3, () => `${label}: +${xp} xp`);
   if (after > before) {
     sim4.level = after;
     banner2(`LEVEL ${after}`, OCTO, 60);
@@ -2041,12 +2014,12 @@ async function celebrateMoments4($, found) {
 const start4 = async ($, e, next) => {
   const saved = await $.store.get("octopus.score");
   if (saved) {
-    await update5($, score3, () => saved);
+    await update4($, score3, () => saved);
     lastStats = statsLine4(saved);
   }
   await $.command.register({
     name: "octopus",
-    description: 'The octopus above the prompt: its score. "/octopus ink|plane|rampage|conquer" to show off, "/octopus hide|show" to put it away or bring it back.'
+    description: 'The octopus above the prompt: its score. "/octopus ink|plane|rampage|conquer" to show off.'
   });
   $.clock.every(FPS_MS4, () => {
     sim4.t += 1;
@@ -2054,7 +2027,7 @@ const start4 = async ($, e, next) => {
     const m = moodOf2(a);
     if (m !== sim4.mood) {
       sim4.mood = m;
-      void update5($, mood2, () => m);
+      void update4($, mood2, () => m);
     }
     const requestId = sim4.requestId;
     if (requestId === null || sim4.W === 0) return;
@@ -2114,14 +2087,6 @@ const command4 = async ($, e) => {
     await celebrate3($, "Practice", 1, show, true);
     return { text: "The octopus shows off." };
   }
-  if (arg === "hide" || arg === "show") {
-    const wantHidden = arg === "hide";
-    if (!await isShown($, ID4) === wantHidden) {
-      return { text: wantHidden ? 'The octopus is already hidden. "/octopus show" brings it back.' : "The octopus is already showing." };
-    }
-    await setShown($, ID4, !wantHidden);
-    return { text: wantHidden ? "The octopus sinks back into the sea." : "The octopus is back." };
-  }
   const last2 = await read5($, feat3);
   return { text: `${statsLine4(await read5($, score3))}${last2 ? `
 Last win: ${last2}` : ""}` };
@@ -2153,7 +2118,7 @@ const tool4 = async ($, e, next) => {
     sim4.lastActivity = sim4.t;
   });
   if (ran.deny !== void 0) return ran;
-  const counted = await update5($, score3, (old) => ({ ...old, tools: old.tools + 1 }));
+  const counted = await update4($, score3, (old) => ({ ...old, tools: old.tools + 1 }));
   lastStats = statsLine4(counted);
   if (counted.tools % 10 === 0) void $.store.set("octopus.score", counted);
   if (ran.isError === true) sim4.sadUntil = sim4.t + 30;
@@ -2175,7 +2140,7 @@ const render4 = async ($, e, next) => {
 const game4 = { id: ID4, title: "Octo Invader" };
 
 // src/games/outlaw.tsx
-import { atom as atom6, read as read6, update as update6 } from "claude-code";
+import { atom as atom6, read as read6, update as update5 } from "claude-code";
 const ID5 = "outlaw";
 const RASTER5 = "outlaw";
 const W2 = 40;
@@ -2262,7 +2227,7 @@ async function land($, duel, isHit) {
   sim5.men[target2].fallUntil = sim5.t + 36;
   say(xOf(target2) + 2, 0, duel.by === "you" ? "GOT HIM" : "OUCH", 20);
   if (sim5.practice) return;
-  const next = await update6($, score4, (old) => {
+  const next = await update5($, score4, (old) => {
     const streak = duel.by === "you" ? old.streak + 1 : 0;
     return {
       you: old.you + (duel.by === "you" ? 1 : 0),
@@ -2413,10 +2378,10 @@ async function celebrateMoments5($, found) {
 }
 const start5 = async ($, e, next) => {
   const saved = await $.store.get("outlaw.score");
-  if (saved) await update6($, score4, () => saved);
+  if (saved) await update5($, score4, () => saved);
   await $.command.register({
     name: "outlaw",
-    description: 'The duel above the prompt: the score. "/outlaw draw" for a practice duel, "/outlaw hide|show" to put it away or bring it back.'
+    description: 'The duel above the prompt: the score. "/outlaw draw" for a practice duel.'
   });
   $.clock.every(FPS_MS5, () => {
     step4($);
@@ -2436,14 +2401,6 @@ const command5 = async ($, e) => {
   if (arg === "draw") {
     sim5.queue.push({ by: "you", isPractice: true }, { by: "bug", isPractice: true });
     return { text: "Practice duel: one shot each, no score." };
-  }
-  if (arg === "hide" || arg === "show") {
-    const wantHidden = arg === "hide";
-    if (!await isShown($, ID5) === wantHidden) {
-      return { text: wantHidden ? 'The outlaws are already hidden. "/outlaw show" brings them back.' : "The outlaws are already showing." };
-    }
-    await setShown($, ID5, !wantHidden);
-    return { text: wantHidden ? "The outlaws ride off." : "The outlaws are back." };
   }
   return {
     text: `${statsLine5(await read6($, score4))}
@@ -2485,7 +2442,7 @@ const render5 = async ($, e, next) => {
 const game5 = { id: ID5, title: "Outlaw" };
 
 // src/games/tama.tsx
-import { atom as atom7, read as read7, update as update7 } from "claude-code";
+import { atom as atom7, read as read7, update as update6 } from "claude-code";
 const ID6 = "tama";
 const RASTER6 = "tama";
 const W3 = 30;
@@ -2603,7 +2560,7 @@ const isNight = (now) => {
 async function change($, fn) {
   const now = await $.clock.now();
   sim6.now = now;
-  const changed = await update7($, pet, (p) => fn(age(p, now)));
+  const changed = await update6($, pet, (p) => fn(age(p, now)));
   sim6.pet = changed;
   await $.store.set("tama.pet", changed);
   return changed;
@@ -2731,11 +2688,11 @@ const start6 = async ($, e, next) => {
   sim6.now = await $.clock.now();
   const saved = await $.store.get("tama.pet");
   const start8 = saved ?? fresh(sim6.now, 1);
-  sim6.pet = await update7($, pet, () => age(start8, sim6.now));
+  sim6.pet = await update6($, pet, () => age(start8, sim6.now));
   await $.store.set("tama.pet", sim6.pet);
   await $.command.register({
     name: "tama",
-    description: 'The Tamagotchi above the prompt: how it is doing. "/tama feed|play|clean" to care for it by hand, "/tama hide|show" to put it away or bring it back.'
+    description: 'The Tamagotchi above the prompt: how it is doing. "/tama feed|play|clean" to care for it by hand.'
   });
   $.clock.every(FPS_MS6, () => {
     step5();
@@ -2770,14 +2727,6 @@ const prompt6 = async ($, e, next) => {
 };
 const command6 = async ($, e) => {
   const arg = (e.args ?? "").trim();
-  if (arg === "hide" || arg === "show") {
-    const wantHidden = arg === "hide";
-    if (!await isShown($, ID6) === wantHidden) {
-      return { text: wantHidden ? 'The Tamagotchi is already hidden. "/tama show" brings it back.' : "The Tamagotchi is already showing." };
-    }
-    await setShown($, ID6, !wantHidden);
-    return { text: wantHidden ? "The Tamagotchi goes in your pocket." : "The Tamagotchi is back." };
-  }
   if (arg === "feed" || arg === "play" || arg === "clean") {
     const now = await $.clock.now();
     const p2 = age(await read7($, pet), now);
@@ -2858,7 +2807,7 @@ const render6 = async ($, e, next) => {
 const game6 = { id: ID6, title: "Tama" };
 
 // src/games/tetris.tsx
-import { atom as atom8, read as read8, update as update8 } from "claude-code";
+import { atom as atom8, read as read8, update as update7 } from "claude-code";
 const ID7 = "tetris";
 const RASTER7 = "well";
 const G = 10;
@@ -2974,7 +2923,7 @@ async function scoreLines($, lines, isBomb) {
   const before = await read8($, tally);
   const level = Math.floor(before.lines / 10);
   const points = isBomb ? 50 * lines * (level + 1) : LINE_SCORE[Math.min(4, lines)] * (level + 1);
-  const saved = await update8($, tally, (old) => ({ ...old, score: old.score + points, lines: old.lines + lines }));
+  const saved = await update7($, tally, (old) => ({ ...old, score: old.score + points, lines: old.lines + lines }));
   await $.store.set("tetris.tally", saved);
   if (!isBomb && lines >= 4) void notify7($, "\u{1F9F1} TETRIS! Four lines at once");
   if (Math.floor(saved.lines / 10) > level) void notify7($, `\u{1F9F1} Level ${Math.floor(saved.lines / 10)}`);
@@ -2982,7 +2931,7 @@ async function scoreLines($, lines, isBomb) {
 async function gameOver($) {
   sim7.wipe = 0;
   sim7.active = null;
-  const saved = await update8($, tally, (old) => ({
+  const saved = await update7($, tally, (old) => ({
     score: 0,
     lines: 0,
     best: Math.max(old.best, old.score),
@@ -3115,10 +3064,10 @@ async function celebrateMoments7($, found) {
 }
 const start7 = async ($, e, next) => {
   const saved = await $.store.get("tetris.tally");
-  if (saved) await update8($, tally, () => saved);
+  if (saved) await update7($, tally, () => saved);
   await $.command.register({
     name: "tetris",
-    description: 'The Tetris above the prompt: the score. "/tetris drop" adds pieces, "/tetris clear" clears a row, "/tetris hide|show" to put it away or bring it back.'
+    description: 'The Tetris above the prompt: the score. "/tetris drop" adds pieces, "/tetris clear" clears a row.'
   });
   $.clock.every(FPS_MS7, () => {
     step6($);
@@ -3150,14 +3099,6 @@ const command7 = async ($, e) => {
   if (arg === "clear") {
     sim7.bombs.push(1);
     return { text: "One row cleared from the bottom." };
-  }
-  if (arg === "hide" || arg === "show") {
-    const wantHidden = arg === "hide";
-    if (!await isShown($, ID7) === wantHidden) {
-      return { text: wantHidden ? 'The handheld is already hidden. "/tetris show" brings it back.' : "The handheld is already showing." };
-    }
-    await setShown($, ID7, !wantHidden);
-    return { text: wantHidden ? "The handheld goes in your pocket." : "The handheld is back." };
   }
   const t = await read8($, tally);
   return {
@@ -3404,8 +3345,8 @@ async function pick5($, mode, pool) {
 }
 async function apply($, mode, pool) {
   const ids = await pick5($, mode, pool);
-  await update9($, shown, () => ids);
-  await update9($, pickedFor, () => `${mode}|${pool.join(",")}`);
+  await update8($, shown, () => ids);
+  await update8($, pickedFor, () => `${mode}|${pool.join(",")}`);
   return ids;
 }
 const title = (id) => GAMES.find((g) => g.id === id)?.title ?? id;
@@ -3416,7 +3357,7 @@ async function status($, mode, pool) {
   return `Arcade on this account: ${setting}.
 This terminal:
 ${rows.join("\n")}
-"/arcade <game>" pins one game, "/arcade random|rotate|all|off" sets how new terminals pick, "/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal's game. "/<game> hide|show" changes this terminal only.`;
+"/arcade <game>" pins one game, "/arcade random|rotate|all|off" sets how new terminals pick, "/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal's game. "/arcade hide" clears this terminal only.`;
 }
 const over = (options) => `${String(options.mode ?? "")}|${String(options.pool ?? "")}`;
 async function save3($, options, mode, pool) {
@@ -3451,7 +3392,7 @@ export const register = (on, options) => {
   on("session.start", async ($, e, next) => {
     await $.command.register({
       name: "arcade",
-      description: 'Which Arcade games show: "/arcade <game>" pins one, "/arcade random|rotate|all|off", "/arcade pool <games>", "/arcade next".'
+      description: 'Which Arcade games show: "/arcade <game>" pins one, "/arcade random|rotate|all|off", "/arcade pool <games>", "/arcade next" or "/arcade hide" for this terminal.'
     });
     const saved = await $.store.get("setting");
     if (saved?.over === over(options)) Object.assign(setting, { mode: modeOf(saved.mode), pool: poolOf(saved.pool) });
@@ -3466,11 +3407,15 @@ export const register = (on, options) => {
     const words = (e.args ?? "").trim().split(/[\s,]+/).filter(Boolean);
     const [first = "", ...rest] = words.map((w) => w.toLowerCase());
     if (first === "") return { text: await status($, setting.mode, setting.pool) };
+    if (first === "hide") {
+      await update8($, shown, () => []);
+      return { text: 'No game in this terminal. "/arcade next" brings one back; new terminals still follow the setting.' };
+    }
     if (first === "next") {
       const now = await read9($, shown);
       const at = setting.pool.indexOf(now[now.length - 1] ?? "");
       const id2 = setting.pool[(at + 1) % setting.pool.length] ?? "";
-      await update9($, shown, () => [id2]);
+      await update8($, shown, () => [id2]);
       return { text: `${title(id2)} in this terminal. New terminals still follow the setting.` };
     }
     if (first === "pool") {

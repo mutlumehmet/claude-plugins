@@ -37,11 +37,11 @@ test('an egg cannot be fed by hand', ONLY, async ($, on) => {
   expect((await $.command.run({ command: 'tama', args: 'feed' } as never)).text).toMatch(/still an egg/)
 })
 
-test('/tama tells how it is doing, /tama hide takes it away', ONLY, async ($, on) => {
+test('/tama tells how it is doing, /arcade hide takes it away', ONLY, async ($, on) => {
   world(on)
   await begin($, on, true)
   expect((await $.command.run({ command: 'tama', args: '' } as never)).text).toMatch(/Generation 1: an egg/)
-  await $.command.run({ command: 'tama', args: 'hide' } as never)
+  await $.command.run({ command: 'arcade', args: 'hide' } as never)
   const ui = await $.ui.mount(BAND)
   expect(await ui.find({ type: 'Raster' })).toBeUndefined()
   await ui.unmount()

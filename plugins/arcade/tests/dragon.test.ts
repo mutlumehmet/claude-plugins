@@ -36,10 +36,10 @@ test('the dragon sits in the band on the terminal', ONLY, async ($, on) => {
   await ui.unmount()
 })
 
-test('/dragon hide takes it out of the band', ONLY, async ($, on) => {
+test('/arcade hide takes the dragon out of the band', ONLY, async ($, on) => {
   world(on)
   await begin($, on)
-  await $.command.run({ command: 'dragon', args: 'hide' } as never)
+  await $.command.run({ command: 'arcade', args: 'hide' } as never)
   const ui = await $.ui.mount(BAND)
   expect(await ui.find({ type: 'Raster' })).toBeUndefined()
   await ui.unmount()
@@ -95,7 +95,7 @@ test('a hidden dragon sends no notifications', ONLY, async ($, on) => {
     toasts.push(JSON.stringify(e))
     return { value: undefined }
   })
-  await $.command.run({ command: 'dragon', args: 'hide' } as never)
+  await $.command.run({ command: 'arcade', args: 'hide' } as never)
   await $.command.run({ command: 'dragon', args: 'fire' } as never)
   expect(toasts).toHaveLength(0)
 })

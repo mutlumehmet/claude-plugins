@@ -46,10 +46,10 @@ test('/tetris drop and /tetris clear queue work', ONLY, async ($, on) => {
   expect((await $.command.run({ command: 'tetris', args: 'clear' } as never)).text).toMatch(/One row/)
 })
 
-test('/tetris hide takes it out of the band', ONLY, async ($, on) => {
+test('/arcade hide takes the tetris out of the band', ONLY, async ($, on) => {
   world(on)
   await begin($, on)
-  expect((await $.command.run({ command: 'tetris', args: 'hide' } as never)).text).toMatch(/pocket/)
+  expect((await $.command.run({ command: 'arcade', args: 'hide' } as never)).text).toMatch(/No game in this terminal/)
   const ui = await $.ui.mount(BAND)
   expect(await ui.find({ type: 'Raster' })).toBeUndefined()
   await ui.unmount()

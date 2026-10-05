@@ -3,7 +3,7 @@ import type { EngineInterface, Hook, MatchedHook } from 'claude-code'
 
 import type { Pet, Stage } from '../../types'
 import type { Milestone } from '../milestones'
-import { isShown, setShown } from '../shown'
+import { isShown } from '../shown'
 import type { Game } from '../shown'
 
 const ID = 'tama'
@@ -278,7 +278,7 @@ export const start: Hook<'session.start'> = async ($, e, next) => {
   await $.store.set('tama.pet', sim.pet)
   await $.command.register({
     name: 'tama',
-    description: 'The Tamagotchi above the prompt: how it is doing. "/tama feed|play|clean" to care for it by hand, "/tama hide|show" to put it away or bring it back.',
+    description: 'The Tamagotchi above the prompt: how it is doing. "/tama feed|play|clean" to care for it by hand.',
   })
   $.clock.every(FPS_MS, () => {
     step()
@@ -323,15 +323,6 @@ export const prompt: Hook<'prompt.submit'> = async ($, e, next) => {
 
 export const command: MatchedHook<'command.run', { command: 'tama' }> = async ($, e) => {
   const arg = (e.args ?? '').trim()
-  // Two explicit commands, not a toggle, so a repeat never flips it back by surprise.
-  if (arg === 'hide' || arg === 'show') {
-    const wantHidden = arg === 'hide'
-    if (!(await isShown($, ID)) === wantHidden) {
-      return { text: wantHidden ? 'The Tamagotchi is already hidden. "/tama show" brings it back.' : 'The Tamagotchi is already showing.' }
-    }
-    await setShown($, ID, !wantHidden)
-    return { text: wantHidden ? 'The Tamagotchi goes in your pocket.' : 'The Tamagotchi is back.' }
-  }
   if (arg === 'feed' || arg === 'play' || arg === 'clean') {
     const now = await $.clock.now()
     const p = age(await read($, pet), now)

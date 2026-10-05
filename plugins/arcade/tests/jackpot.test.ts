@@ -48,10 +48,10 @@ test('a golden spin never loses, and the lowest roll is the jackpot', ONLY, asyn
   expect(outcome(false, 0)).toEqual(['seven', 'seven', 'seven'])
 })
 
-test('/jackpot hide covers the machine', ONLY, async ($, on) => {
+test('/arcade hide takes the jackpot out of the band', ONLY, async ($, on) => {
   world(on)
   await begin($, on)
-  await $.command.run({ command: 'jackpot', args: 'hide' } as never)
+  await $.command.run({ command: 'arcade', args: 'hide' } as never)
   const ui = await $.ui.mount(BAND)
   expect(await ui.find({ type: 'Raster' })).toBeUndefined()
   await ui.unmount()

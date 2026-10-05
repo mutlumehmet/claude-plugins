@@ -5,7 +5,7 @@ import type { OctoMood as Mood, OctoScore as Score } from '../../types'
 import { BABY, FLAG, OCTO_HEIGHT, OCTO_WIDTH, PLANE, octopus } from './octo-sprite'
 import type { Legs } from './octo-sprite'
 import type { Milestone } from '../milestones'
-import { isShown, setShown } from '../shown'
+import { isShown } from '../shown'
 import type { Game } from '../shown'
 
 const ID = 'octopus'
@@ -639,7 +639,7 @@ export const start: Hook<'session.start'> = async ($, e, next) => {
   }
   await $.command.register({
     name: 'octopus',
-    description: 'The octopus above the prompt: its score. "/octopus ink|plane|rampage|conquer" to show off, "/octopus hide|show" to put it away or bring it back.',
+    description: 'The octopus above the prompt: its score. "/octopus ink|plane|rampage|conquer" to show off.',
   })
   $.clock.every(FPS_MS, () => {
     sim.t += 1
@@ -716,15 +716,6 @@ export const command: MatchedHook<'command.run', { command: 'octopus' }> = async
   if (show) {
     await celebrate($, 'Practice', 1, show, true)
     return { text: 'The octopus shows off.' }
-  }
-  // Two explicit commands, not a toggle, so a repeat never flips it back by surprise.
-  if (arg === 'hide' || arg === 'show') {
-    const wantHidden = arg === 'hide'
-    if (!(await isShown($, ID)) === wantHidden) {
-      return { text: wantHidden ? 'The octopus is already hidden. "/octopus show" brings it back.' : 'The octopus is already showing.' }
-    }
-    await setShown($, ID, !wantHidden)
-    return { text: wantHidden ? 'The octopus sinks back into the sea.' : 'The octopus is back.' }
   }
   const last = await read($, feat)
   return { text: `${statsLine(await read($, score))}${last ? `\nLast win: ${last}` : ''}` }

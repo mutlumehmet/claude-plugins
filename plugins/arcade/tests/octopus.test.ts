@@ -37,16 +37,16 @@ test('the city fills the band and keeps what was there below it', ONLY, async ($
   await ui.unmount()
 })
 
-test('/octopus hide takes it out of the band, show brings it back', ONLY, async ($, on) => {
+test('/arcade hide takes the octopus out of the band, /arcade next brings it back', ONLY, async ($, on) => {
   world(on)
   await begin($, on)
   const run = async (args: string) => (await $.command.run({ command: 'octopus', args } as never)).text ?? ''
-  expect(await run('hide')).toBe('The octopus sinks back into the sea.')
-  expect(await run('hide')).toMatch(/already hidden/)
+  expect((await $.command.run({ command: 'arcade', args: 'hide' } as never)).text).toMatch(/No game in this terminal/)
   const ui = await $.ui.mount(BAND)
   expect(await ui.find({ type: 'Raster' })).toBeUndefined()
   await ui.unmount()
-  expect(await run('show')).toBe('The octopus is back.')
+  expect((await $.command.run({ command: 'arcade', args: 'next' } as never)).text).toMatch(/Octo Invader in this terminal/)
+  expect(await run('')).toMatch(/Lv 1/)
 })
 
 test('/octopus plane shows off and adds xp', ONLY, async ($, on) => {

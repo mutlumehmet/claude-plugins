@@ -93,11 +93,21 @@ test('settings changed in /plugin after /arcade win again', { options: { mode: '
   expect(await showing($)).toEqual(['jackpot'])
 })
 
-test('/<game> show adds a game to this terminal only', { options: { mode: 'fixed', pool: 'outlaw' } }, async ($, on) => {
+test('/arcade hide clears this terminal, /arcade next brings a game back', { options: { mode: 'all', pool: 'outlaw,tama' } }, async ($, on) => {
+  world(on)
+  await begin($, on)
+  await $.command.run({ command: 'arcade', args: 'hide' } as never)
+  expect(await showing($)).toEqual([])
+  await $.command.run({ command: 'arcade', args: 'next' } as never)
+  expect(await showing($)).toEqual(['outlaw'])
+})
+
+test('a game no longer takes hide or show', { options: { mode: 'fixed', pool: 'outlaw' } }, async ($, on) => {
   world(on)
   await begin($, on)
   await $.command.run({ command: 'tama', args: 'show' } as never)
-  expect(await showing($)).toEqual(['outlaw', 'tama'])
+  await $.command.run({ command: 'outlaw', args: 'hide' } as never)
+  expect(await showing($)).toEqual(['outlaw'])
 })
 
 test('an unknown word lists the games and the modes', { options: { mode: 'fixed', pool: 'outlaw' } }, async ($, on) => {

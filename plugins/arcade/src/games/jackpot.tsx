@@ -5,7 +5,7 @@ import type { Bank } from '../../types'
 import { PALETTE, SYMBOLS, SYMBOL_SIZE } from './jackpot-symbols'
 import type { SymbolId } from './jackpot-symbols'
 import type { Milestone } from '../milestones'
-import { isShown, setShown } from '../shown'
+import { isShown } from '../shown'
 import type { Game } from '../shown'
 
 const ID = 'jackpot'
@@ -369,7 +369,7 @@ export const start: Hook<'session.start'> = async ($, e, next) => {
   if (saved) await update($, bank, () => ({ ...saved, streak: saved.streak ?? 0 }))
   await $.command.register({
     name: 'jackpot',
-    description: 'The slot machine above the prompt: your chips. "/jackpot spin|golden|demo" to try it, "/jackpot hide|show" to put it away or bring it back.',
+    description: 'The slot machine above the prompt: your chips. "/jackpot spin|golden|demo" to try it.',
   })
   startLoop($)
 
@@ -398,15 +398,6 @@ export const command: MatchedHook<'command.run', { command: 'jackpot' }> = async
   if (arg === 'demo') {
     pull($, { isGolden: true, isPractice: true, forced: ['seven', 'seven', 'seven'] })
     return { text: 'A practice jackpot: it pays nothing.' }
-  }
-  // Two explicit commands, not a toggle, so a repeat never flips it back by surprise.
-  if (arg === 'hide' || arg === 'show') {
-    const wantHidden = arg === 'hide'
-    if (!(await isShown($, ID)) === wantHidden) {
-      return { text: wantHidden ? 'The machine is already hidden. "/jackpot show" brings it back.' : 'The machine is already showing.' }
-    }
-    await setShown($, ID, !wantHidden)
-    return { text: wantHidden ? 'The machine is covered.' : 'The machine is back.' }
   }
   const b = await read($, bank)
   const g = await read($, golden)

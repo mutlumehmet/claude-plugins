@@ -3,7 +3,7 @@ import type { EngineInterface, Hook, MatchedHook } from 'claude-code'
 
 import type { OutlawScore as Score } from '../../types'
 import type { Milestone } from '../milestones'
-import { isShown, setShown } from '../shown'
+import { isShown } from '../shown'
 import type { Game } from '../shown'
 
 const ID = 'outlaw'
@@ -292,7 +292,7 @@ export const start: Hook<'session.start'> = async ($, e, next) => {
   if (saved) await update($, score, () => saved)
   await $.command.register({
     name: 'outlaw',
-    description: 'The duel above the prompt: the score. "/outlaw draw" for a practice duel, "/outlaw hide|show" to put it away or bring it back.',
+    description: 'The duel above the prompt: the score. "/outlaw draw" for a practice duel.',
   })
   $.clock.every(FPS_MS, () => {
     step($)
@@ -319,15 +319,6 @@ export const command: MatchedHook<'command.run', { command: 'outlaw' }> = async 
   if (arg === 'draw') {
     sim.queue.push({ by: 'you', isPractice: true }, { by: 'bug', isPractice: true })
     return { text: 'Practice duel: one shot each, no score.' }
-  }
-  // Two explicit commands, not a toggle, so a repeat never flips it back by surprise.
-  if (arg === 'hide' || arg === 'show') {
-    const wantHidden = arg === 'hide'
-    if (!(await isShown($, ID)) === wantHidden) {
-      return { text: wantHidden ? 'The outlaws are already hidden. "/outlaw show" brings them back.' : 'The outlaws are already showing.' }
-    }
-    await setShown($, ID, !wantHidden)
-    return { text: wantHidden ? 'The outlaws ride off.' : 'The outlaws are back.' }
   }
 
   return {

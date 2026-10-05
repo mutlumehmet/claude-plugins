@@ -28,12 +28,12 @@ random from all seven.
 | `/arcade random`, `rotate`, `all`, `off` | Sets how new terminals pick |
 | `/arcade pool dragon tetris` | Picks only from these games |
 | `/arcade next` | Swaps this terminal to the next game in the pool; new terminals still follow the setting |
-| `/<game> hide`, `/<game> show` | Hides or adds one game in this terminal only |
+| `/arcade hide` | Clears this terminal; `/arcade next` brings a game back |
 
 The setting lives in Claude Code's settings (`pluginConfigs`), so the `/config` menu shows it too, and
 each Claude Code config directory keeps its own: a work and a personal account can show different
 games. Where there is no settings menu (`claude -p`), `/arcade` keeps the choice in the plugin's own
-store, still per config directory, until the settings change. A hidden game keeps playing and keeps its score; it only stops drawing and stays quiet.
+store, still per config directory, until the settings change. A game that is not shown keeps playing and keeps its score; it only stops drawing and stays quiet. A game's own command (`/dragon`, `/duck` and the rest) shows its score and plays its practice moves; which games show is only ever `/arcade`.
 
 ## The games
 
@@ -46,7 +46,7 @@ A small one colour pixel dragon that lives at the right end of the line above th
 - **A failed tool** drops its head; **two minutes of quiet** and it falls asleep.
 - **Moments**: a small one is a puff of smoke, a medium one a breath of fire, a big one a blaze, and a merge, release, deploy, streak or record a roar.
 - **Gold** builds up with every moment and is kept between sessions. Under the dragon: `Lv 3  ◆ 55  ★ 9  ⚒ 58` (level, gold, wins, tool calls).
-- **`/dragon`** shows the hoard; `/dragon puff`, `fire`, `blaze` and `roar` show off each size; `/dragon hide` puts it away and `/dragon show` brings it back.
+- **`/dragon`** shows the hoard; `/dragon puff`, `fire`, `blaze` and `roar` show off each size.
 
 ### Jackpot (`jackpot`)
 
@@ -57,7 +57,7 @@ A pixel slot machine at the right end of the line above the prompt. Every finish
 - **Five clean turns in a row** (no tool error) raise the multiplier by one, up to ×5; a failed tool resets it.
 - **Payouts**: three 7s pay 100 chips, three dragons 50, diamonds 25, bells 15, stars 10, cherries 8; a cherry pair 3, any other pair 2. A jackpot strobes the cabinet and spills coins.
 - **Under the machine**: `◉ 2967  ×1  ▲ 2  ✦ 0  ♛ 1` (chips, multiplier, clean streak, golden spins waiting, jackpots). Chips are kept between sessions.
-- **`/jackpot`** shows the rules and stats; `/jackpot spin`, `golden` and `demo` are practice spins that pay nothing; `/jackpot hide` puts it away and `/jackpot show` brings it back.
+- **`/jackpot`** shows the rules and stats; `/jackpot spin`, `golden` and `demo` are practice spins that pay nothing.
 
 ### Outlaw (`outlaw`)
 
@@ -67,7 +67,7 @@ A one colour Atari Outlaw duel at the right end of the line above the prompt. Yo
 - **A hit** is aimed at eye level and clears the cactus; **a miss** is from the hip and takes a chunk out of the cactus, which grows back between duels.
 - **Between duels** the two pace, shift their weight and tip their hats, a tumbleweed rolls by and a vulture circles; while Claude thinks they stand with a hand on the gun.
 - **Under the duel**: `YOU 7 : 3 BUGS  ▲ 4  ★ 6` (score, your run of hits, your best run). Kept between sessions.
-- **`/outlaw`** shows the score and rules; `/outlaw draw` is a practice duel; `/outlaw hide` puts it away and `/outlaw show` brings it back.
+- **`/outlaw`** shows the score and rules; `/outlaw draw` is a practice duel.
 
 ### Tama (`tama`)
 
@@ -80,7 +80,7 @@ A classic Tamagotchi in a small LCD at the right end of the line above the promp
 - **Left hungry for twelve hours** it packs its bags and leaves an egg behind. It never dies.
 - **At night** (23:00 to 07:00 local time) it sleeps.
 - **Under the LCD**: `♨ ▮▮▮▯  ♥ ▮▮▯▯  ✧ ▮▮▮▮` (food, joy, clean).
-- **`/tama`** says how it is doing; `/tama feed`, `play` and `clean` are hand care, a few times a day; `/tama hide` puts it away and `/tama show` brings it back.
+- **`/tama`** says how it is doing; `/tama feed`, `play` and `clean` are hand care, a few times a day.
 
 ### Tetris (`tetris`)
 
@@ -92,7 +92,7 @@ A classic falling-piece Tetris in a small handheld screen at the right end of th
 - **Medium moments** clear one row from the bottom, **big moments** three.
 - **When the stack reaches the lid** the game ends, the well empties and a new game starts. The best score is kept.
 - **Under the screen**: `▤ 35  ◆ 4250  Lv 3` (rows, score, level).
-- **`/tetris`** shows the score and rules; `/tetris drop` adds pieces, `/tetris clear` clears a row, `/tetris hide` puts it away and `/tetris show` brings it back.
+- **`/tetris`** shows the score and rules; `/tetris drop` adds pieces, `/tetris clear` clears a row.
 
 ### Octo Invader (`octopus`)
 
@@ -112,7 +112,7 @@ Both GIFs are drawn by the mod's own code from a scripted session (a read, an ed
 - **A failed tool** leaves it dazed with stars over its head; **two minutes of quiet** and it curls up asleep.
 - **Moments**: a small one is a squirt of ink, a medium one a plane snatched out of the sky and thrown down (`BOOM!`), a big one a `RAMPAGE!` through the streets, and a merge, release, deploy, streak or record ends with a flag on the rubble and `THE CITY IS MINE`.
 - **The score** sits at the right end of the strip: `Lv 3  ⌂ 12  ✈ 4  ⚒ 140` (level, buildings toppled, planes downed, tool calls). It is kept between sessions.
-- **`/octopus`** shows the score; `/octopus ink`, `plane`, `rampage` and `conquer` show off each size; `/octopus hide` puts it away and `/octopus show` brings it back.
+- **`/octopus`** shows the score; `/octopus ink`, `plane`, `rampage` and `conquer` show off each size.
 
 ### Duck Hunt (`duck`)
 
@@ -124,7 +124,7 @@ and ducks. Your work does the shooting.
 - **A failed tool** lets the duck in the air get away (`FLY AWAY`), and the dog comes up laughing. **Two minutes of quiet** and the dog lies down asleep.
 - **Rounds**: every ten ducks down is a new round (`ROUND 3`).
 - **The score** sits at the right end of the strip: `R 2  ▼ 14  ↗ 3  ⚒ 140` (round, ducks down, ducks that got away, tool calls). It is kept between sessions.
-- **`/duck`** shows the score; `/duck shot`, `hunt`, `double`, `perfect` and `flyaway` are practice that counts nothing; `/duck hide` puts it away and `/duck show` brings it back.
+- **`/duck`** shows the score; `/duck shot`, `hunt`, `double`, `perfect` and `flyaway` are practice that counts nothing.
 
 ## Moments
 

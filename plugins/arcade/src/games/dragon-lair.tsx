@@ -5,7 +5,7 @@ import type { DragonMood as Mood, Hoard } from '../../types'
 import { DRAGON_WIDTH, EYE, MOUTH, NOSTRIL, PIXEL_ROWS, draw, drawBaby } from './dragon-sprite'
 import type { Pose } from './dragon-sprite'
 import type { Milestone } from '../milestones'
-import { isShown, setShown } from '../shown'
+import { isShown } from '../shown'
 import type { Game } from '../shown'
 
 const ID = 'dragon'
@@ -441,7 +441,7 @@ export const start: Hook<'session.start'> = async ($, e, next) => {
   if (saved) await update($, hoard, () => saved)
   await $.command.register({
     name: 'dragon',
-    description: 'The dragon above the prompt: its hoard. "/dragon puff|fire|blaze|roar" to show off, "/dragon hide|show" to put it away or bring it back.',
+    description: 'The dragon above the prompt: its hoard. "/dragon puff|fire|blaze|roar" to show off.',
   })
   $.clock.every(FPS_MS, () => {
     sim.t += 1
@@ -516,15 +516,6 @@ export const command: MatchedHook<'command.run', { command: 'dragon' }> = async 
   if (show) {
     await celebrate($, 'Practice', 1, show)
     return { text: 'The dragon breathes fire.' }
-  }
-  // Two explicit commands, not a toggle, so a repeat never flips it back by surprise.
-  if (arg === 'hide' || arg === 'show') {
-    const wantHidden = arg === 'hide'
-    if (!(await isShown($, ID)) === wantHidden) {
-      return { text: wantHidden ? 'The dragon is already hidden. "/dragon show" brings it back.' : 'The dragon is already showing.' }
-    }
-    await setShown($, ID, !wantHidden)
-    return { text: wantHidden ? 'The dragon goes to sleep out of sight.' : 'The dragon is back.' }
   }
   const last = await read($, feat)
 

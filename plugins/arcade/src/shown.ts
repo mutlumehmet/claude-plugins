@@ -1,4 +1,4 @@
-import { atom, read, update } from 'claude-code'
+import { atom, read } from 'claude-code'
 import type { EngineInterface } from 'claude-code'
 
 // One game of the Arcade. Its file also exports one hook per event (start, command, prompt,
@@ -14,6 +14,3 @@ export async function isShown($: EngineInterface, id: string) {
   return (await read($, shown)).includes(id)
 }
 
-export async function setShown($: EngineInterface, id: string, isOn: boolean) {
-  await update($, shown, ids => (isOn ? [...ids.filter(x => x !== id), id] : ids.filter(x => x !== id)))
-}
