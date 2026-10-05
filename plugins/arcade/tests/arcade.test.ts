@@ -59,18 +59,24 @@ test('/arcade next swaps this terminal to the next game in the pool', { options:
   expect(await showing($)).toEqual(['tama'])
 })
 
-test('/arcade tetris pins Tetris and saves it in the settings', { options: { mode: 'random', pool: 'outlaw,tetris' } }, async ($, on) => {
-  const saved: Record<string, unknown> = {}
+test('/arcade tetris pins Tetris in this terminal and for new ones', { options: { mode: 'random', pool: 'outlaw,tetris' } }, async ($, on) => {
   world(on)
-  on('config.set', (_$, e) => {
-    saved[e.key] = e.value
-    return { value: e.value }
-  })
   await begin($, on)
   const text = (await $.command.run({ command: 'arcade', args: 'tetris' } as never)).text ?? ''
   expect(text).toMatch(/fixed on Tetris/)
-  expect(saved).toEqual({ 'arcade.mode': 'fixed', 'arcade.pool': 'tetris,outlaw' })
   expect(await showing($)).toEqual(['tetris'])
+})
+
+test('a new terminal follows what /arcade saved', { options: { mode: 'random', pool: '' } }, async ($, on) => {
+  world(on, { setting: { mode: 'fixed', pool: 'tama,outlaw', over: 'random|' } })
+  await begin($, on)
+  expect(await showing($)).toEqual(['tama'])
+})
+
+test('settings changed in /plugin after /arcade win again', { options: { mode: 'fixed', pool: 'jackpot' } }, async ($, on) => {
+  world(on, { setting: { mode: 'fixed', pool: 'tama', over: 'random|' } })
+  await begin($, on)
+  expect(await showing($)).toEqual(['jackpot'])
 })
 
 test('/<game> show adds a game to this terminal only', { options: { mode: 'fixed', pool: 'outlaw' } }, async ($, on) => {

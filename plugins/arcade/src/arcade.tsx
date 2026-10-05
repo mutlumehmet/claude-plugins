@@ -131,10 +131,18 @@ async function status($: EngineInterface, mode: Mode, pool: string[]) {
   )
 }
 
-// Writes the setting the way the /config menu would, so it lands in this account's settings.
-async function save($: EngineInterface, field: 'mode' | 'pool', value: string) {
-  const { deny } = await $.config.set({ key: `arcade.${field}`, value })
-  return deny
+// What /arcade chose, kept in the plugin store: a file in this Claude Code config directory, so
+// each account keeps its own. `over` is the settings it was chosen over: once the mode or pool in
+// /plugin changes, those win again. ($.config.set would be neater, but on 2.1.289 a plugin's
+// userConfig fields were not rows $.config.list or $.config.set knew in a headless session,
+// checked 5 October 2026.)
+type Saved = { mode: string; pool: string; over: string }
+
+const over = (options: PluginOptions) => `${String(options.mode ?? '')}|${String(options.pool ?? '')}`
+
+async function save($: EngineInterface, options: PluginOptions, mode: Mode, pool: string[]) {
+  const saved: Saved = { mode, pool: pool.join(','), over: over(options) }
+  await $.store.set('setting', saved)
 }
 
 // Hands each moment to every game; a hidden game keeps score and stays quiet.
@@ -159,6 +167,8 @@ export const register: Register = (on, options: PluginOptions) => {
       name: 'arcade',
       description: 'Which Arcade games show: "/arcade <game>" pins one, "/arcade random|rotate|all|off", "/arcade pool <games>", "/arcade next".',
     })
+    const saved = (await $.store.get('setting')) as Saved | undefined
+    if (saved?.over === over(options)) Object.assign(setting, { mode: modeOf(saved.mode), pool: poolOf(saved.pool) })
     if ((await read($, pickedFor)) !== `${setting.mode}|${setting.pool.join(',')}`) await apply($, setting.mode, setting.pool)
 
     const ran = await dragonStart($, e, ((e1: typeof e) => jackpotStart($, e1, ((e2: typeof e) => outlawStart($, e2, ((e3: typeof e) => tamaStart($, e3, ((e4: typeof e) => tetrisStart($, e4, ((e5: typeof e) => octopusStart($, e5, next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)
@@ -189,8 +199,7 @@ export const register: Register = (on, options: PluginOptions) => {
         return { text: `Name the games for the pool: ${GAMES.map(g => g.id).join(', ')}.` }
       }
       const pool = poolOf(ids.join(','))
-      const deny = await save($, 'pool', pool.join(','))
-      if (deny !== undefined) return { text: `The pool was not saved: ${deny}` }
+      await save($, options, setting.mode, pool)
       setting.pool = pool
       await apply($, setting.mode, pool)
       return { text: await status($, setting.mode, pool) }
@@ -204,8 +213,7 @@ export const register: Register = (on, options: PluginOptions) => {
     // "/arcade tetris" pins Tetris: fixed mode with Tetris first in the pool.
     const pool = id === undefined ? setting.pool : [id, ...setting.pool.filter(x => x !== id)]
     const next = id === undefined ? (mode as Mode) : 'fixed'
-    const deny = (await save($, 'mode', next)) ?? (id === undefined ? undefined : await save($, 'pool', pool.join(',')))
-    if (deny !== undefined) return { text: `The setting was not saved: ${deny}` }
+    await save($, options, next, pool)
     Object.assign(setting, { mode: next, pool })
     await apply($, next, pool)
     return { text: await status($, next, pool) }

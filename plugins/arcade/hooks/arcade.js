@@ -376,7 +376,7 @@ function drawBabies(ink, W5) {
 function frame(a) {
   const W5 = COLUMNS;
   const ink = new Uint8Array(W5 * PIXEL_ROWS);
-  const over = /* @__PURE__ */ new Map();
+  const over2 = /* @__PURE__ */ new Map();
   draw(ink, W5, pose(a), shift(a), lift(a));
   drawBabies(ink, W5);
   for (const p of sim.particles) {
@@ -384,7 +384,7 @@ function frame(a) {
     const y = Math.round(p.y);
     if (x < 0 || x >= W5 || y < 0 || y >= PIXEL_ROWS) continue;
     if (p.ch) {
-      over.set(Math.floor(y / 2) * W5 + x, p.ch);
+      over2.set(Math.floor(y / 2) * W5 + x, p.ch);
       continue;
     }
     if (p.age / p.life > 0.7 && (x + sim.t) % 2 === 0) continue;
@@ -396,7 +396,7 @@ function frame(a) {
       const i = (cy * W5 + cx) * 3;
       const top = ink[cy * 2 * W5 + cx] === 1;
       const bottom = ink[(cy * 2 + 1) * W5 + cx] === 1;
-      const ch = over.get(cy * W5 + cx);
+      const ch = over2.get(cy * W5 + cx);
       words[i] = ch ? ch.codePointAt(0) : top && bottom ? 9608 : top ? 9600 : bottom ? 9604 : 32;
       words[i + 1] = INK;
       words[i + 2] = NONE;
@@ -763,7 +763,7 @@ const hueColour = (hue) => {
 };
 function frame2() {
   const px = new Int32Array(W * H).fill(CLEAR);
-  const over = /* @__PURE__ */ new Map();
+  const over2 = /* @__PURE__ */ new Map();
   const set = (x, y, c) => {
     const xi = Math.round(x);
     const yi = Math.round(y);
@@ -818,9 +818,9 @@ function frame2() {
     const text = isJackpot ? sim2.payout > 0 ? cycle2(["JACKPOT!", `+${sim2.payout}`], 8) : "JACKPOT!" : sim2.payout > 0 ? `+${sim2.payout}` : "";
     const start7 = Math.floor((W - text.length) / 2);
     const fg = isJackpot ? hueColour(sim2.t * 40 % 360) : 16765773;
-    text.split("").forEach((ch, i) => over.set(start7 + i, { ch, fg }));
+    text.split("").forEach((ch, i) => over2.set(start7 + i, { ch, fg }));
   } else if (sim2.queue.some((s) => s.isGolden) || sim2.spin?.isGolden) {
-    "GOLDEN".split("").forEach((ch, i) => over.set(11 + i, { ch, fg: cycle2([16765773, 16773800], 4) }));
+    "GOLDEN".split("").forEach((ch, i) => over2.set(11 + i, { ch, fg: cycle2([16765773, 16773800], 4) }));
   }
   const words = new Uint32Array(W * ROWS2 * 3);
   for (let cy = 0; cy < ROWS2; cy++) {
@@ -828,7 +828,7 @@ function frame2() {
       const i = (cy * W + cx) * 3;
       const top = px[cy * 2 * W + cx];
       const bottom = px[(cy * 2 + 1) * W + cx];
-      const o = over.get(cy * W + cx);
+      const o = over2.get(cy * W + cx);
       if (o) {
         words[i] = o.ch.codePointAt(0);
         words[i + 1] = o.fg;
@@ -1460,9 +1460,9 @@ const statsLine3 = (s) => `Lv ${levelOf2(s.xp)}  \u2302 ${s.toppled}  \u2708 ${s
 function frame3(a, stats) {
   const W5 = sim3.W;
   const buf = new Uint32Array(W5 * PH).fill(EMPTY);
-  const over = /* @__PURE__ */ new Map();
+  const over2 = /* @__PURE__ */ new Map();
   const text = (x, row, s, color) => [...s].forEach((ch, i) => {
-    if (x + i >= 0 && x + i < W5) over.set(row * W5 + x + i, { ch, color });
+    if (x + i >= 0 && x + i < W5) over2.set(row * W5 + x + i, { ch, color });
   });
   drawCity(buf);
   if (sim3.flag) {
@@ -1490,7 +1490,7 @@ function frame3(a, stats) {
       const i = (cy * W5 + cx) * 3;
       const top = buf[cy * 2 * W5 + cx];
       const bottom = buf[(cy * 2 + 1) * W5 + cx];
-      const g = over.get(cy * W5 + cx);
+      const g = over2.get(cy * W5 + cx);
       if (g) {
         words[i] = g.ch.codePointAt(0);
         words[i + 1] = g.color;
@@ -1907,15 +1907,15 @@ function frame4() {
   }
   if (sim4.tumble) stamp(TUMBLE[Math.floor(sim4.t / 3) % 2], sim4.tumble.x, PIXEL_ROWS2 - 3 - Math.floor(sim4.t / 4) % 2, false);
   if (sim4.bird) stamp(BIRD[Math.floor(sim4.t / 4) % 2], sim4.bird.x, sim4.bird.y, false);
-  const over = /* @__PURE__ */ new Map();
-  for (const g of sim4.glyphs) if (g.x >= 0 && g.x < W2 && g.y >= 0 && g.y < ROWS4) over.set(g.y * W2 + g.x, g.ch);
+  const over2 = /* @__PURE__ */ new Map();
+  for (const g of sim4.glyphs) if (g.x >= 0 && g.x < W2 && g.y >= 0 && g.y < ROWS4) over2.set(g.y * W2 + g.x, g.ch);
   const words = new Uint32Array(W2 * ROWS4 * 3);
   for (let cy = 0; cy < ROWS4; cy++) {
     for (let cx = 0; cx < W2; cx++) {
       const i = (cy * W2 + cx) * 3;
       const top = ink[cy * 2 * W2 + cx] === 1;
       const bottom = ink[(cy * 2 + 1) * W2 + cx] === 1;
-      const ch = over.get(cy * W2 + cx);
+      const ch = over2.get(cy * W2 + cx);
       words[i] = ch ? ch.codePointAt(0) : top && bottom ? 9608 : top ? 9600 : bottom ? 9604 : 32;
       words[i + 1] = INK3;
       words[i + 2] = NONE3;
@@ -2184,10 +2184,10 @@ function frame5() {
     if (xi > 0 && xi < W3 - 1 && yi > 0 && yi < PIXEL_ROWS3 - 1) ink[yi * W3 + xi] = 1;
   };
   const stamp = (rows2, x, y) => rows2.forEach((row, dy) => [...row].forEach((c, dx) => c === "#" && set(x + dx, y + dy)));
-  const over = /* @__PURE__ */ new Map();
+  const over2 = /* @__PURE__ */ new Map();
   const glyph3 = (x, cell, ch) => {
     const xi = Math.round(x);
-    if (xi > 0 && xi < W3 - 1 && cell >= 0 && cell < ROWS5) over.set(cell * W3 + xi, ch);
+    if (xi > 0 && xi < W3 - 1 && cell >= 0 && cell < ROWS5) over2.set(cell * W3 + xi, ch);
   };
   for (let x = 0; x < W3; x++) {
     ink[x] = 1;
@@ -2230,7 +2230,7 @@ function frame5() {
       const i = (cy * W3 + cx) * 3;
       const top = ink[cy * 2 * W3 + cx] === 1;
       const bottom = ink[(cy * 2 + 1) * W3 + cx] === 1;
-      const ch = over.get(cy * W3 + cx);
+      const ch = over2.get(cy * W3 + cx);
       words[i] = ch ? ch.codePointAt(0) : top && bottom ? 9608 : top ? 9600 : bottom ? 9604 : 32;
       words[i + 1] = INK4;
       words[i + 2] = NONE4;
@@ -2958,9 +2958,10 @@ This terminal:
 ${rows.join("\n")}
 "/arcade <game>" pins one game, "/arcade random|rotate|all|off" sets how new terminals pick, "/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal's game. "/<game> hide|show" changes this terminal only.`;
 }
-async function save2($, field, value) {
-  const { deny } = await $.config.set({ key: `arcade.${field}`, value });
-  return deny;
+const over = (options) => `${String(options.mode ?? "")}|${String(options.pool ?? "")}`;
+async function save2($, options, mode, pool) {
+  const saved = { mode, pool: pool.join(","), over: over(options) };
+  await $.store.set("setting", saved);
 }
 async function celebrate3($, found) {
   if (found.length === 0) return;
@@ -2979,6 +2980,8 @@ export const register = (on, options) => {
       name: "arcade",
       description: 'Which Arcade games show: "/arcade <game>" pins one, "/arcade random|rotate|all|off", "/arcade pool <games>", "/arcade next".'
     });
+    const saved = await $.store.get("setting");
+    if (saved?.over === over(options)) Object.assign(setting, { mode: modeOf(saved.mode), pool: poolOf(saved.pool) });
     if (await read8($, pickedFor) !== `${setting.mode}|${setting.pool.join(",")}`) await apply($, setting.mode, setting.pool);
     const ran = await start($, e, ((e1) => start2($, e1, ((e2) => start4($, e2, ((e3) => start5($, e3, ((e4) => start6($, e4, ((e5) => start3($, e5, next)))))))))));
     const streak = streakMilestones(await $.store.get("days"), await $.clock.now());
@@ -3003,8 +3006,7 @@ export const register = (on, options) => {
         return { text: `Name the games for the pool: ${GAMES.map((g) => g.id).join(", ")}.` };
       }
       const pool2 = poolOf(ids.join(","));
-      const deny2 = await save2($, "pool", pool2.join(","));
-      if (deny2 !== void 0) return { text: `The pool was not saved: ${deny2}` };
+      await save2($, options, setting.mode, pool2);
       setting.pool = pool2;
       await apply($, setting.mode, pool2);
       return { text: await status($, setting.mode, pool2) };
@@ -3016,8 +3018,7 @@ export const register = (on, options) => {
     }
     const pool = id === void 0 ? setting.pool : [id, ...setting.pool.filter((x) => x !== id)];
     const next = id === void 0 ? mode : "fixed";
-    const deny = await save2($, "mode", next) ?? (id === void 0 ? void 0 : await save2($, "pool", pool.join(",")));
-    if (deny !== void 0) return { text: `The setting was not saved: ${deny}` };
+    await save2($, options, next, pool);
     Object.assign(setting, { mode: next, pool });
     await apply($, next, pool);
     return { text: await status($, next, pool) };
