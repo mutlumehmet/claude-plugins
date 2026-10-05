@@ -23,7 +23,8 @@ session in that folder knows where things are without being told.
 4. **Writes two documents.** `CLAUDE.md` for what never changes about the project, `STATUS.md` for
    where things stand today. A new session reads `STATUS.md` first and carries on.
 5. **Creates the repo safely.** Private by default. If you have more than one GitHub account logged
-   in, it checks which one is active first, because `gh repo create` silently uses the active one.
+   in, it has you check which one is active first, because `gh repo create` silently uses the active
+   one. You run the `gh` commands yourself (with `!`), so the skill never touches your GitHub login.
 
 ## First run
 

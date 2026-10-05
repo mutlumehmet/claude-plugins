@@ -2,12 +2,18 @@
 name: save-context
 description: Saves what a working session decided, changed, learned or left open, so the next conversation starts with it already in context. Discovers what the project keeps (STATUS.md, CLAUDE.md, the agent's memory files, registers, context folders), maps each item from the conversation to the one place it belongs, shows the user the plan in one list, writes it after approval, hands items to other skills that own a destination, and commits only the files it touched without pushing. Works in any project. Use at the end of a session, or as a checkpoint before switching to a different task. Triggers on "save context", "save-context", "wrap up", "wrap-up", "close the session", "did you update everything", "update status and memory", "save the context", "before we close", "before I close this", "handoff", "checkpoint", "make sure the next session knows".
 allowed-tools:
-  - Bash
   - Read
-  - Write
-  - Edit
   - AskUserQuestion
-  - Skill
+  - Edit(**/STATUS.md)
+  - Edit(**/CLAUDE.md)
+  - Write(**/memory/*.md)
+  - Edit(**/memory/*.md)
+  - Bash(ls:*)
+  - Bash(git rev-parse:*)
+  - Bash(git status:*)
+  - Bash(git diff:*)
+  - Bash(git add:*)
+  - Bash(git commit:*)
 ---
 
 # Save context before closing a session
@@ -16,13 +22,15 @@ The goal is one thing: **a fresh session, reading only what the project already 
 must know everything from this conversation that matters later.** Anything that only mattered
 inside this conversation stays out.
 
+Pre-approved tools are kept narrow on purpose: reading, edits to STATUS.md, CLAUDE.md and the
+memory folder, and the read and commit git commands. Anything else (a register, another skill, a
+push) asks the user first, which is the intended behaviour, not an error.
+
 ## Step 0: Load the config (optional)
 
 The config lives at `$SAVE_CONTEXT_CONFIG` if set, otherwise `~/.config/save-context/config.yaml`.
 
-```bash
-CFG_FILE="${SAVE_CONTEXT_CONFIG:-$HOME/.config/save-context/config.yaml}"; test -f "$CFG_FILE" && cat "$CFG_FILE"
-```
+Read that file with the Read tool if it exists (expand `~` to the home folder).
 
 Every key is optional and the skill works with no file at all, so there is no setup round. If the
 file is missing, use the defaults below and carry on. `config.example.yaml` next to this file
@@ -37,14 +45,17 @@ documents each key.
 
 Do not assume a layout. Find it.
 
+Run these from the project folder (where the session started):
+
 ```bash
-ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); echo "$ROOT"
-ls "$ROOT"; git -C "$ROOT" status --short 2>/dev/null
-CC="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
-MEM="$CC/projects/$(echo "$ROOT" | sed 's|/|-|g')/memory"; ls "$MEM" 2>/dev/null
+git rev-parse --show-toplevel
+git status --short
+ls
 ```
 
-`MEM` is where Claude Code keeps per-project memory. If the environment uses a different memory
+`ROOT` is the first line, or the current folder if it is not a git repo. The per-project memory
+folder is `<config dir>/projects/<ROOT with every / replaced by ->/memory`, where the config dir is
+`$CLAUDE_CONFIG_DIR` or `~/.claude`; list it with `ls`. That is where Claude Code keeps per-project memory. If the environment uses a different memory
 location or format (its system prompt will say), follow that instead.
 
 Then read, in this order:
@@ -100,7 +111,7 @@ Rules for routing:
 
 - **Owning skills first.** A skill owns a destination when its description says it writes there
   (a findings register, a task list, a ticket tracker). List the item as "hand to <skill>" and
-  invoke that skill after approval. Never hand-roll what a skill does, because it may keep two
+  invoke that skill after approval (it is not pre-approved, so Claude Code asks first). Never hand-roll what a skill does, because it may keep two
   places in sync or apply checks you would skip.
 - **One home per fact.** If the project separates registers from tasks (a fact vs a promise), keep
   each item in exactly one place.
@@ -189,8 +200,8 @@ Skip this step if `commit: false` or the folder is not a git repo. Memory lives 
 and is not committed.
 
 ```bash
-git -C "$ROOT" status --short
-git -C "$ROOT" diff --stat
+git status --short
+git diff --stat
 ```
 
 - Stage **only the files this run touched**, by name. Never `git add -A`. Files that were already

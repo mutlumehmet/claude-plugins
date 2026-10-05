@@ -18,7 +18,7 @@
 #   --assets "a b"       subfolders to create under <storage-base>/<name>/assets.
 #                        Omit entirely to skip the assets symlink. "" means symlink, no subfolders.
 #   --git MODE           none | local | private | public. Default local. Creates no remote:
-#                        the skill runs `gh repo create` itself after checking the account.
+#                        the skill hands the user `gh repo create` to run after checking the account.
 #   --env                also write a tracked .env.example
 #   --mcp                also write a .mcp.json stub
 #   --claude-lang L      write .claude/settings.local.json with {"language": "L"}, scoping Claude's

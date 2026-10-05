@@ -2,11 +2,18 @@
 name: create-project
 description: Sets up a new project folder the same way every time, for code or for a folder of notes and documents, so any later agent session can find its way around without being told. Asks the few questions that change the layout (code or notes, docs language, heavy files, git remote, what is sensitive, optionally which account), then creates the folder, an optional assets/ symlink into synced cloud storage that git never sees, CLAUDE.md for what never changes and STATUS.md for where things stand, and optionally a private GitHub repo on the right account. Use whenever a new project folder is being started, for work or personal life. Triggers on "create a project", "new project", "set up a project folder", "scaffold a project", "start a new folder for", "make this a project", "set this up like my other projects".
 allowed-tools:
-  - Bash
   - Read
-  - Write
-  - Edit
   - AskUserQuestion
+  - Write(**/CLAUDE.md)
+  - Write(**/STATUS.md)
+  - Write(**/.claude/settings.local.json)
+  - Bash(ls:*)
+  - Bash(git status:*)
+  - Bash(git add:*)
+  - Bash(git commit:*)
+  - Bash(git ls-files:*)
+  - Bash(git check-ignore:*)
+  - Bash(git remote -v:*)
 ---
 
 # Create a project
@@ -18,13 +25,15 @@ Everything that differs between people (where projects live, which cloud folder 
 which GitHub accounts exist, optional integrations) comes from a config file. The rest of this skill
 is the same for everyone.
 
+Pre-approved tools are kept narrow on purpose: reading, writing CLAUDE.md, STATUS.md and the local
+settings file, and local git commands. `scaffold.sh`, any configured command, and everything that
+touches the user's GitHub login ask first or are run by the user.
+
 ## Step 0: Load the config, or set it up once
 
 The config lives at `$CREATE_PROJECT_CONFIG` if set, otherwise `~/.config/create-project/config.yaml`.
 
-```bash
-CFG="${CREATE_PROJECT_CONFIG:-$HOME/.config/create-project/config.yaml}"; test -f "$CFG" && cat "$CFG"
-```
+Read that file with the Read tool (expand `~` to the home folder).
 
 - **It exists:** read it and go to Step 1. Do not ask setup questions again.
 - **It does not exist:** this is the first run. Set it up, then continue with the project the user
@@ -38,9 +47,10 @@ First-run setup. Detect first, ask only what detection cannot answer, in one que
    `~/Library/Mobile Documents/com~apple~CloudDocs` (iCloud Drive), `~/Dropbox`, `~/OneDrive`,
    `~/Google Drive` if present. Offer each, plus "none". If one is chosen, suggest
    `<that folder>/project-assets` as `storage.path` and set `storage.label` to its name.
-3. **GitHub.** Run `gh auth status 2>&1`. Record the logged-in accounts in `github.accounts`. If
-   there is more than one, ask which is the default for new repos. If `gh` is missing or logged
-   out, leave `github` empty: projects get local git only until they set it up.
+3. **GitHub.** Ask which GitHub accounts they use with `gh` and record them in `github.accounts`.
+   If they are not sure, ask them to run `! gh auth status` and tell you what it lists: this skill
+   does not read the GitHub login itself. If there is more than one, ask which is the default for
+   new repos. If they do not use `gh`, leave `github` empty: projects get local git only.
 4. **Doc languages.** Ask which languages they write project docs in. Default: English.
 5. **Optional integrations.** Ask once whether they use a per-folder Claude account tool or keep a
    single file listing all their projects. Most people do not: default to leaving both empty.
@@ -97,21 +107,19 @@ under it may be committed, and `CLAUDE.md` must say so in words.
 **`setup-assets.sh` is committed, executable, and idempotent.** It recreates the symlink on a fresh
 clone and creates the subfolders, which mirror the repo's own folder names. `scaffold.sh` writes it.
 
-**GitHub account check.** `gh repo create` silently uses whichever account is active. If
-`github.accounts` lists more than one account, check before creating:
+**GitHub account check.** Creating the remote uses the user's own GitHub login, so the skill
+does not run `gh` itself: it gives the user the exact commands to run with the `!` prefix (the
+output lands in the conversation), one at a time. `gh repo create` silently uses whichever account
+is active, so with more than one account in `github.accounts`, start with the check:
 
-```bash
-gh auth status
+```
+! gh auth status
+! gh auth switch --hostname github.com --user <github.default>
+! gh repo create <name> --<visibility> --source=. --remote=origin --push
+! gh repo view --json owner,isPrivate
 ```
 
-If the active account is not `github.default`, switch first:
-
-```bash
-gh auth switch --hostname github.com --user <github.default>
-```
-
-Then `gh repo create <name> --<visibility> --source=. --remote=origin --push`, default branch
-`main`, and confirm the owner with `gh repo view --json owner,isPrivate`. Undoing a repo created
+Skip the switch when the active account is already `github.default`. Default branch `main`. Undoing a repo created
 under the wrong account needs the `delete_repo` token scope, which is usually not granted, so check
 first rather than fix later. With a single account, skip the check.
 
@@ -176,11 +184,13 @@ keeps a routing index. Do that when there are more than about four substantial t
    where the real value comes from. A plausible wrong figure in a tax or contract folder is worse
    than a gap.
 7. **Commit**, message in the project's language, with whatever attribution the session requires.
-8. **Create the remote** if asked (see the GitHub account check), then verify: `gh repo view --json
-   isPrivate,owner`, `git ls-files` to confirm nothing sensitive is tracked, and
-   `git check-ignore -v assets` if there is an assets folder.
+8. **Create the remote** if asked: hand the user the commands in the GitHub account check and wait
+   for their output, then verify: `git remote -v` shows the new remote, the user's
+   `gh repo view` output shows the right owner and privacy, `git ls-files` confirms nothing
+   sensitive is tracked, and `git check-ignore -v assets` if there is an assets folder.
 9. **Assign the Claude account** (only if `claude_accounts.command` is set): run the command with
-   `{path}` and `{account}` filled in, then confirm it took effect.
+   `{path}` and `{account}` filled in, then confirm it took effect. It is the user's own configured
+   command and is not pre-approved, so Claude Code asks before running it.
 10. **Add a row to the registry** (only if `registry.file` is set): one row for the new folder,
     filling `registry.columns`, committed separately if that file lives in its own repo. Run
     `registry.check_command` afterwards if it is set.
@@ -194,7 +204,7 @@ keeps a routing index. Do that when there are more than about four substantial t
 |---|---|
 | **Committing `assets/`.** | Confirm `git check-ignore -v assets` before the first push, and `git ls-files` after. This is the one mistake that leaks bank details to a remote. |
 | **Creating a public repo.** | Private unless the user explicitly says public. |
-| **Repo lands under the wrong GitHub account.** | With more than one account, run `gh auth status` and switch to `github.default` before `gh repo create`, then confirm the owner. |
+| **Repo lands under the wrong GitHub account.** | With more than one account, have the user run `! gh auth status` and switch to `github.default` before `gh repo create`, then confirm the owner from their `gh repo view` output. |
 | **An assets symlink that points at nothing.** | `scaffold.sh` creates the target folder itself. Verify with `ls -la assets/` that it resolves to a real directory. |
 | **Inventing facts to fill a table.** | Mark unknown, say where the value comes from. |
 | **Guessing the language.** | Ask. Mixing languages inside one project reads badly. |
