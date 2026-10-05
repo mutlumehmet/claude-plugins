@@ -1,6 +1,6 @@
 {
   "name": "dragon-lair",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A small pixel dragon above the prompt that acts out what Claude is doing and breathes fire at the moments worth celebrating: a commit, a merge, a finished task list, a PDF made.",
   "author": {
     "name": "Mehmet Mutlu"

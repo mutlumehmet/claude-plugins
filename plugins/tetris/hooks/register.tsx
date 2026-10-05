@@ -25,6 +25,11 @@ const NONE = 0x01000000
 const tally = atom({ plugin: 'tetris', key: 'tally' } as const, { score: 0, lines: 0, best: 0, games: 0 })
 const isHidden = atom({ plugin: 'tetris', key: 'isHidden' } as const, false)
 
+// A hidden game stays quiet: its notifications are hidden too.
+async function notify($: EngineInterface, text: string) {
+  if (!(await read($, isHidden))) $.ui.toast(text)
+}
+
 // The classic scoring for 1 to 4 lines at once, times the level plus one.
 const LINE_SCORE = [0, 40, 100, 300, 1200]
 // Rows a milestone clears from the bottom.
@@ -139,8 +144,8 @@ async function scoreLines($: EngineInterface, lines: number, isBomb: boolean) {
   const points = isBomb ? 50 * lines * (level + 1) : LINE_SCORE[Math.min(4, lines)]! * (level + 1)
   const saved = await update($, tally, old => ({ ...old, score: old.score + points, lines: old.lines + lines }))
   await $.store.set('tally', saved)
-  if (!isBomb && lines >= 4) $.ui.toast('🧱 TETRIS! Four lines at once')
-  if (Math.floor(saved.lines / 10) > level) $.ui.toast(`🧱 Level ${Math.floor(saved.lines / 10)}`)
+  if (!isBomb && lines >= 4) void notify($, '🧱 TETRIS! Four lines at once')
+  if (Math.floor(saved.lines / 10) > level) void notify($, `🧱 Level ${Math.floor(saved.lines / 10)}`)
 }
 
 async function gameOver($: EngineInterface) {
@@ -153,7 +158,7 @@ async function gameOver($: EngineInterface) {
     games: old.games + 1,
   }))
   await $.store.set('tally', saved)
-  $.ui.toast(`🧱 Game over. Best ${saved.best}`)
+  void notify($, `🧱 Game over. Best ${saved.best}`)
 }
 
 // Medium moments clear a row from the bottom, big ones three.
@@ -161,7 +166,7 @@ async function onMilestone($: EngineInterface, tier: string, _kind: string, labe
   const rows = CLEARS[tier as keyof typeof CLEARS] ?? 0
   if (rows === 0) return
   sim.bombs.push(rows)
-  $.ui.toast(`🧱 ${label}: ${rows} row${rows > 1 ? 's' : ''} cleared`)
+  void notify($, `🧱 ${label}: ${rows} row${rows > 1 ? 's' : ''} cleared`)
 }
 
 function step($: EngineInterface) {

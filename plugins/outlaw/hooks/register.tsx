@@ -17,6 +17,11 @@ const NONE = 0x01000000
 const score = atom({ plugin: 'outlaw', key: 'score' } as const, { you: 0, bugs: 0, streak: 0, best: 0 })
 const isHidden = atom({ plugin: 'outlaw', key: 'isHidden' } as const, false)
 
+// A hidden game stays quiet: its notifications are hidden too.
+async function notify($: EngineInterface, text: string) {
+  if (!(await read($, isHidden))) $.ui.toast(text)
+}
+
 const HIT_CHANCE = { you: 0.8, bug: 0.5 }
 
 // The gunslinger facing right, 7 by 9 pixels. The bug is the same, mirrored.
@@ -272,7 +277,7 @@ async function onMilestone($: EngineInterface, tier: string, _kind: string, labe
   const shots = tier === 'big' ? 3 : tier === 'medium' ? 1 : 0
   if (shots === 0) return
   for (let i = 0; i < shots; i++) sim.queue.push({ by: 'you', isPractice: false })
-  $.ui.toast(`🤠 ${label}! ${shots > 1 ? `${shots} shots` : 'Draw!'}`)
+  void notify($, `🤠 ${label}! ${shots > 1 ? `${shots} shots` : 'Draw!'}`)
 }
 
 // Hands each moment the session's milestones spotted to the game.

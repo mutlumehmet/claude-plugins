@@ -76,3 +76,15 @@ test('a configured big command counts as big', { options: { big_commands: 'make 
   await $.tool.call({ tool: 'Bash', command: 'make ship' })
   expect(await hoard($)).toMatch(/◆ 25 /)
 })
+
+test('a hidden dragon sends no notifications', async ($, on) => {
+  mock.store(on)
+  const toasts: string[] = []
+  on('ui.toast', ($, e) => {
+    toasts.push(JSON.stringify(e))
+    return { value: undefined }
+  })
+  await $.command.run({ command: 'dragon', args: 'hide' })
+  await $.command.run({ command: 'dragon', args: 'fire' })
+  expect(toasts).toHaveLength(0)
+})

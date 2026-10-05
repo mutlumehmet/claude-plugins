@@ -27,6 +27,11 @@ const golden = atom({ plugin: 'jackpot', key: 'golden' } as const, 0)
 const last = atom({ plugin: 'jackpot', key: 'last' } as const, '')
 const isHidden = atom({ plugin: 'jackpot', key: 'isHidden' } as const, false)
 
+// A hidden game stays quiet: its notifications are hidden too.
+async function notify($: EngineInterface, text: string) {
+  if (!(await read($, isHidden))) $.ui.toast(text)
+}
+
 const ORDER: SymbolId[] = ['seven', 'dragon', 'diamond', 'bell', 'star', 'cherry']
 const TRIPLE_PAY: Record<SymbolId, number> = { seven: 100, dragon: 50, diamond: 25, bell: 15, star: 10, cherry: 8 }
 // Each reel's strip, so a spin scrolls past real neighbours.
@@ -153,8 +158,8 @@ async function finishSpin($: EngineInterface) {
   await $.store.set('bank', next)
   const names = sim.result.join(' ')
   await update($, last, () => (payout > 0 ? `${names}: +${payout}` : names))
-  if (win === 'jackpot') $.ui.toast(`🎰 JACKPOT! 7 7 7 pays ${payout} chips`)
-  else if (win === 'triple') $.ui.toast(`🎰 Three ${sim.result[0]}s! +${payout} chips`)
+  if (win === 'jackpot') void notify($, `🎰 JACKPOT! 7 7 7 pays ${payout} chips`)
+  else if (win === 'triple') void notify($, `🎰 Three ${sim.result[0]}s! +${payout} chips`)
 }
 
 function tick($: EngineInterface) {
@@ -349,7 +354,7 @@ async function onMilestone($: EngineInterface, tier: string, _kind: string, labe
   if (spins === 0) return
   for (let i = 0; i < spins; i++) pull($, { isGolden: true, isPractice: false })
   await update($, golden, n => n + spins)
-  $.ui.toast(`✦ ${label}: ${spins} golden spin${spins > 1 ? 's' : ''} queued`)
+  void notify($, `✦ ${label}: ${spins} golden spin${spins > 1 ? 's' : ''} queued`)
 }
 
 // Hands each moment the session's milestones spotted to the game.

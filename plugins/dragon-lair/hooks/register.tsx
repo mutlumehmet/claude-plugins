@@ -21,6 +21,11 @@ const mood = atom({ plugin: 'dragon-lair', key: 'mood' } as const, 'idle')
 const feat = atom({ plugin: 'dragon-lair', key: 'feat' } as const, '')
 const isHidden = atom({ plugin: 'dragon-lair', key: 'isHidden' } as const, false)
 
+// A hidden game stays quiet: its notifications are hidden too.
+async function notify($: EngineInterface, text: string) {
+  if (!(await read($, isHidden))) $.ui.toast(text)
+}
+
 // The bigger the feat, the bigger the show.
 type Show = 'puff' | 'breath' | 'blaze' | 'roar'
 const SHOW_FRAMES: Record<Show, number> = { puff: 20, breath: 32, blaze: 48, roar: 72 }
@@ -408,9 +413,9 @@ async function celebrate($: EngineInterface, label: string, gold: number, show: 
   if (after > before) {
     sim.level = after
     sim.levelUntil = sim.show.until + 45
-    $.ui.toast(`🔥 ${label}! +${gold} gold. The dragon grows to level ${after}!`)
+    void notify($, `🔥 ${label}! +${gold} gold. The dragon grows to level ${after}!`)
   } else if (!isQuiet) {
-    $.ui.toast(`🔥 ${label}! The dragon hoards +${gold} gold`)
+    void notify($, `🔥 ${label}! The dragon hoards +${gold} gold`)
   }
 }
 

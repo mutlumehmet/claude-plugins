@@ -26,6 +26,11 @@ const FULL = 4
 const pet = atom({ plugin: 'tama', key: 'pet' } as const, fresh(0, 1))
 const isHidden = atom({ plugin: 'tama', key: 'isHidden' } as const, false)
 
+// A hidden game stays quiet: its notifications are hidden too.
+async function notify($: EngineInterface, text: string) {
+  if (!(await read($, isHidden))) $.ui.toast(text)
+}
+
 
 // One sprite per stage; the eye row's holes close for a blink.
 const SPRITES: Record<Stage, { rows: string[]; eyes: number }> = {
@@ -295,7 +300,7 @@ export const register: Register = (on, options) => {
         const p = await change($, q => q)
         if (p.starvingSince > 0 && sim.now - p.starvingSince > LEAVES_AFTER && sim.leaveFrom < 0) {
           sim.leaveFrom = sim.t
-          $.ui.toast('🧳 Left hungry for too long, your Tamagotchi packs its bags. It leaves an egg behind.')
+          void notify($, '🧳 Left hungry for too long, your Tamagotchi packs its bags. It leaves an egg behind.')
           $.clock.after(6000, () => {
             sim.leaveFrom = -1
             sim.x = 12
@@ -390,7 +395,7 @@ export const register: Register = (on, options) => {
     })
     if (before.stage === 'egg' && p.stage === 'baby') {
       hearts(2)
-      $.ui.toast('🥚 Your Tamagotchi hatched!')
+      void notify($, '🥚 Your Tamagotchi hatched!')
     } else if (p.stage !== 'egg') {
       sim.eatUntil = sim.t + 18
     }
