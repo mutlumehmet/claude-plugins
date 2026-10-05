@@ -18,14 +18,14 @@ nothing, so you can add your own words and press Enter. Part of [claude-plugins]
   answer's items in the band above the prompt, so the list stays in view however the conversation
   scrolls. Nothing pins by itself: the pin stays on that list through later answers until you unpin
   it or pin another one. Items you then send with `/subtask` get a `⑂`; the first 5 show, then a
-  `+N more` line. `Unpin list`, `/subtask unpin`, `/st unpin` or the `Unpin` button clears it.
+  `+N more` line. `Unpin list`, `/st unpin` or the `Unpin` button clears it.
   The list sits at the right end of the band, beside the other band mods (an Arcade game, the
   account line), and every item is a button: a press puts `/subtask <item>` in the prompt box.
 - **Pin an earlier list**: `/st pins` shows the last few answers that had a list, newest first, and `/st pin N` pins list N, so a list from a few answers back can still be pinned.
 
 What it reads and does: Claude's last answer (to find the items), the prompt box (to add a pick), and
-the text of each `/subtask` you run (to mark pinned items as sent). It watches `/subtask` and only answers it
-itself for `unpin`; every other `/subtask` runs as usual. It sends nothing anywhere.
+the text of each `/subtask` you run (to mark pinned items as sent). It watches `/subtask` and always passes it
+on unchanged, so every `/subtask` runs as usual. It sends nothing anywhere.
 
 Nothing is drawn in the VS Code chat panel; use `/st` there.
 
@@ -34,7 +34,7 @@ Nothing is drawn in the VS Code chat panel; use `/st` there.
 - **Reads**: the text of the last answers, to find their list items, and the prompt box, to add an item to it.
 - **Keeps**: the last 10 answers that had a list, and the pin, in Claude Code's session state (in memory, this session only), so a hot reload keeps them.
 - **Does**: draws the Subtask and Pin list buttons, the item picker and the pinned list above the prompt; fills the prompt box and never sends it.
-- **Hooks**: `turn.start` and `turn.complete` track the latest answer. `command.run` answers `/subtask unpin` and `/st` (including `/st pin`, `/st pin N` and `/st pins`); every other `/subtask` passes on unchanged. `ui.render` adds its rows and leaves the answer unchanged.
+- **Hooks**: `turn.start` and `turn.complete` track the latest answer. `command.run` answers `/st` (including `/st pin`, `/st pin N`, `/st pins` and `/st unpin`); `/subtask` is only watched, to mark pinned items as sent, and always passes on unchanged. `ui.render` adds its rows and leaves the answer unchanged.
 - **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
 - **Never**: sends anything anywhere (no network calls, no telemetry).
 

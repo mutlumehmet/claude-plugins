@@ -191,7 +191,7 @@ function band() {
   } as any
 }
 
-test('/subtask alone pins nothing; the Pin list button pins, /subtask marks the item, /subtask unpin clears it', async ($, on) => {
+test('/subtask alone pins nothing; the Pin list button pins, /subtask marks the item and passes on, /st unpin clears it', async ($, on) => {
   const forked: string[] = []
   engine(on, [])
   on('command.run', { command: 'subtask' }, ($: unknown, e: any) => {
@@ -219,9 +219,12 @@ test('/subtask alone pins nothing; the Pin list button pins, /subtask marks the 
   expect(await ui.find({ key: 'pin-2', text: /^⑂ 2\. Ask first buttons/ })).toBeDefined()
   await ui.unmount()
 
-  const r = await $.command.run({ command: 'subtask', args: 'unpin' } as any)
+  const r = await $.command.run({ command: 'st', args: 'unpin' } as any)
   expect(r.text).toBe('Unpinned the list.')
   expect(forked.length).toBe(2)
+  // /subtask unpin is no longer answered by the mod: it reaches Claude Code like any /subtask
+  await $.command.run({ command: 'subtask', args: 'unpin' } as any)
+  expect(forked.length).toBe(3)
   const after = await $.ui.mount(band())
   expect(await after.find({ key: 'pin-unpin' })).toBeUndefined()
 })

@@ -8,7 +8,7 @@
 // A "Pin list" button beside it pins that answer's items in the band above the prompt,
 // so the list stays in view however the conversation scrolls, until you unpin it or
 // pin another answer; nothing pins by itself. /st pin pins the newest list from the
-// keyboard. Items later sent with /subtask get a ⑂. /subtask unpin, /st unpin or the
+// keyboard. Items later sent with /subtask get a ⑂. /st unpin or the
 // Unpin button clears it. The pin and the recent lists live in the host's state, so a
 // later answer or a hot reload does not move or lose it.
 
@@ -289,15 +289,10 @@ export const register: Register = (on) => {
     return next(e)
   })
 
-  // /subtask belongs to Claude Code; the mod watches it to mark pinned items sent,
-  // and answers only "unpin"
+  // /subtask belongs to Claude Code; the mod only watches it to mark pinned items sent
+  // and always passes it on unchanged (unpinning is /st unpin)
   on('command.run', { command: 'subtask' }, async ($, e, next) => {
-    const args = String(e.args ?? '').trim()
-    if (args === 'unpin') {
-      await unpin($)
-      return { text: 'Unpinned the list.' }
-    }
-    await markSent($, args)
+    await markSent($, String(e.args ?? '').trim())
     return next(e)
   })
 
