@@ -590,8 +590,12 @@ async function save($: EngineInterface, change: (s: Score) => Score) {
   return next
 }
 
+// A smaller moment never cuts a bigger show short: the plane still falls, the city still falls.
+const RANK: Record<Show, number> = { ink: 0, plane: 1, rampage: 2, conquer: 3 }
+
 async function celebrate($: EngineInterface, label: string, xp: number, show: Show, isQuiet = false) {
-  sim.show = { kind: show, until: sim.t + SHOW_FRAMES[show] }
+  const running = sim.show && sim.t < sim.show.until ? sim.show.kind : null
+  if (running === null || RANK[show] >= RANK[running]) sim.show = { kind: show, until: sim.t + SHOW_FRAMES[show] }
   sim.lastActivity = sim.t
   const before = levelOf((await read($, score)).xp)
   const next = await save($, old => ({ ...old, xp: old.xp + xp }))

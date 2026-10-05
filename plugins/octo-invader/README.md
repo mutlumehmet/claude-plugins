@@ -2,6 +2,14 @@
 
 A Claude Code mod: a pixel octopus invades a city that runs the full width of the line above the prompt. It acts out what Claude is doing, Godzilla style, and pulls planes out of the sky when something worth celebrating happens. Part of the Claude Code Arcade in [claude-plugins](../../README.md).
 
+![octo-invader in a terminal: Claude reads, edits, commits and merges while the octopus walks the streets, smashes a building, pulls a plane out of the sky and takes the city](../../docs/images/octo-invader-terminal.gif)
+
+The strip on its own, as the mod draws it:
+
+![The octopus strip: a city the width of the terminal, buildings toppled, a plane downed, a flag on the rubble](../../docs/images/octo-invader.gif)
+
+Both GIFs are drawn by the mod's own code from a scripted session (a read, an edit, a web search, a commit, a merge); the window around the strip is a mock up of a terminal.
+
 ## What it does
 
 - **While Claude works** the octopus shows it: it hops when you send a message, hovers over the rooftops while Claude thinks, walks the streets on its tentacles while a file is read, hunts about with a `?` while Claude searches, and takes to the sky for web and MCP tools.

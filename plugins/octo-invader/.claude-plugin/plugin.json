@@ -1,6 +1,6 @@
 {
   "name": "octo-invader",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A pixel octopus invades a city that runs the full width above the prompt: it walks the streets while Claude reads, smashes buildings while Claude edits, flies for the web, and pulls planes out of the sky at the moments worth celebrating.",
   "author": {
     "name": "Mehmet Mutlu"
