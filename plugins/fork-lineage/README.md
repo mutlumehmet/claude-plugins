@@ -4,7 +4,7 @@ A Claude Code mod that remembers which session a fork came from, shows it above 
 carries a fork's report back to its parent when you say so. Part of
 [claude-plugins](../../README.md) and of the Claude Code Toolkit.
 
-![A fork shows its parent and a report button; pressed, the fork's model writes a report and asks before sending](../../docs/images/fork-lineage-fork.gif)
+![How it works: a fork remembers its parent through renames, and its report goes back only after you approve it](../../docs/images/fork-lineage-how.gif)
 
 ## Why
 
@@ -26,6 +26,8 @@ copy it back by hand. fork-lineage keeps the link and makes the hand back one bu
   conversation without running a turn. If you never press it, the report goes along with your next
   message instead, so it is never lost and never arrives twice.
 - **In a parent**: the band says `⑂ N forks`.
+
+![In a fork: type, press report to parent, approve the report, and the band says reported](../../docs/images/fork-lineage-fork.gif)
 - **`/lineage`**: the whole family tree with the current titles, your session marked.
 - **At 80% and 90% context**, a fork that has not reported yet gets one reminder.
 
