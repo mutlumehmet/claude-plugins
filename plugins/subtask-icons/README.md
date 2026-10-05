@@ -14,6 +14,14 @@ nothing, so you can add your own words and press Enter. Part of [claude-plugins]
 - **Several items into one subtask**: if the prompt box already holds a `/subtask`, the next pick
   is added on a new line.
 - **From the keyboard**: `/st` opens the same picker; `/st 3` puts item 3 in the prompt box directly.
+- **Pinned list**: when `/subtask` runs, the answer's items are pinned in the band above the prompt,
+  so the list stays in view however the conversation scrolls. Items already sent to a subtask get a
+  `⑂`; the first 5 show, then a `+N more` line. `/subtask` on a newer answer replaces the pin.
+  `/subtask unpin`, `/st unpin` or the `Unpin` button clears it.
+
+What it reads and does: Claude's last answer (to find the items), the prompt box (to add a pick), and
+the text of each `/subtask` you run (to pin and mark items). It watches `/subtask` and only answers it
+itself for `unpin`; every other `/subtask` runs as usual. It sends nothing anywhere.
 
 Nothing is drawn in the VS Code chat panel; use `/st` there.
 
@@ -34,6 +42,8 @@ A mod runs inside Claude Code with your permissions. Read the code before you in
   12 item cap keeps it short.
 - After editing the mod while a session is open, restart the session: a hot reload has dropped the
   `/st` command once.
+- An item counts as sent when the `/subtask` text holds its whole first line; an edited pick is not
+  marked. A hot reload or a new session unpins the list.
 
 ## About
 

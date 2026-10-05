@@ -5,6 +5,9 @@
 // on a new line, so several items go to one subtask.
 // From the keyboard: /st opens a picker pane with every item in full (a press
 // or the item's number fills it), /st 3 fills the third directly.
+// When /subtask runs, the answer's items are pinned in the band above the prompt,
+// so the list stays in view however the conversation scrolls; items already sent
+// to a subtask get a ⑂. /subtask unpin (or /st unpin, or the Unpin button) clears it.
 
 import type { Hook, Register } from 'claude-code'
 
@@ -14,6 +17,8 @@ type Api = Parameters<Hook<'command.run'>>[0]
 const MAX_ITEMS = 12
 const LABEL_CHARS = 28
 const PICKER = 'st-picker'
+// Rows the pinned list shows before a "+N more" line
+const PIN_ROWS = 5
 
 // label: the short icon text; title: the item's whole first line, for the picker
 export type Unit = { label: string; title: string; text: string }
@@ -146,9 +151,27 @@ export function isLastBlock(blockText: string, answer: string): boolean {
 }
 
 // Module variables: a hot reload clears them, which only hides the icons
-// until the next answer
+// until the next answer, and unpins the list
 let lastAnswer = ''
 let isWorking = false
+// The list pinned in the band: the answer it came from, its items, the ones sent
+let pinned: { answer: string; units: Unit[]; sent: Set<number> } | null = null
+
+// The items a /subtask text names: an item counts as sent when the text holds its title
+export function sentItems(units: Unit[], text: string): number[] {
+  const body = text.toLowerCase()
+  return units.flatMap((u, i) => (u.title && body.includes(u.title.toLowerCase()) ? [i] : []))
+}
+
+// Pins the last answer's items (or keeps the pin, when it is the same answer) and
+// marks the items this /subtask names
+function pinFor(args: string): boolean {
+  const units = findUnits(lastAnswer)
+  if (units.length === 0) return false
+  if (!pinned || pinned.answer !== lastAnswer) pinned = { answer: lastAnswer, units, sent: new Set() }
+  for (const i of sentItems(units, args)) pinned.sent.add(i)
+  return true
+}
 // The items the open picker shows, fixed when /st opened it
 let pickerUnits: Unit[] = []
 
@@ -202,7 +225,24 @@ export const register: Register = (on) => {
     return next(e)
   })
 
+  // /subtask belongs to Claude Code; the mod watches it, and answers only "unpin"
+  on('command.run', { command: 'subtask' }, async ($, e, next) => {
+    const args = String(e.args ?? '').trim()
+    if (args === 'unpin') {
+      pinned = null
+      $.ui.invalidate('ui.render')
+      return { text: 'Unpinned the list.' }
+    }
+    if (pinFor(args)) $.ui.invalidate('ui.render')
+    return next(e)
+  })
+
   on('command.run', { command: 'st' }, async ($, e) => {
+    if (String(e.args ?? '').trim() === 'unpin') {
+      pinned = null
+      $.ui.invalidate('ui.render')
+      return { text: 'Unpinned the list.' }
+    }
     const units = findUnits(lastAnswer)
     if (units.length === 0) return { text: 'The last answer has no items.' }
     const n = Number.parseInt(String(e.args ?? '').trim(), 10)
@@ -235,6 +275,37 @@ export const register: Register = (on) => {
             {fit(i + 1 + '. ' + u.title, width)}
           </Button>
         ))}
+      </Box>
+    )
+  })
+
+  // The pinned list sits on top of the band, above whatever else is there
+  on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+    const below = await next(e)
+    if (!pinned || e.props.hasSurvey) return below
+    const { Box, Button, Text } = $.ui.resolve(e)
+    const width = Math.max(20, (e.props.bodyColumns ?? 80) - 12)
+    const shown = pinned.units.slice(0, PIN_ROWS)
+    const more = pinned.units.length - shown.length
+    const sent = pinned.sent
+    return (
+      <Box flexDirection="column">
+        <Box flexDirection="row">
+          <Text dimColor>{'⑂ Pinned list  '}</Text>
+          <Button key="pin-unpin" plain dimColor onPress={() => {
+            pinned = null
+            $.ui.invalidate('ui.render')
+          }}>
+            Unpin
+          </Button>
+        </Box>
+        {shown.map((u, i) => (
+          <Text key={'pin-' + (i + 1)} dimColor>
+            {fit((sent.has(i) ? '⑂ ' : '  ') + (i + 1) + '. ' + u.title, width)}
+          </Text>
+        ))}
+        {more > 0 && <Text key="pin-more" dimColor>{'   +' + more + ' more (/st lists them all)'}</Text>}
+        {below ?? null}
       </Box>
     )
   })

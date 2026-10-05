@@ -180,3 +180,59 @@ test('/st with no number opens the picker; a press closes it and fills that item
   expect(closed).toEqual(['st-picker'])
   expect(filled).toEqual(['/subtask 2. Message send guard\n`tool.call` holds the sends. '])
 })
+
+function band() {
+  return {
+    plugin: 'subtask-icons',
+    surface: 'terminal',
+    component: 'AbovePrompt',
+    viewport: { columns: 100, rows: 30 },
+    props: { hasSurvey: false, isWorking: false, bodyColumns: 100 },
+  } as any
+}
+
+test('/subtask pins the answer list in the band, marks the item sent, and /subtask unpin clears it', async ($, on) => {
+  const forked: string[] = []
+  engine(on, [])
+  on('command.run', { command: 'subtask' }, ($: unknown, e: any) => {
+    forked.push(e.args)
+    return { text: 'forked' }
+  })
+  await $.turn.start({ turnId: 't1', text: 'q' })
+  await $.turn.complete({ turnId: 't1', answer: NUMBERED_LIST, durationMs: 5, isAborted: false, reason: 'answer' })
+
+  const empty = await $.ui.mount(band())
+  expect(await empty.find({ key: 'pin-unpin' })).toBeUndefined()
+  await empty.unmount()
+
+  await $.command.run({ command: 'subtask', args: 'Ask first buttons: Haiku scans the answer.' } as any)
+  expect(forked).toEqual(['Ask first buttons: Haiku scans the answer.'])
+  const ui = await $.ui.mount(band())
+  expect(await ui.find({ key: 'pin-unpin' })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: '  1. Dash guard: refuses an em dash.' })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: '⑂ 2. Ask first buttons: Haiku scans the answer.' })).toBeDefined()
+  await ui.unmount()
+
+  const r = await $.command.run({ command: 'subtask', args: 'unpin' } as any)
+  expect(r.text).toBe('Unpinned the list.')
+  expect(forked.length).toBe(1)
+  const after = await $.ui.mount(band())
+  expect(await after.find({ key: 'pin-unpin' })).toBeUndefined()
+})
+
+test('a long list shows the first rows and a +N more line; the Unpin button clears it', async ($, on) => {
+  engine(on, [])
+  on('command.run', { command: 'subtask' }, () => ({ text: 'forked' }))
+  const many = Array.from({ length: 8 }, (_, i) => '- item ' + (i + 1)).join('\n')
+  await $.turn.start({ turnId: 't1', text: 'q' })
+  await $.turn.complete({ turnId: 't1', answer: many, durationMs: 5, isAborted: false, reason: 'answer' })
+  await $.command.run({ command: 'subtask', args: 'item 1' } as any)
+  const ui = await $.ui.mount(band())
+  expect(await ui.find({ type: 'Text', text: '  5. item 5' })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: '  6. item 6' })).toBeUndefined()
+  expect(await ui.find({ type: 'Text', text: '   +3 more (/st lists them all)' })).toBeDefined()
+  await ui.press({ key: 'pin-unpin' })
+  await ui.unmount()
+  const after = await $.ui.mount(band())
+  expect(await after.find({ key: 'pin-unpin' })).toBeUndefined()
+})

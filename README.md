@@ -30,7 +30,7 @@ Six small mods for long sessions. Install all six with `/plugin install toolkit@
 
 | Plugin | Kind | What it does |
 |---|---|---|
-| [`subtask-icons`](plugins/subtask-icons) | mod | A `⑂ Subtask` button under the last answer that puts `/subtask <item>` in the prompt box |
+| [`subtask-icons`](plugins/subtask-icons) | mod | A `⑂ Subtask` button under the last answer that puts `/subtask <item>` in the prompt box, and pins the list above the prompt while you work through it |
 | [`context-alarm`](plugins/context-alarm) | mod | Warns as the context fills up and suggests `/save-context` before compaction |
 | [`answer-buttons`](plugins/answer-buttons) | mod | Plain English, Shorter and Plain & short buttons under the last answer |
 | [`skill-stats`](plugins/skill-stats) | mod | Which skills run, which never trigger, and a hand off to skill-creator |
