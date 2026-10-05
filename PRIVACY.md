@@ -2,7 +2,7 @@
 
 This policy covers every plugin in this repository: the skills, the Claude Code Arcade
 (`arcade`: dragon, jackpot, outlaw, tama, tetris, octopus and duck), the mods in Claude Code Toolkit (subtask-icons,
-context-alarm, answer-buttons, skill-stats, dash-guard, shared-file-guard), and the `toolkit`
+context-alarm, answer-buttons, skill-stats, dash-guard, shared-file-guard, fork-lineage), and the `toolkit`
 collection that installs them.
 
 ## What is collected
@@ -15,7 +15,9 @@ of their own and send nothing to the author or to anyone else.
 Some mods keep small amounts of their own state so they can work across sessions, for example a
 game's score, a pet's hunger, or counts of how often a skill ran. That state lives in Claude Code's
 plugin store or in your Claude Code transcripts on your own machine, and you can remove it by
-uninstalling the plugin. Each plugin's README lists exactly what it reads and keeps, under "What
+uninstalling the plugin. fork-lineage also keeps the fork reports you approve, and the links
+between sessions, as files in `~/.claude-forks/` on your machine; they can contain conversation
+content, are never sent anywhere, and are cleaned up as described in its README. Each plugin's README lists exactly what it reads and keeps, under "What
 it reads and does".
 
 ## What the mods read
@@ -23,6 +25,9 @@ it reads and does".
 The mods react to events inside your Claude Code session: tool names, whether a tool failed, shell
 command lines, file names, skill names and, for the games, the words of your message (only to spot
 praise). They read these in memory to draw or to guard, and do not store or send the content.
+fork-lineage reads your local transcripts to find which session a fork came from, and, only when
+you press its button, asks the session's own model (through Claude Code, on your account) for a
+report of the fork.
 
 ## Third parties
 

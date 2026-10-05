@@ -46,9 +46,14 @@
       "description": "The Claude Code Arcade: seven pixel games above the prompt, played by your work (a dragon, a slot machine, an Outlaw duel, a Tamagotchi, Tetris, an invading octopus and a duck hunt). Pin one, rotate them, or get a random one in every terminal."
     },
     {
+      "name": "fork-lineage",
+      "source": "./plugins/fork-lineage",
+      "description": "Remembers which session a fork came from (renames never break it), shows it above the prompt, and sends a fork's report to its parent only when you approve it"
+    },
+    {
       "name": "toolkit",
       "source": "./plugins/toolkit",
-      "description": "The Claude Code Toolkit in one install: subtask-icons, context-alarm, answer-buttons, skill-stats, dash-guard and shared-file-guard."
+      "description": "The Claude Code Toolkit in one install: subtask-icons, context-alarm, answer-buttons, skill-stats, dash-guard, shared-file-guard and fork-lineage."
     }
   ]
 }

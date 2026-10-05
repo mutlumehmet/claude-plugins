@@ -1,7 +1,7 @@
 # toolkit
 
-The Claude Code Toolkit in one install. This plugin holds no code of its own: it lists six small
-mods as dependencies, so installing it installs all six. Part of [claude-plugins](../../README.md).
+The Claude Code Toolkit in one install. This plugin holds no code of its own: it lists seven small
+mods as dependencies, so installing it installs all seven. Part of [claude-plugins](../../README.md).
 
 | Mod | What it does |
 |---|---|
@@ -11,6 +11,7 @@ mods as dependencies, so installing it installs all six. Part of [claude-plugins
 | [`skill-stats`](../skill-stats) | Which skills run, which never trigger, and a hand off to skill-creator |
 | [`dash-guard`](../dash-guard) | Refuses prose with em dashes, en dashes or double hyphens |
 | [`shared-file-guard`](../shared-file-guard) | Refuses shell writes to shared files another session changed |
+| [`fork-lineage`](../fork-lineage) | Shows which session a fork came from, and sends the fork's report to its parent when you approve |
 
 Installing the toolkit also installs [`project-workflow`](../project-workflow) (the `create-project` and
 `save-context` skills), which `context-alarm` depends on.

@@ -1,0 +1,11 @@
+{
+  "name": "fork-lineage",
+  "version": "0.2.0",
+  "description": "Remembers which session a fork came from (renames never break it), shows it above the prompt, and sends a fork's report to its parent only when you approve it",
+  "author": {
+    "name": "Mehmet Mutlu"
+  },
+  "homepage": "https://github.com/mutlumehmet/claude-plugins/tree/main/plugins/fork-lineage",
+  "license": "MIT",
+  "repository": "https://github.com/mutlumehmet/claude-plugins"
+}

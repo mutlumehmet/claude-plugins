@@ -1,0 +1,1 @@
+{ "description": "fork-lineage hooks module", "modules": ["./register.tsx"] }

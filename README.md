@@ -25,7 +25,7 @@ Each plugin has its own page with what it does, its settings and its known gaps.
 
 ### Claude Code Toolkit
 
-Six small mods for long sessions. Install all six with `/plugin install toolkit@mehmetmutlu`
+Seven small mods for long sessions. Install all seven with `/plugin install toolkit@mehmetmutlu`
 ([`toolkit`](plugins/toolkit)), or any one by name.
 
 | Plugin | Kind | What it does |
@@ -36,6 +36,7 @@ Six small mods for long sessions. Install all six with `/plugin install toolkit@
 | [`skill-stats`](plugins/skill-stats) | mod | Which skills run, which never trigger, and a hand off to skill-creator |
 | [`dash-guard`](plugins/dash-guard) | mod | Refuses prose with em dashes, en dashes or double hyphens |
 | [`shared-file-guard`](plugins/shared-file-guard) | mod | Refuses shell writes to shared files another session changed |
+| [`fork-lineage`](plugins/fork-lineage) | mod | Shows which session a fork came from, and sends the fork's report to its parent when you approve |
 
 ### Claude Code Arcade
 
