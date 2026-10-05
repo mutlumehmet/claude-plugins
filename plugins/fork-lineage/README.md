@@ -27,7 +27,7 @@ copy it back by hand. fork-lineage keeps the link and makes the hand back one bu
   message instead, so it is never lost and never arrives twice.
 - **In a parent**: the band says `⑂ N forks`.
 
-![The whole story: a session forks with /branch, the fork works and reports after you approve, the parent is closed so the report waits, and back in the parent Read brings it in](../../docs/images/fork-lineage-story.gif)
+![The whole story: a session forks with /branch, the fork works over several turns, and before it is closed it reports to the parent after you approve; an open parent gets it at once, a closed one finds it waiting behind Read](../../docs/images/fork-lineage-story.gif)
 - **`/lineage`**: the whole family tree with the current titles, your session marked.
 - **At 80% and 90% context**, a fork that has not reported yet gets one reminder.
 
