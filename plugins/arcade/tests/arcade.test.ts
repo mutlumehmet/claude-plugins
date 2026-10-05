@@ -59,15 +59,31 @@ test('/arcade next swaps this terminal to the next game in the pool', { options:
   expect(await showing($)).toEqual(['tama'])
 })
 
-test('/arcade tetris pins Tetris in this terminal and for new ones', { options: { mode: 'random', pool: 'outlaw,tetris' } }, async ($, on) => {
+test('/arcade tetris swaps only this terminal and keeps the setting', { options: { mode: 'random', pool: 'outlaw,tetris' } }, async ($, on) => {
+  let wrote = false
   world(on)
+  on('config.list', () => ({ value: [{ key: 'arcade.mode' }, { key: 'arcade.pool' }] }) as never)
+  on('config.set', (_$, e) => {
+    wrote = true
+    return { value: e.value }
+  })
   await begin($, on)
   const text = (await $.command.run({ command: 'arcade', args: 'tetris' } as never)).text ?? ''
+  expect(text).toMatch(/Tetris in this terminal/)
+  expect(wrote).toBe(false)
+  expect(await showing($)).toEqual(['tetris'])
+  expect(await $.command.run({ command: 'arcade', args: '' } as never).then(r => r.text ?? '')).toMatch(/random, from Outlaw, Tetris/)
+})
+
+test('/arcade tetris all pins Tetris in this terminal and for new ones', { options: { mode: 'random', pool: 'outlaw,tetris' } }, async ($, on) => {
+  world(on)
+  await begin($, on)
+  const text = (await $.command.run({ command: 'arcade', args: 'tetris all' } as never)).text ?? ''
   expect(text).toMatch(/fixed on Tetris/)
   expect(await showing($)).toEqual(['tetris'])
 })
 
-test('/arcade tetris writes the mode and pool settings where the settings menu has them', { options: { mode: 'random', pool: 'outlaw,tetris' } }, async ($, on) => {
+test('/arcade tetris all writes the mode and pool settings where the settings menu has them', { options: { mode: 'random', pool: 'outlaw,tetris' } }, async ($, on) => {
   const written: Record<string, unknown> = {}
   world(on)
   on('config.list', () => ({ value: [{ key: 'arcade.mode' }, { key: 'arcade.pool' }] }) as never)
@@ -76,7 +92,7 @@ test('/arcade tetris writes the mode and pool settings where the settings menu h
     return { value: e.value }
   })
   await begin($, on)
-  await $.command.run({ command: 'arcade', args: 'tetris' } as never)
+  await $.command.run({ command: 'arcade', args: 'tetris all' } as never)
   expect(written).toEqual({ 'arcade.mode': 'fixed', 'arcade.pool': 'tetris,outlaw' })
   expect(await showing($)).toEqual(['tetris'])
 })

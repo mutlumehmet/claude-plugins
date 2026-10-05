@@ -24,7 +24,8 @@ random from all seven.
 | Command | What it does |
 |---|---|
 | `/arcade` | Shows the setting and which games this terminal shows |
-| `/arcade tetris` | Pins Tetris: every new terminal shows it (`mode` fixed, Tetris first in the pool) |
+| `/arcade tetris` | Swaps this terminal to Tetris; other terminals and the setting stay as they are |
+| `/arcade tetris all` | Pins Tetris: every terminal shows it, new ones too (`mode` fixed, Tetris first in the pool) |
 | `/arcade random`, `rotate`, `all`, `off` | Sets how new terminals pick |
 | `/arcade pool dragon tetris` | Picks only from these games |
 | `/arcade next` | Swaps this terminal to the next game in the pool; new terminals still follow the setting |
@@ -170,7 +171,7 @@ All optional. Set them in `/plugin` (the plugin's settings) or in
   count; skill names; the words of your message (only to spot praise); subagent start and finish.
 - **Keeps**: each game's score and state, and which game the last terminal showed, in Claude Code's plugin store on your machine; the mode and pool in your Claude Code settings.
 - **Draws**: the games it shows in the line above the prompt (a block at the right end, or the octopus's and the duck hunt's strips across the full width), and an occasional notice.
-- **Hooks**: `skill.prompt` only notes which skill ran, so a finished skill can count as a moment; it passes the skill's prompt on unchanged. `command.run` answers its own commands (`/arcade` and the seven game commands) and no other. `/arcade <game>`, `/arcade <mode>` and `/arcade pool` write `arcade.mode` and `arcade.pool` through Claude Code's own settings call, the same as changing them in the menu.
+- **Hooks**: `skill.prompt` only notes which skill ran, so a finished skill can count as a moment; it passes the skill's prompt on unchanged. `command.run` answers its own commands (`/arcade` and the seven game commands) and no other. `/arcade <game> all`, `/arcade <mode>` and `/arcade pool` write `arcade.mode` and `arcade.pool` through Claude Code's own settings call, the same as changing them in the menu.
 - **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
 - **Never**: changes, blocks or delays a tool call or a message; sends anything anywhere (no network
   calls, no telemetry); reads file contents beyond counting lines of a file Claude writes.

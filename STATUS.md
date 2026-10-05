@@ -1,5 +1,7 @@
 # claude-plugins: current state
 
+**5 October 2026, evening:** `arcade` 0.5.0: `/arcade <game>` now swaps only this terminal; `/arcade <game> all` pins it for every terminal (the old `/arcade <game>`). 47 tests pass, validates. Committed on `main`, not pushed.
+
 Last updated: **5 October 2026, afternoon**, on branch `arcade-one-plugin` (worktree
 `~/Projects/claude-plugins-arcade`, not merged, not pushed). Seventh game: Duck Hunt (`/duck`,
 `src/games/duck-hunt.tsx`), a full width marsh like the octopus's city: moments shoot ducks down,

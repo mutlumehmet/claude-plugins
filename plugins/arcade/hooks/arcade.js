@@ -3357,7 +3357,7 @@ async function status($, mode, pool) {
   return `Arcade on this account: ${setting}.
 This terminal:
 ${rows.join("\n")}
-"/arcade <game>" pins one game, "/arcade random|rotate|all|off" sets how new terminals pick, "/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal's game. "/arcade hide" clears this terminal only.`;
+"/arcade <game>" swaps this terminal's game, "/arcade <game> all" pins it for every terminal, "/arcade random|rotate|all|off" sets how new terminals pick, "/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal's game. "/arcade hide" clears this terminal only.`;
 }
 const over = (options) => `${String(options.mode ?? "")}|${String(options.pool ?? "")}`;
 async function save3($, options, mode, pool) {
@@ -3392,7 +3392,7 @@ export const register = (on, options) => {
   on("session.start", async ($, e, next) => {
     await $.command.register({
       name: "arcade",
-      description: 'Which Arcade games show: "/arcade <game>" pins one, "/arcade random|rotate|all|off", "/arcade pool <games>", "/arcade next" or "/arcade hide" for this terminal.'
+      description: 'Which Arcade games show: "/arcade <game>" for this terminal, "/arcade <game> all" pins one everywhere, "/arcade random|rotate|all|off", "/arcade pool <games>", "/arcade next" or "/arcade hide" for this terminal.'
     });
     const saved = await $.store.get("setting");
     if (saved?.over === over(options)) Object.assign(setting, { mode: modeOf(saved.mode), pool: poolOf(saved.pool) });
@@ -3433,6 +3433,10 @@ export const register = (on, options) => {
     const id = gameId(first);
     if (mode === void 0 && id === void 0) {
       return { text: `No game or mode called "${first}". Games: ${GAMES.map((g) => g.id).join(", ")}. Modes: ${MODES.join(", ")}.` };
+    }
+    if (id !== void 0 && rest[0] !== "all") {
+      await update8($, shown, () => [id]);
+      return { text: `${title(id)} in this terminal. "/arcade ${id} all" pins it for every terminal.` };
     }
     const pool = id === void 0 ? setting.pool : [id, ...setting.pool.filter((x) => x !== id)];
     const next = id === void 0 ? mode : "fixed";

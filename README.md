@@ -47,7 +47,7 @@ Seven games that live above your prompt and are played by your work, in one plug
 [`arcade`](plugins/arcade): a pixel dragon, a slot machine, an Atari duel, a Tamagotchi, Tetris, an
 octopus that invades a city and a duck hunt. The Arcade spots the moments worth celebrating, coding or not: small (a
 turn done, a file saved), medium (a commit, a skill run, a message sent) and big (a merge, a deploy,
-a finished task list, a PDF made). Pin one game with `/arcade tetris`, get a random one in every new
+a finished task list, a PDF made). Pin one game with `/arcade tetris all`, get a random one in every new
 terminal (the default), rotate through them, or limit the choice with `/arcade pool dragon tetris`.
 
 | Plugin | Kind | What it does |

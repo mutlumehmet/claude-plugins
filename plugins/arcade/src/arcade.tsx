@@ -135,7 +135,8 @@ async function status($: EngineInterface, mode: Mode, pool: string[]) {
     mode === 'fixed' ? `fixed on ${title(pool[0] ?? '')}` : mode === 'off' ? 'off' : `${mode}, from ${pool.map(title).join(', ')}`
   return (
     `Arcade on this account: ${setting}.\nThis terminal:\n${rows.join('\n')}\n` +
-    '"/arcade <game>" pins one game, "/arcade random|rotate|all|off" sets how new terminals pick, ' +
+    '"/arcade <game>" swaps this terminal\'s game, "/arcade <game> all" pins it for every terminal, ' +
+    '"/arcade random|rotate|all|off" sets how new terminals pick, ' +
     '"/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal\'s game. ' +
     '"/arcade hide" clears this terminal only.'
   )
@@ -189,7 +190,7 @@ export const register: Register = (on, options: PluginOptions) => {
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'arcade',
-      description: 'Which Arcade games show: "/arcade <game>" pins one, "/arcade random|rotate|all|off", "/arcade pool <games>", "/arcade next" or "/arcade hide" for this terminal.',
+      description: 'Which Arcade games show: "/arcade <game>" for this terminal, "/arcade <game> all" pins one everywhere, "/arcade random|rotate|all|off", "/arcade pool <games>", "/arcade next" or "/arcade hide" for this terminal.',
     })
     const saved = (await $.store.get('setting')) as Saved | undefined
     if (saved?.over === over(options)) Object.assign(setting, { mode: modeOf(saved.mode), pool: poolOf(saved.pool) })
@@ -239,7 +240,12 @@ export const register: Register = (on, options: PluginOptions) => {
     if (mode === undefined && id === undefined) {
       return { text: `No game or mode called "${first}". Games: ${GAMES.map(g => g.id).join(', ')}. Modes: ${MODES.join(', ')}.` }
     }
-    // "/arcade tetris" pins Tetris: fixed mode with Tetris first in the pool.
+    // "/arcade tetris" swaps only this terminal; the setting and other terminals stay as they are.
+    if (id !== undefined && rest[0] !== 'all') {
+      await update($, shown, () => [id])
+      return { text: `${title(id)} in this terminal. "/arcade ${id} all" pins it for every terminal.` }
+    }
+    // "/arcade tetris all" pins Tetris: fixed mode with Tetris first in the pool.
     const pool = id === undefined ? setting.pool : [id, ...setting.pool.filter(x => x !== id)]
     const next = id === undefined ? (mode as Mode) : 'fixed'
     await save($, options, next, pool)
