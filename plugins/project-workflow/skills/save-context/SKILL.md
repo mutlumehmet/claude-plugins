@@ -153,14 +153,18 @@ Ask with `AskUserQuestion`: write all / let me adjust / skip. Do not write befor
 step is the point of the skill: the user sees what will be remembered, and can catch a wrong or
 missing item while the conversation is still fresh.
 
-**When `confirm: false`:** do not show the plan and do not ask anything. Saying "save context"
-already was the approval, and the user has often left the session by then, so a question would sit
-unanswered and nothing would get saved. Go straight to Step 5 and treat it as "write all". The plan
-list moves into the Step 7 report instead, so the user still sees what was remembered when they come
-back. The same applies to everything after this point: never stop to ask. When an item is unsure,
-save it (the user can delete a line more easily than recover a lost fact); when a handoff to another
-skill would itself need the user's input, skip that handoff and record the item in STATUS.md as
-pending, as Step 5 describes.
+**When `confirm: false`:** skip this question only. Do not show the plan and do not ask "write
+all / adjust / skip": saying "save context" already was the approval, and the user has often left
+the session by then, so that question would sit unanswered and nothing would get saved. Go straight
+to Step 5 and treat it as "write all". When an item is unsure, save it (the user can delete a line
+more easily than recover a lost fact). The plan list moves into the Step 7 report instead, so the
+user still sees what was remembered when they come back.
+
+This switches off the plan question, nothing else. Every handoff still runs. If an owning skill, a
+tool permission prompt or a send guard asks the user something along the way, let it ask and wait
+for the answer; never skip a handoff or a tool just because it might prompt, because a skipped
+handoff is a lost item. Write everything that needs no answer first, so a prompt left waiting holds
+up as little as possible.
 
 ## Step 5: Write
 
