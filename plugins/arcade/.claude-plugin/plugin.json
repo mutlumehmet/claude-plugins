@@ -1,6 +1,6 @@
 {
   "name": "arcade",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "The Claude Code Arcade: seven pixel games above the prompt, played by your work (a dragon, a slot machine, an Outlaw duel, a Tamagotchi, Tetris, an invading octopus and a duck hunt). Pin one, rotate them, or get a random one in every terminal.",
   "author": {
     "name": "Mehmet Mutlu"
