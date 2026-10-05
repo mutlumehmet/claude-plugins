@@ -1,6 +1,6 @@
 {
   "name": "jackpot",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "A pixel slot machine above the prompt: every finished turn pulls the lever, and the moments worth celebrating (a commit, a skill run, a deploy, a finished task list) earn golden spins.",
   "author": {
     "name": "Mehmet Mutlu"

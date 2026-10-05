@@ -279,7 +279,7 @@ export const register: Register = (on, options) => {
     await $.store.set('pet', sim.pet)
     await $.command.register({
       name: 'tama',
-      description: 'The Tamagotchi above the prompt: how it is doing. "/tama feed|play|clean" to care for it by hand, "/tama hide" to toggle it.',
+      description: 'The Tamagotchi above the prompt: how it is doing. "/tama feed|play|clean" to care for it by hand, "/tama hide|show" to put it away or bring it back.',
     })
     $.clock.every(FPS_MS, () => {
       step()
@@ -337,9 +337,14 @@ export const register: Register = (on, options) => {
 
   on('command.run', { command: 'tama' }, async ($, e) => {
     const arg = (e.args ?? '').trim()
-    if (arg === 'hide') {
-      const hidden = await update($, isHidden, was => !was)
-      return { text: hidden ? 'The Tamagotchi goes in your pocket.' : 'The Tamagotchi is back.' }
+    // Two explicit commands, not a toggle, so a repeat never flips it back by surprise.
+    if (arg === 'hide' || arg === 'show') {
+      const wantHidden = arg === 'hide'
+      if ((await read($, isHidden)) === wantHidden) {
+        return { text: wantHidden ? 'The Tamagotchi is already hidden. "/tama show" brings it back.' : 'The Tamagotchi is already showing.' }
+      }
+      await update($, isHidden, () => wantHidden)
+      return { text: wantHidden ? 'The Tamagotchi goes in your pocket.' : 'The Tamagotchi is back.' }
     }
     if (arg === 'feed' || arg === 'play' || arg === 'clean') {
       const now = await $.clock.now()

@@ -1,6 +1,6 @@
 {
   "name": "tetris",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "A classic Tetris in a small handheld screen above the prompt, played by Claude's work: every tool drops a piece, failed tools push up garbage, and the moments worth celebrating clear rows.",
   "author": {
     "name": "Mehmet Mutlu"

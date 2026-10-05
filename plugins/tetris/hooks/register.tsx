@@ -312,7 +312,7 @@ export const register: Register = (on, options) => {
     if (saved) await update($, tally, () => saved)
     await $.command.register({
       name: 'tetris',
-      description: 'The Tetris above the prompt: the score. "/tetris drop" adds pieces, "/tetris clear" clears a row, "/tetris hide" toggles it.',
+      description: 'The Tetris above the prompt: the score. "/tetris drop" adds pieces, "/tetris clear" clears a row, "/tetris hide|show" to put it away or bring it back.',
     })
     $.clock.every(FPS_MS, () => {
       step($)
@@ -369,9 +369,14 @@ export const register: Register = (on, options) => {
       sim.bombs.push(1)
       return { text: 'One row cleared from the bottom.' }
     }
-    if (arg === 'hide') {
-      const hidden = await update($, isHidden, was => !was)
-      return { text: hidden ? 'The handheld goes in your pocket.' : 'The handheld is back.' }
+    // Two explicit commands, not a toggle, so a repeat never flips it back by surprise.
+    if (arg === 'hide' || arg === 'show') {
+      const wantHidden = arg === 'hide'
+      if ((await read($, isHidden)) === wantHidden) {
+        return { text: wantHidden ? 'The handheld is already hidden. "/tetris show" brings it back.' : 'The handheld is already showing.' }
+      }
+      await update($, isHidden, () => wantHidden)
+      return { text: wantHidden ? 'The handheld goes in your pocket.' : 'The handheld is back.' }
     }
     const t = await read($, tally)
 

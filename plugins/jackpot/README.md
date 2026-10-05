@@ -9,7 +9,7 @@ A Claude Code mod: a pixel slot machine at the right end of the line above the p
 - **Five clean turns in a row** (no tool error) raise the multiplier by one, up to ×5; a failed tool resets it.
 - **Payouts**: three 7s pay 100 chips, three dragons 50, diamonds 25, bells 15, stars 10, cherries 8; a cherry pair 3, any other pair 2. A jackpot strobes the cabinet and spills coins.
 - **Under the machine**: `◉ 2967  ×1  ▲ 2  ✦ 0  ♛ 1` (chips, multiplier, clean streak, golden spins waiting, jackpots). Chips are kept between sessions.
-- **`/jackpot`** shows the rules and stats; `/jackpot spin`, `golden` and `demo` are practice spins that pay nothing; `/jackpot hide` toggles it.
+- **`/jackpot`** shows the rules and stats; `/jackpot spin`, `golden` and `demo` are practice spins that pay nothing; `/jackpot hide` puts it away and `/jackpot show` brings it back.
 
 ## Moments
 
@@ -63,7 +63,7 @@ A mod runs inside Claude Code with your permissions. Read the code before you in
 
 It draws in a terminal (including an editor's integrated terminal) and in the Code tab of the
 Desktop app; in the VS Code chat panel and `claude -p` it runs but draws nothing. Several Arcade
-games can be open at once, but the line above the prompt fills up: `/<command> hide` puts one away.
+games can be open at once, but the line above the prompt fills up: `/<command> hide` puts one away, `/<command> show` brings it back.
 
 ## Known gaps
 

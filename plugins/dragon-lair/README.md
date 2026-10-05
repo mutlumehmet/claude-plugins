@@ -9,7 +9,7 @@ A Claude Code mod: a small one colour pixel dragon that lives at the right end o
 - **A failed tool** drops its head; **two minutes of quiet** and it falls asleep.
 - **Moments**: a small one is a puff of smoke, a medium one a breath of fire, a big one a blaze, and a merge, release, deploy, streak or record a roar.
 - **Gold** builds up with every moment and is kept between sessions. Under the dragon: `Lv 3  ◆ 55  ★ 9  ⚒ 58` (level, gold, wins, tool calls).
-- **`/dragon`** shows the hoard; `/dragon puff`, `fire`, `blaze` and `roar` show off each size; `/dragon hide` toggles it.
+- **`/dragon`** shows the hoard; `/dragon puff`, `fire`, `blaze` and `roar` show off each size; `/dragon hide` puts it away and `/dragon show` brings it back.
 
 ## Moments
 
@@ -63,7 +63,7 @@ A mod runs inside Claude Code with your permissions. Read the code before you in
 
 It draws in a terminal (including an editor's integrated terminal) and in the Code tab of the
 Desktop app; in the VS Code chat panel and `claude -p` it runs but draws nothing. Several Arcade
-games can be open at once, but the line above the prompt fills up: `/<command> hide` puts one away.
+games can be open at once, but the line above the prompt fills up: `/<command> hide` puts one away, `/<command> show` brings it back.
 
 ## Known gaps
 

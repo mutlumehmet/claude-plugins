@@ -10,7 +10,7 @@ A Claude Code mod: a classic falling-piece Tetris in a small handheld screen at 
 - **Medium moments** clear one row from the bottom, **big moments** three.
 - **When the stack reaches the lid** the game ends, the well empties and a new game starts. The best score is kept.
 - **Under the screen**: `▤ 35  ◆ 4250  Lv 3` (rows, score, level).
-- **`/tetris`** shows the score and rules; `/tetris drop` adds pieces, `/tetris clear` clears a row, `/tetris hide` toggles it.
+- **`/tetris`** shows the score and rules; `/tetris drop` adds pieces, `/tetris clear` clears a row, `/tetris hide` puts it away and `/tetris show` brings it back.
 
 ## Moments
 
@@ -64,7 +64,7 @@ A mod runs inside Claude Code with your permissions. Read the code before you in
 
 It draws in a terminal (including an editor's integrated terminal) and in the Code tab of the
 Desktop app; in the VS Code chat panel and `claude -p` it runs but draws nothing. Several Arcade
-games can be open at once, but the line above the prompt fills up: `/<command> hide` puts one away.
+games can be open at once, but the line above the prompt fills up: `/<command> hide` puts one away, `/<command> show` brings it back.
 
 ## Known gaps
 

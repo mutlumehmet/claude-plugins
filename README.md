@@ -45,7 +45,7 @@ Five games that live above your prompt and are played by your work. Each one spo
 worth celebrating on its own, coding or not: small (a turn done, a file saved), medium (a commit, a
 skill run, a message sent) and big (a merge, a deploy, a finished task list, a PDF made). Install one
 or all; each works alone. Install all five with `/plugin install arcade@mehmetmutlu`
-([`arcade`](plugins/arcade)); with several showing, hide some with `/<game> hide`.
+([`arcade`](plugins/arcade)); with several showing, hide some with `/<game> hide` and bring them back with `/<game> show`.
 
 | Plugin | Kind | What it does |
 |---|---|---|

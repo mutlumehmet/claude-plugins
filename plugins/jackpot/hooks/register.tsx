@@ -370,7 +370,7 @@ export const register: Register = (on, options) => {
     if (saved) await update($, bank, () => ({ ...saved, streak: saved.streak ?? 0 }))
     await $.command.register({
       name: 'jackpot',
-      description: 'The slot machine above the prompt: your chips. "/jackpot spin|golden|demo" to try it, "/jackpot hide" to toggle it.',
+      description: 'The slot machine above the prompt: your chips. "/jackpot spin|golden|demo" to try it, "/jackpot hide|show" to put it away or bring it back.',
     })
     startLoop($)
 
@@ -413,9 +413,14 @@ export const register: Register = (on, options) => {
       pull($, { isGolden: true, isPractice: true, forced: ['seven', 'seven', 'seven'] })
       return { text: 'A practice jackpot: it pays nothing.' }
     }
-    if (arg === 'hide') {
-      const hidden = await update($, isHidden, was => !was)
-      return { text: hidden ? 'The machine is covered.' : 'The machine is back.' }
+    // Two explicit commands, not a toggle, so a repeat never flips it back by surprise.
+    if (arg === 'hide' || arg === 'show') {
+      const wantHidden = arg === 'hide'
+      if ((await read($, isHidden)) === wantHidden) {
+        return { text: wantHidden ? 'The machine is already hidden. "/jackpot show" brings it back.' : 'The machine is already showing.' }
+      }
+      await update($, isHidden, () => wantHidden)
+      return { text: wantHidden ? 'The machine is covered.' : 'The machine is back.' }
     }
     const b = await read($, bank)
     const g = await read($, golden)

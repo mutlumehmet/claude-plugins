@@ -28,7 +28,7 @@ To try a single game instead, install it by name, for example `/plugin install d
 
 - **The games share the line above the prompt.** With all five showing, that line gets crowded. Keep
   one or two out at a time and hide the rest: `/dragon hide`, `/jackpot hide`, `/outlaw hide`,
-  `/tama hide`, `/tetris hide` (the same command brings each back).
+  `/tama hide`, `/tetris hide` (`/<game> show` brings each back).
 - **Removing `arcade` leaves the games installed.** Claude Code keeps plugins installed as
   dependencies until you clean them up: run `claude plugin prune` after uninstalling `arcade`, or
   uninstall the games you no longer want by name.

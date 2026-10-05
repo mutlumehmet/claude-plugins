@@ -11,7 +11,7 @@ A Claude Code mod: a classic Tamagotchi in a small LCD at the right end of the l
 - **Left hungry for twelve hours** it packs its bags and leaves an egg behind. It never dies.
 - **At night** (23:00 to 07:00 local time) it sleeps.
 - **Under the LCD**: `♨ ▮▮▮▯  ♥ ▮▮▯▯  ✧ ▮▮▮▮` (food, joy, clean).
-- **`/tama`** says how it is doing; `/tama feed`, `play` and `clean` are hand care, a few times a day; `/tama hide` toggles it.
+- **`/tama`** says how it is doing; `/tama feed`, `play` and `clean` are hand care, a few times a day; `/tama hide` puts it away and `/tama show` brings it back.
 
 ## Moments
 
@@ -65,7 +65,7 @@ A mod runs inside Claude Code with your permissions. Read the code before you in
 
 It draws in a terminal (including an editor's integrated terminal) and in the Code tab of the
 Desktop app; in the VS Code chat panel and `claude -p` it runs but draws nothing. Several Arcade
-games can be open at once, but the line above the prompt fills up: `/<command> hide` puts one away.
+games can be open at once, but the line above the prompt fills up: `/<command> hide` puts one away, `/<command> show` brings it back.
 
 ## Known gaps
 

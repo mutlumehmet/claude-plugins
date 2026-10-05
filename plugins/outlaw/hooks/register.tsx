@@ -293,7 +293,7 @@ export const register: Register = (on, options) => {
     if (saved) await update($, score, () => saved)
     await $.command.register({
       name: 'outlaw',
-      description: 'The duel above the prompt: the score. "/outlaw draw" for a practice duel, "/outlaw hide" to toggle it.',
+      description: 'The duel above the prompt: the score. "/outlaw draw" for a practice duel, "/outlaw hide|show" to put it away or bring it back.',
     })
     $.clock.every(FPS_MS, () => {
       step($)
@@ -334,9 +334,14 @@ export const register: Register = (on, options) => {
       sim.queue.push({ by: 'you', isPractice: true }, { by: 'bug', isPractice: true })
       return { text: 'Practice duel: one shot each, no score.' }
     }
-    if (arg === 'hide') {
-      const hidden = await update($, isHidden, was => !was)
-      return { text: hidden ? 'The outlaws ride off.' : 'The outlaws are back.' }
+    // Two explicit commands, not a toggle, so a repeat never flips it back by surprise.
+    if (arg === 'hide' || arg === 'show') {
+      const wantHidden = arg === 'hide'
+      if ((await read($, isHidden)) === wantHidden) {
+        return { text: wantHidden ? 'The outlaws are already hidden. "/outlaw show" brings them back.' : 'The outlaws are already showing.' }
+      }
+      await update($, isHidden, () => wantHidden)
+      return { text: wantHidden ? 'The outlaws ride off.' : 'The outlaws are back.' }
     }
 
     return {

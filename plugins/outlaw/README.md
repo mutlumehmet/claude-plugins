@@ -8,7 +8,7 @@ A Claude Code mod: a one colour Atari Outlaw duel at the right end of the line a
 - **A hit** is aimed at eye level and clears the cactus; **a miss** is from the hip and takes a chunk out of the cactus, which grows back between duels.
 - **Between duels** the two pace, shift their weight and tip their hats, a tumbleweed rolls by and a vulture circles; while Claude thinks they stand with a hand on the gun.
 - **Under the duel**: `YOU 7 : 3 BUGS  ▲ 4  ★ 6` (score, your run of hits, your best run). Kept between sessions.
-- **`/outlaw`** shows the score and rules; `/outlaw draw` is a practice duel; `/outlaw hide` toggles it.
+- **`/outlaw`** shows the score and rules; `/outlaw draw` is a practice duel; `/outlaw hide` puts it away and `/outlaw show` brings it back.
 
 ## Moments
 
@@ -62,7 +62,7 @@ A mod runs inside Claude Code with your permissions. Read the code before you in
 
 It draws in a terminal (including an editor's integrated terminal) and in the Code tab of the
 Desktop app; in the VS Code chat panel and `claude -p` it runs but draws nothing. Several Arcade
-games can be open at once, but the line above the prompt fills up: `/<command> hide` puts one away.
+games can be open at once, but the line above the prompt fills up: `/<command> hide` puts one away, `/<command> show` brings it back.
 
 ## Known gaps
 
