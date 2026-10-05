@@ -1,6 +1,6 @@
 # arcade
 
-The Claude Code Arcade: six pixel games in the line above the prompt, played by your work. Pin the
+The Claude Code Arcade: seven pixel games in the line above the prompt, played by your work. Pin the
 one you like, rotate through them, or get a random one in every new terminal. Part of
 [claude-plugins](../../README.md).
 
@@ -14,11 +14,12 @@ one you like, rotate through them, or get a random one in every new terminal. Pa
 | Tama | `/tama` | A Tamagotchi your work feeds, or it packs its bags |
 | Tetris | `/tetris` | Tetris where Claude's tools drop the pieces |
 | Octo Invader | `/octopus` | A pixel octopus that smashes a city the full width of the line while Claude edits |
+| Duck Hunt | `/duck` | A dog and a marsh the full width of the line: your moments shoot the ducks down, failed tools let them fly away |
 
 ## Choosing the games
 
 Each new terminal shows the games the `mode` and `pool` settings pick. By default it is one game at
-random from all six.
+random from all seven.
 
 | Command | What it does |
 |---|---|
@@ -113,6 +114,18 @@ Both GIFs are drawn by the mod's own code from a scripted session (a read, an ed
 - **The score** sits at the right end of the strip: `Lv 3  ⌂ 12  ✈ 4  ⚒ 140` (level, buildings toppled, planes downed, tool calls). It is kept between sessions.
 - **`/octopus`** shows the score; `/octopus ink`, `plane`, `rampage` and `conquer` show off each size; `/octopus hide` puts it away and `/octopus show` brings it back.
 
+### Duck Hunt (`duck`)
+
+A marsh the full width of the line above the prompt, with the grass along the bottom, a tree, a dog
+and ducks. Your work does the shooting.
+
+- **While Claude works** the dog sniffs along the grass, faster while a tool runs, and now and then flushes a duck that flaps across the sky.
+- **Moments**: a small one is a shot (a flash of the crosshair), a medium one shoots a duck down and the dog pops up from the grass holding it, a big one is a double (`DOUBLE!`, the dog holds two), and a merge, release, deploy, streak or record is a `PERFECT!` round with feathers everywhere.
+- **A failed tool** lets the duck in the air get away (`FLY AWAY`), and the dog comes up laughing. **Two minutes of quiet** and the dog lies down asleep.
+- **Rounds**: every ten ducks down is a new round (`ROUND 3`).
+- **The score** sits at the right end of the strip: `R 2  ▼ 14  ↗ 3  ⚒ 140` (round, ducks down, ducks that got away, tool calls). It is kept between sessions.
+- **`/duck`** shows the score; `/duck shot`, `hunt`, `double`, `perfect` and `flyaway` are practice that counts nothing; `/duck hide` puts it away and `/duck show` brings it back.
+
 ## Moments
 
 The Arcade spots the moments once and hands each one to every game, coding or not.
@@ -134,7 +147,7 @@ All optional. Set them in `/plugin` (the plugin's settings) or in
 | Setting | What it is for | Example |
 |---|---|---|
 | `mode` | How each new terminal picks: `random` (one game from the pool, the default), `rotate` (the next one in turn), `fixed` (always the first in the pool), `all` (every game in the pool), `off` | `fixed` |
-| `pool` | Comma separated games to pick from; empty means all six | `dragon, tetris` |
+| `pool` | Comma separated games to pick from; empty means all seven | `dragon, tetris` |
 | `big_skills` | Skills whose run is a big moment (every other skill is medium) | `release-notes, publish-report` |
 | `quiet_skills` | Skills that celebrate nothing | `commit` |
 | `big_commands` | A regular expression of shell commands whose success is big | `make ship` |
@@ -147,8 +160,8 @@ All optional. Set them in `/plugin` (the plugin's settings) or in
   line and whether its output says nothing changed; for file writes, the file name and its line
   count; skill names; the words of your message (only to spot praise); subagent start and finish.
 - **Keeps**: each game's score and state, and which game the last terminal showed, in Claude Code's plugin store on your machine; the mode and pool in your Claude Code settings.
-- **Draws**: the games it shows in the line above the prompt (a block at the right end, or the octopus's strip across the full width), and an occasional notice.
-- **Hooks**: `skill.prompt` only notes which skill ran, so a finished skill can count as a moment; it passes the skill's prompt on unchanged. `command.run` answers its own commands (`/arcade` and the six game commands) and no other. `/arcade <game>`, `/arcade <mode>` and `/arcade pool` write `arcade.mode` and `arcade.pool` through Claude Code's own settings call, the same as changing them in the menu.
+- **Draws**: the games it shows in the line above the prompt (a block at the right end, or the octopus's and the duck hunt's strips across the full width), and an occasional notice.
+- **Hooks**: `skill.prompt` only notes which skill ran, so a finished skill can count as a moment; it passes the skill's prompt on unchanged. `command.run` answers its own commands (`/arcade` and the seven game commands) and no other. `/arcade <game>`, `/arcade <mode>` and `/arcade pool` write `arcade.mode` and `arcade.pool` through Claude Code's own settings call, the same as changing them in the menu.
 - **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
 - **Never**: changes, blocks or delays a tool call or a message; sends anything anywhere (no network
   calls, no telemetry); reads file contents beyond counting lines of a file Claude writes.
@@ -197,6 +210,8 @@ test.
 - **Tetris**: The placement AI favours a low, flat stack; it does not look ahead.
 - **Octo Invader**: The strip takes eight rows; on a short terminal the line above the prompt scrolls instead of showing whole.
 - **Octo Invader**: The octopus is drawn with half blocks; a terminal with tall line spacing shows thin gaps between rows.
+- **Duck Hunt**: The strip takes eight rows, like the octopus's; with both showing the line above the prompt is sixteen rows tall.
+- **Duck Hunt**: The ducks fly where they like; the crosshair finds them, it is not aimed by you.
 - **Octo Invader**: The score glyphs `⌂` and `✈` are single width in most terminal fonts; a font that draws `✈` as an emoji shifts the score by one cell.
 
 ## About

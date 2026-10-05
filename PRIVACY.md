@@ -1,7 +1,7 @@
 # Privacy
 
 This policy covers every plugin in this repository: the skills, the Claude Code Arcade
-(`arcade`: dragon, jackpot, outlaw, tama, tetris and octopus), the mods in Claude Code Toolkit (subtask-icons,
+(`arcade`: dragon, jackpot, outlaw, tama, tetris, octopus and duck), the mods in Claude Code Toolkit (subtask-icons,
 context-alarm, answer-buttons, skill-stats, dash-guard, shared-file-guard), and the `toolkit`
 collection that installs them.
 

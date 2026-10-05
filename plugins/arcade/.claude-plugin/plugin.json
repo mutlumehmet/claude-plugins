@@ -1,7 +1,7 @@
 {
   "name": "arcade",
   "version": "0.2.0",
-  "description": "The Claude Code Arcade: six pixel games above the prompt, played by your work (a dragon, a slot machine, an Outlaw duel, a Tamagotchi, Tetris and an invading octopus). Pin one, rotate them, or get a random one in every terminal.",
+  "description": "The Claude Code Arcade: seven pixel games above the prompt, played by your work (a dragon, a slot machine, an Outlaw duel, a Tamagotchi, Tetris, an invading octopus and a duck hunt). Pin one, rotate them, or get a random one in every terminal.",
   "author": {
     "name": "Mehmet Mutlu"
   },
@@ -23,7 +23,7 @@
     "pool": {
       "type": "string",
       "title": "Game pool",
-      "description": "Comma separated games to pick from: dragon, jackpot, outlaw, tama, tetris, octopus. Empty means all of them.",
+      "description": "Comma separated games to pick from: dragon, jackpot, outlaw, tama, tetris, octopus, duck. Empty means all of them.",
       "default": ""
     },
     "big_skills": {

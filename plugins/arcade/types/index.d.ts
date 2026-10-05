@@ -45,6 +45,8 @@ export type Tally = { score: number; lines: number; best: number; games: number 
 // octo-invader
 export type OctoScore = { xp: number; toppled: number; planes: number; tools: number }
 export type OctoMood = 'idle' | 'work' | 'sad' | 'sleep' | 'rampage'
+// duck-hunt
+export type DuckScore = { hits: number; escaped: number; tools: number }
 
 declare module 'claude-code' {
   interface PluginState {
@@ -64,6 +66,8 @@ declare module 'claude-code' {
       octopusScore: OctoScore
       octopusMood: OctoMood
       octopusFeat: string
+      duckScore: DuckScore
+      duckFeat: string
     }
   }
 }

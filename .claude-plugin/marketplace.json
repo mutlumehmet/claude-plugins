@@ -43,7 +43,7 @@
     {
       "name": "arcade",
       "source": "./plugins/arcade",
-      "description": "The Claude Code Arcade: six pixel games above the prompt, played by your work (a dragon, a slot machine, an Outlaw duel, a Tamagotchi, Tetris and an invading octopus). Pin one, rotate them, or get a random one in every terminal."
+      "description": "The Claude Code Arcade: seven pixel games above the prompt, played by your work (a dragon, a slot machine, an Outlaw duel, a Tamagotchi, Tetris, an invading octopus and a duck hunt). Pin one, rotate them, or get a random one in every terminal."
     },
     {
       "name": "toolkit",

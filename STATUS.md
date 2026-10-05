@@ -1,7 +1,10 @@
 # claude-plugins: current state
 
 Last updated: **5 October 2026, afternoon**, on branch `arcade-one-plugin` (worktree
-`~/Projects/claude-plugins-arcade`, not merged, not pushed). The six games (dragon-lair, jackpot,
+`~/Projects/claude-plugins-arcade`, not merged, not pushed). Seventh game: Duck Hunt (`/duck`,
+`src/games/duck-hunt.tsx`), a full width marsh like the octopus's city: moments shoot ducks down,
+a failed tool lets one fly away and the dog laughs. Frames checked as text from its own code in a
+scratch harness; not yet seen in a live terminal. 45 tests pass. The first six games (dragon-lair, jackpot,
 outlaw, tama, tetris, octo-invader) are one plugin, `arcade` 0.2.0: settings `mode` (random,
 rotate, fixed, all, off) and `pool` choose which games a new terminal shows, `/arcade` shows and
 changes it (`/arcade tetris`, `/arcade pool dragon tetris`, `/arcade next`), `/<game> hide|show`
