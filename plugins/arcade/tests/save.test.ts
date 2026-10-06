@@ -68,7 +68,9 @@ test('a score saved before scores were per project moves to the home folder\'s p
   expect((await $.command.run({ command: 'duck', args: '' } as never)).text).toMatch(/▼ 12/)
 })
 
-test('a reset asks first, needs "reset yes" within a minute, and clears only this game', { options: { mode: 'fixed', pool: 'duck' } }, async ($, on) => {
+// Slow by nature: checking that the minute runs out moves every game's frame clock a minute on,
+// about 900 frames each, which takes a few seconds on a CI runner.
+test('a reset asks first, needs "reset yes" within a minute, and clears only this game', { timeoutMs: 20_000, options: { mode: 'fixed', pool: 'duck' } }, async ($, on) => {
   const store: Record<string, unknown> = {}
   world(on, store)
   const clock = mock.clock(on)
