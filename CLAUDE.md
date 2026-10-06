@@ -67,6 +67,11 @@ when a task calls for them) or one mod (a hooks module that runs inside Claude C
   merges on save. Saving must not depend on the game being shown. No top-level `let` in `src/`:
   the build turns top-level `var` into `const`.
 - `claude plugin validate` and `claude plugin test` pass before every push; CI runs both.
+- **What the Anthropic Directory refuses** (found on the Arcade, 6 October 2026), though Claude Code
+  accepts it: a `userConfig` field with `options` (use a plain string and document the values), and
+  any variable, parameter or function named like the hook API's own names (`on`, `$`, a hook's
+  `next`) used as something else anywhere in the bundled module: the directory then cannot follow
+  the real `on` and `$`. Check the plugin's page on claude.ai/directory/manage after each push.
 - Dialogs that guard an action list the safe choice first, so a reflexive Enter refuses.
 - Everything the mod shows is English. Tests use neutral sample data.
 - Bump `version` in `plugin.json` on every change, so installed copies update.

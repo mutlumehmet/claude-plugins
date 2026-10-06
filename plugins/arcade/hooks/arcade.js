@@ -4759,8 +4759,8 @@ async function apply($, mode, pool) {
 }
 const title = (id) => GAMES.find((g) => g.id === id)?.title ?? id;
 async function status($, mode, pool) {
-  const on = await read12($, shown);
-  const rows = GAMES.map((g) => `${on.includes(g.id) ? "\u25CF" : "\u25CB"} ${g.title} (${g.id})${pool.includes(g.id) ? "" : ", not in the pool"}`);
+  const showing = await read12($, shown);
+  const rows = GAMES.map((g) => `${showing.includes(g.id) ? "\u25CF" : "\u25CB"} ${g.title} (${g.id})${pool.includes(g.id) ? "" : ", not in the pool"}`);
   const setting = mode === "fixed" ? `fixed on ${title(pool[0] ?? "")}` : mode === "off" ? "off" : `${mode}, from ${pool.map(title).join(", ")}`;
   return `Arcade on this account: ${setting}.
 This terminal:

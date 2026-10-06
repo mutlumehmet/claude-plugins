@@ -171,8 +171,9 @@ async function apply($: EngineInterface, mode: Mode, pool: string[]) {
 const title = (id: string) => GAMES.find(g => g.id === id)?.title ?? id
 
 async function status($: EngineInterface, mode: Mode, pool: string[]) {
-  const on = await read($, shown)
-  const rows = GAMES.map(g => `${on.includes(g.id) ? '●' : '○'} ${g.title} (${g.id})${pool.includes(g.id) ? '' : ', not in the pool'}`)
+  // Not called `on`: the directory reads that name as the hook registration function everywhere.
+  const showing = await read($, shown)
+  const rows = GAMES.map(g => `${showing.includes(g.id) ? '●' : '○'} ${g.title} (${g.id})${pool.includes(g.id) ? '' : ', not in the pool'}`)
   const setting =
     mode === 'fixed' ? `fixed on ${title(pool[0] ?? '')}` : mode === 'off' ? 'off' : `${mode}, from ${pool.map(title).join(', ')}`
   return (
