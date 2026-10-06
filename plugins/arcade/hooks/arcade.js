@@ -96,7 +96,7 @@ function drawBaby(ink, columns, x, y, frame10) {
 // src/save.ts
 const FORGET_AFTER_MS = 90 * 24 * 60 * 60 * 1e3;
 const PROJECTS = "arcade.projects";
-const here = { project: "", path: "" };
+const here = { project: "", path: "", home: "" };
 function hash(text) {
   let h2 = 2166136261;
   for (let i = 0; i < text.length; i++) {
@@ -134,6 +134,13 @@ async function rootOf($, cwd) {
 async function useProject($, cwd) {
   here.path = await rootOf($, cwd);
   here.project = hash(here.path);
+  let home;
+  try {
+    home = await $.env.get("HOME");
+  } catch {
+    home = void 0;
+  }
+  here.home = home ? hash(await rootOf($, home)) : here.project;
   try {
     const now = await $.clock.now();
     const seen = { ...await $.store.get(PROJECTS) ?? {} };
@@ -152,9 +159,10 @@ async function loadKept($, key) {
   if (value !== void 0 || scoped(key) === key) return value;
   const old = await $.store.get(key);
   if (old === void 0) return void 0;
-  await $.store.set(scoped(key), old);
+  const homeKey = `${key}@${here.home || here.project}`;
+  if (await $.store.get(homeKey) === void 0) await $.store.set(homeKey, old);
   await $.store.delete(key);
-  return old;
+  return homeKey === scoped(key) ? old : void 0;
 }
 const queues = /* @__PURE__ */ new Map();
 function keep($, key, current, change2) {

@@ -53,13 +53,18 @@ test('each repository keeps its own score, and a worktree shares its repository\
   expect(Object.keys(store).some(k => k.includes('/work/'))).toBe(false)
 })
 
-test('a score saved before scores were per project moves to the first project that opens', { options: { mode: 'fixed', pool: 'duck' } }, async ($, on) => {
+test('a score saved before scores were per project moves to the home folder\'s project', { options: { mode: 'fixed', pool: 'duck' } }, async ($, on) => {
   const store: Record<string, unknown> = { 'duck.score': { hits: 12, escaped: 3, tools: 40 } }
   world(on, store)
+  mock.env(on, { HOME: '/home/me' })
   mock.clock(on)
+  // Opened first in a repository: the old score goes home, and this project starts fresh.
   await open($, '/work/app')
   expect(store['duck.score']).toBeUndefined()
-  expect(store[duckKeys(store)[0]!]).toEqual({ hits: 12, escaped: 3, tools: 40 })
+  expect(duckKeys(store)).toHaveLength(1)
+  expect((await $.command.run({ command: 'duck', args: '' } as never)).text).toMatch(/▼ 0/)
+  // Opened in the home folder: there it is.
+  await open($, '/home/me')
   expect((await $.command.run({ command: 'duck', args: '' } as never)).text).toMatch(/▼ 12/)
 })
 

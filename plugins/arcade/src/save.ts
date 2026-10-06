@@ -13,12 +13,14 @@ import type { EngineInterface } from 'claude-code'
 // - A reset writes the initial value rather than deleting the key, so another terminal's next
 //   save starts from the reset too.
 // - A project nobody opened for 90 days is forgotten: its keys are deleted.
+// - Scores from before 0.8.0 move to the home folder's project (`~`), the first time any session
+//   of the account starts.
 
 const FORGET_AFTER_MS = 90 * 24 * 60 * 60 * 1000
 const PROJECTS = 'arcade.projects'
 
 // One object, not two `let`s: the build turns every top-level `var` into a `const`.
-const here = { project: '', path: '' }
+const here = { project: '', path: '', home: '' }
 
 // FNV-1a, 32 bits, in base 36: short, stable, and not the path itself.
 function hash(text: string) {
@@ -65,6 +67,14 @@ async function rootOf($: EngineInterface, cwd: string) {
 export async function useProject($: EngineInterface, cwd: string) {
   here.path = await rootOf($, cwd)
   here.project = hash(here.path)
+  // The home folder's project: where scores from before per project saving go.
+  let home: string | undefined
+  try {
+    home = await $.env.get('HOME')
+  } catch {
+    home = undefined
+  }
+  here.home = home ? hash(await rootOf($, home)) : here.project
   // Remember when each project was last opened, and forget the ones left for 90 days.
   try {
     const now = await $.clock.now()
@@ -82,16 +92,18 @@ export async function useProject($: EngineInterface, cwd: string) {
   }
 }
 
-// Reads a value for this project. A value saved before the Arcade kept values per project moves to
-// the first project that asks for it, so an existing score is not lost.
+// Reads a value for this project. A value saved before the Arcade kept values per project moves,
+// once, to the home folder's project (the one Claude Code opens in from `~`), so the old scores
+// have one place to be found; every other project starts fresh.
 export async function loadKept($: EngineInterface, key: string): Promise<unknown> {
   const value = await $.store.get(scoped(key))
   if (value !== undefined || scoped(key) === key) return value
   const old = await $.store.get(key)
   if (old === undefined) return undefined
-  await $.store.set(scoped(key), old)
+  const homeKey = `${key}@${here.home || here.project}`
+  if ((await $.store.get(homeKey)) === undefined) await $.store.set(homeKey, old)
   await $.store.delete(key)
-  return old
+  return homeKey === scoped(key) ? old : undefined
 }
 
 // Saves are queued per key, so two saves in one session never read the same old value.

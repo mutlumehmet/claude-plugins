@@ -244,7 +244,8 @@ Claude Code runs in, so your work on one repository builds its own town and play
 - **Where it lives**: Claude Code's plugin store on your machine, under each key with `@` and a short
   hash of the project's path. Nothing is written into the project folder, so a repository gets no
   new files. A project nobody opened for 90 days is forgotten.
-- **Upgrading from 0.7.0 or earlier**: the scores you had move to the first project you open.
+- **Upgrading from 0.7.0 or earlier**: the scores you had move to your home folder's project, the
+  one you get when you start Claude Code in `~`; every repository starts fresh.
 
 ## What it reads and does
 
