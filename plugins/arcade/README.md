@@ -143,6 +143,16 @@ edit, passing tests, a commit, a merge); the window around the strip is a mock u
 A side scrolling course the full width of the line above the prompt, with a ground of bricks,
 clouds, bushes and pipes. Dario runs while Claude works; you only watch.
 
+![Dario in a terminal: tool calls bring ? blocks and coins, a failing test sends a bug that knocks into Dario, green tests are a course clear at the flag pole, a commit stomps a bug and a merge is a world clear with fireworks](../../docs/images/dario-terminal.gif)
+
+The strip on its own, as the mod draws it:
+
+![The Dario strip: a brick ground the width of the terminal, Dario running, ? blocks, a bug, pipes and the flag pole](../../docs/images/dario.gif)
+
+Both GIFs are drawn by the Arcade's own code from a scripted session (a read, a search, a failing
+test, an edit, passing tests, a commit, a merge); the window around the strip is a mock up of a
+terminal.
+
 - **While Claude works** the course scrolls by, fastest while a tool runs, and Dario jumps the pipes on its way. **Two minutes of quiet** and he sits down for a nap.
 - **Every finished tool call** brings a ? block: Dario jumps, bumps it and a coin flies out. With two blocks already waiting, the coin comes straight away.
 - **A failed tool** sends a bug walking in, and it knocks into Dario (`OUCH`).
