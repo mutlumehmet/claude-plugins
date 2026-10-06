@@ -168,6 +168,16 @@ stone, then houses, farms, a well, towers and a grove of trees. Your agents buil
 work, and it is kept between sessions, so a glance in the middle of a long session shows how much
 got done.
 
+![Block Town in a terminal: the main agent and a helper villager build a house, a farm and a grove, a failing test brings a creeper, green tests raise part of the castle, a commit finishes a house and a merge builds the castle](../../docs/images/block-town-terminal.gif)
+
+The strip on its own, as the mod draws it:
+
+![The Block Town strip: grass, dirt and stone the width of the terminal, houses, a farm, trees and a finished castle](../../docs/images/block-town.gif)
+
+Both GIFs are drawn by the Arcade's own code from a scripted session (edits and reads with a
+subagent helping, a failing test, edits, passing tests, a commit, a merge); the window around the
+strip is a mock up of a terminal.
+
 - **Every tool call lays blocks** on the building going up (two, an edit or a write three), from the bottom row up, with scaffolding at its corners. The main agent's villager does it; **each subagent sends a helper villager** of its own colour, who goes home once that subagent is quiet.
 - **A failed tool** brings a creeper that walks up to a building, flashes and blows a hole in it (`BOOM`); the villagers build it back before starting anything new.
 - **Moments**: a small one plants a tree (trees grow as the work goes on, sapling to full tree; once the grove is full, they grow faster instead), a medium one finishes the building going up (`HOUSE BUILT`), a big one raises a third of the castle at the right end of the band (`THE CASTLE GROWS`), and a merge, release, deploy, streak or record raises the rest at once (`CASTLE BUILT!`, fireworks).
