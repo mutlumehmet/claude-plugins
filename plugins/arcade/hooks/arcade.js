@@ -1,6 +1,6 @@
 // Built by scripts/build.sh from src/ with esbuild@0.25.10. Do not edit: edit src/ and rebuild.
 // src/arcade.tsx
-import { atom as atom11, read as read11, update as update10 } from "claude-code";
+import { atom as atom12, read as read12, update as update11 } from "claude-code";
 
 // src/games/dragon-lair.tsx
 import { atom as atom2, read as read2, update } from "claude-code";
@@ -61,8 +61,8 @@ const MOUTH = { x: 26, y: BASE + 2 };
 const NOSTRIL = { x: 25, y: BASE + 2 };
 const EYE = { x: 19, y: BASE + 2 };
 function draw(ink, columns, pose2, dx = 0, dy = 0) {
-  const put4 = (part, frame9) => {
-    const rows = part.frames[frame9] ?? Object.values(part.frames)[0] ?? [];
+  const put5 = (part, frame10) => {
+    const rows = part.frames[frame10] ?? Object.values(part.frames)[0] ?? [];
     rows.forEach((row, y) => {
       for (let x = 0; x < row.length; x++) {
         if (row[x] !== "#") continue;
@@ -72,18 +72,18 @@ function draw(ink, columns, pose2, dx = 0, dy = 0) {
       }
     });
   };
-  put4(TAIL, pose2.tail);
-  put4(BODY, pose2.body);
-  put4(LEGS, pose2.legs);
-  put4(WING, pose2.wing);
-  put4(HEAD, pose2.head);
+  put5(TAIL, pose2.tail);
+  put5(BODY, pose2.body);
+  put5(LEGS, pose2.legs);
+  put5(WING, pose2.wing);
+  put5(HEAD, pose2.head);
 }
 const BABY = {
   up: [".#....", "#.#...", ".###.#", "..####", "..#..."],
   down: ["......", "....#.", ".####.", "#.###.", "..#..."]
 };
-function drawBaby(ink, columns, x, y, frame9) {
-  BABY[frame9].forEach((row, dy) => {
+function drawBaby(ink, columns, x, y, frame10) {
+  BABY[frame10].forEach((row, dy) => {
     for (let dx = 0; dx < row.length; dx++) {
       if (row[dx] !== "#") continue;
       const px = Math.round(x) + dx;
@@ -115,12 +115,12 @@ async function notify($, text) {
   if (!!await isShown($, ID)) $.ui.toast(text);
 }
 const SHOW_FRAMES = { puff: 20, breath: 32, blaze: 48, roar: 72 };
-function workOf(tool10) {
-  if (tool10 === "Read") return "read";
-  if (tool10 === "Grep" || tool10 === "Glob" || tool10 === "LSP") return "search";
-  if (tool10 === "Edit" || tool10 === "Write" || tool10 === "NotebookEdit") return "edit";
-  if (tool10 === "WebFetch" || tool10 === "WebSearch" || tool10.startsWith("mcp__")) return "web";
-  if (tool10 === "Agent" || tool10 === "Task") return "agent";
+function workOf(tool11) {
+  if (tool11 === "Read") return "read";
+  if (tool11 === "Grep" || tool11 === "Glob" || tool11 === "LSP") return "search";
+  if (tool11 === "Edit" || tool11 === "Write" || tool11 === "NotebookEdit") return "edit";
+  if (tool11 === "WebFetch" || tool11 === "WebSearch" || tool11.startsWith("mcp__")) return "web";
+  if (tool11 === "Agent" || tool11 === "Task") return "agent";
   return "bash";
 }
 const SLOTS = [
@@ -355,10 +355,10 @@ function drawBabies(ink, W5) {
       continue;
     }
     const isBusy = sim.t - b.lastTool < 15;
-    const frame9 = cycle(["up", "down"], isBusy ? 2 : 4);
+    const frame10 = cycle(["up", "down"], isBusy ? 2 : 4);
     if (b.state === "home") {
       const k = Math.min(1, age2 / 14);
-      drawBaby(ink, W5, at.x + (HOME.x - at.x) * k, at.y + (HOME.y - at.y) * k, frame9);
+      drawBaby(ink, W5, at.x + (HOME.x - at.x) * k, at.y + (HOME.y - at.y) * k, frame10);
       continue;
     }
     if (b.state === "fall") {
@@ -366,7 +366,7 @@ function drawBabies(ink, W5) {
       continue;
     }
     const bob = cycle(at.y === 0 ? [0, 0, 1, 1] : [0, 0, -1, -1], isBusy ? 2 : 5);
-    drawBaby(ink, W5, at.x, at.y + bob, frame9);
+    drawBaby(ink, W5, at.x, at.y + bob, frame10);
   }
   if (hidden > 0) glyph(W5 - 2, 8, `+${Math.min(9, hidden)}`.slice(-1), 2);
 }
@@ -1180,8 +1180,8 @@ async function finishSpin($) {
 function tick($) {
   sim3.t += 1;
   if (sim3.spin) {
-    const isDone = sim3.reels.every((r) => sim3.t - r.start >= r.frames + 4);
-    if (isDone) void finishSpin($);
+    const isDone2 = sim3.reels.every((r) => sim3.t - r.start >= r.frames + 4);
+    if (isDone2) void finishSpin($);
   } else if (sim3.t >= sim3.winUntil && sim3.queue.length > 0) {
     const spin = sim3.queue.shift();
     if (spin.isGolden && !spin.isPractice) void update3($, golden, (n) => Math.max(0, n - 1));
@@ -1257,9 +1257,9 @@ function frame3() {
   for (const c of sim3.coins) set(c.x, c.y, (c.age + Math.round(c.x)) % 3 === 0 ? 16777215 : 16765773);
   if (isWinning) {
     const text = isJackpot ? sim3.payout > 0 ? cycle2(["JACKPOT!", `+${sim3.payout}`], 8) : "JACKPOT!" : sim3.payout > 0 ? `+${sim3.payout}` : "";
-    const start10 = Math.floor((W - text.length) / 2);
+    const start11 = Math.floor((W - text.length) / 2);
     const fg = isJackpot ? hueColour(sim3.t * 40 % 360) : 16765773;
-    text.split("").forEach((ch, i) => over2.set(start10 + i, { ch, fg }));
+    text.split("").forEach((ch, i) => over2.set(start11 + i, { ch, fg }));
   } else if (sim3.queue.some((s) => s.isGolden) || sim3.spin?.isGolden) {
     "GOLDEN".split("").forEach((ch, i) => over2.set(11 + i, { ch, fg: cycle2([16765773, 16773800], 4) }));
   }
@@ -1515,12 +1515,12 @@ async function notify4($, text) {
   if (!!await isShown($, ID4)) $.ui.toast(text);
 }
 const SHOW_FRAMES3 = { ink: 24, plane: 260, rampage: 110, conquer: 150 };
-function workOf2(tool10) {
-  if (tool10 === "Read") return "read";
-  if (tool10 === "Grep" || tool10 === "Glob" || tool10 === "LSP") return "search";
-  if (tool10 === "Edit" || tool10 === "Write" || tool10 === "NotebookEdit") return "edit";
-  if (tool10 === "WebFetch" || tool10 === "WebSearch" || tool10.startsWith("mcp__")) return "web";
-  if (tool10 === "Agent" || tool10 === "Task") return "agent";
+function workOf2(tool11) {
+  if (tool11 === "Read") return "read";
+  if (tool11 === "Grep" || tool11 === "Glob" || tool11 === "LSP") return "search";
+  if (tool11 === "Edit" || tool11 === "Write" || tool11 === "NotebookEdit") return "edit";
+  if (tool11 === "WebFetch" || tool11 === "WebSearch" || tool11.startsWith("mcp__")) return "web";
+  if (tool11 === "Agent" || tool11 === "Task") return "agent";
   return "bash";
 }
 const sim4 = {
@@ -1837,7 +1837,7 @@ function stepBabies2() {
 function drawBabies2(buf) {
   sim4.babies.slice(0, 6).forEach((b, i) => {
     const isBusy = sim4.t - b.lastTool < 15;
-    const frame9 = BABY2[Math.floor(sim4.t / (isBusy ? 2 : 5)) % 2];
+    const frame10 = BABY2[Math.floor(sim4.t / (isBusy ? 2 : 5)) % 2];
     let x = sim4.ox + (sim4.face > 0 ? -7 * (i + 1) : OCTO_WIDTH + 2 + 7 * i);
     let y = Math.min(PH2 - 4, sim4.oy + 4 + i % 2 * 3 + cycle3([0, 1], isBusy ? 3 : 6));
     if (b.state === "home") {
@@ -1846,7 +1846,7 @@ function drawBabies2(buf) {
       y += (sim4.oy + 4 - y) * k;
     }
     if (b.state === "fall") y += b.y;
-    mask2(buf, frame9, x, y, BABY_INK, sim4.face < 0);
+    mask2(buf, frame10, x, y, BABY_INK, sim4.face < 0);
   });
 }
 function put2(buf, x, y, color) {
@@ -2687,8 +2687,8 @@ async function celebrateMoments6($, found) {
 const start6 = async ($, e, next) => {
   sim6.now = await $.clock.now();
   const saved = await $.store.get("tama.pet");
-  const start10 = saved ?? fresh(sim6.now, 1);
-  sim6.pet = await update6($, pet, () => age(start10, sim6.now));
+  const start11 = saved ?? fresh(sim6.now, 1);
+  sim6.pet = await update6($, pet, () => age(start11, sim6.now));
   await $.store.set("tama.pet", sim6.pet);
   await $.command.register({
     name: "tama",
@@ -2906,8 +2906,8 @@ function choose(shape) {
       const bump = heights.slice(1).reduce((s, height, i) => s + Math.abs(height - heights[i]), 0);
       const value = -0.51 * heights.reduce((s, height) => s + height, 0) + 0.76 * lines - 0.36 * holes - 0.18 * bump;
       if (!best || value > best.value) {
-        const start10 = Math.floor((G - widthOf(cells)) / 2);
-        best = { piece: { cells, col: start10, targetCol: col, row: -2, targetRow: row }, value };
+        const start11 = Math.floor((G - widthOf(cells)) / 2);
+        best = { piece: { cells, col: start11, targetCol: col, row: -2, targetRow: row }, value };
       }
     }
   }
@@ -3744,6 +3744,621 @@ const render9 = async ($, e, next) => {
 };
 const game9 = { id: ID9, title: "Dario" };
 
+// src/games/block-town.tsx
+import { read as read11, update as update10, atom as atom11 } from "claude-code";
+const ID10 = "town";
+const RASTER9 = "town";
+const ROWS10 = 8;
+const PH4 = ROWS10 * 2;
+const FPS_MS9 = 66;
+const MIN_COLUMNS5 = 24;
+const MAX_COLUMNS5 = 512;
+const SLEEP_AFTER3 = 2 * 60 * 1e3 / FPS_MS9;
+const HELPER_IDLE = 20 * 1e3 / FPS_MS9;
+const INK8 = 16777216;
+const NONE8 = 16777216;
+const EMPTY4 = 4294967295;
+const GREY4 = 9079434;
+const GOLD2 = 16766011;
+const CREEPER = 5025616;
+const GRASS2 = PH4 - 3;
+const BASE2 = GRASS2 - 1;
+const CASTLE_ROOM = 24;
+const MIN_FOR_CASTLE = 64;
+const BLOCKS = {
+  P: 12096607,
+  // planks
+  L: 7031339,
+  // logs
+  R: 10238763,
+  // roof
+  W: 10474495,
+  // window
+  D: 4861976,
+  // door
+  S: 10132122,
+  // stone
+  s: 8224125,
+  // dark stone
+  Y: 14729280,
+  // wheat
+  F: 8014372,
+  // farmland
+  B: 3900150,
+  // water
+  G: 4170573,
+  // leaves
+  T: 7031339,
+  // trunk
+  K: 15017249,
+  // banner
+  O: 12632256
+  // flag pole
+};
+const TREE_STAGES = [
+  ["G", "T"],
+  [".G.", "GGG", "GGG", ".T.", ".T."],
+  [".GGG.", "GGGGG", "GGGGG", "GGGGG", ".GTG.", "..T..", "..T.."]
+];
+function castleRows() {
+  const w = 21;
+  const h2 = 12;
+  const g = Array.from({ length: h2 }, () => Array.from({ length: w }, () => "."));
+  const fill = (x0, x1, y0, y1, c) => {
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) g[y][x] = c;
+  };
+  fill(5, 15, 5, 11, "S");
+  for (const x of [5, 7, 9, 11, 13, 15]) g[4][x] = "S";
+  fill(0, 4, 1, 11, "s");
+  fill(16, 20, 1, 11, "s");
+  for (const x of [0, 2, 4, 16, 18, 20]) g[0][x] = "s";
+  fill(8, 12, 2, 11, "S");
+  for (const x of [8, 12]) g[1][x] = "S";
+  g[1][10] = "O";
+  g[0][10] = "O";
+  g[0][11] = "K";
+  g[1][11] = "K";
+  fill(9, 11, 8, 11, "D");
+  g[4][2] = "W";
+  g[4][18] = "W";
+  g[5][10] = "W";
+  return g.map((r) => r.join(""));
+}
+const BLUEPRINTS = {
+  house: ["...R...", "..RRR..", ".RRRRR.", "RRRRRRR", "LPPWPPL", "LPPDPPL", "LPPDPPL"],
+  bighouse: [
+    "....R....",
+    "...RRR...",
+    "..RRRRR..",
+    ".RRRRRRR.",
+    "RRRRRRRRR",
+    "LPPWPWPPL",
+    "LPPPPPPPL",
+    "LLLLLLLLL",
+    "LPWPDPWPL",
+    "LPPPDPPPL"
+  ],
+  farm: ["Y.Y.Y.Y", "FFFFFFF"],
+  well: ["LLLLL", "L...L", "L...L", "SBBBS", "SSSSS"],
+  tower: ["S.S.S", "SSSSS", "SSWSS", "SSSSS", "SSSSS", "SSWSS", "SSSSS", "SSSSS", "SSSSS", "SSDSS", "SSDSS"],
+  castle: castleRows()
+};
+const NAMES = { house: "HOUSE", bighouse: "HALL", farm: "FARM", well: "WELL", tower: "TOWER", castle: "CASTLE", tree: "TREE" };
+const widthOf2 = (kind) => kind === "tree" ? 5 : BLUEPRINTS[kind][0].length;
+const ORDER2 = /* @__PURE__ */ new Map();
+function blocksOf(rows) {
+  const key = rows.join("|");
+  const cached = ORDER2.get(key);
+  if (cached) return cached;
+  const out = [];
+  for (let r = rows.length - 1; r >= 0; r--) {
+    const row = rows[r];
+    for (let c = 0; c < row.length; c++) {
+      const color = BLOCKS[row[c]];
+      if (color !== void 0) out.push({ dx: c, dy: r - rows.length + 1, color });
+    }
+  }
+  ORDER2.set(key, out);
+  return out;
+}
+const CYCLE = ["house", "farm", "house", "well", "house", "tower", "bighouse", "house"];
+const sim10 = {
+  t: 0,
+  W: 0,
+  requestId: null,
+  isBlitting: false,
+  isTurn: false,
+  working: 0,
+  lastActivity: 0,
+  plots: [],
+  next: 0,
+  villagers: [],
+  creepers: [],
+  particles: [],
+  banner: null,
+  gain: { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0 },
+  isDirty: false,
+  stats: "",
+  tools: 0
+};
+const rand6 = (a, b) => a + Math.random() * (b - a);
+const pick6 = (list2) => list2[Math.floor(Math.random() * list2.length)];
+const clamp5 = (v, a, b) => Math.max(a, Math.min(b, v));
+const HELPER_COLORS = [14721072, 11558102, 2864035, 15231634, 9159498];
+function levelOf3(blocks) {
+  if (blocks < 50) return "Camp";
+  if (blocks < 200) return "Hamlet";
+  if (blocks < 600) return "Village";
+  if (blocks < 1500) return "Town";
+  return "City";
+}
+function banner4(text, color, frames) {
+  sim10.banner = { text, color, until: sim10.t + frames };
+}
+function sparkle2(x, y, colors, n = 8) {
+  for (let i = 0; i < n; i++) {
+    sim10.particles.push({ x, y, vx: rand6(-0.7, 0.7), vy: rand6(-0.8, 0.2), age: 0, life: Math.floor(rand6(10, 20)), color: pick6(colors), gravity: 0.05 });
+  }
+}
+function treeStage(p) {
+  return clamp5(Math.floor((sim10.tools - (p.plantedAt ?? 0)) / 8), 0, 2);
+}
+const rowsOf = (p) => p.kind === "tree" ? TREE_STAGES[treeStage(p)] : BLUEPRINTS[p.kind];
+const sizeOf = (p) => p.kind === "tree" ? Infinity : blocksOf(BLUEPRINTS[p.kind]).length;
+const isDone = (p) => p.kind === "tree" || p.progress >= sizeOf(p);
+const castleX = () => sim10.W >= MIN_FOR_CASTLE ? sim10.W - CASTLE_ROOM + 1 : Infinity;
+const buildable = () => Math.min(sim10.W, castleX() - 2);
+function freeSpan(w, fromRight = false) {
+  const taken = sim10.plots.filter((p) => p.kind !== "castle").map((p) => [p.x - 1, p.x + widthOf2(p.kind)]).sort((a, b) => a[0] - b[0]);
+  const gaps = [];
+  let x = 1;
+  for (const [a, b] of taken) {
+    if (x + w <= a) gaps.push(fromRight ? a - w : x);
+    x = Math.max(x, b + 1);
+  }
+  if (x + w <= buildable()) gaps.push(fromRight ? buildable() - w : x);
+  if (gaps.length === 0) return null;
+  return fromRight ? Math.max(...gaps) : gaps[0];
+}
+function site() {
+  const fits = (p) => p.x + widthOf2(p.kind) <= sim10.W;
+  const damaged = sim10.plots.find((p) => p.kind !== "tree" && p.wasDone && !isDone(p) && fits(p));
+  if (damaged) return damaged;
+  const building = sim10.plots.find((p) => p.kind !== "tree" && p.kind !== "castle" && !isDone(p) && fits(p));
+  if (building) return building;
+  const kind = CYCLE[sim10.next % CYCLE.length];
+  const x = freeSpan(widthOf2(kind));
+  if (x !== null) {
+    sim10.next += 1;
+    const plot = { kind, x, progress: 0, wasDone: false };
+    sim10.plots.push(plot);
+    return plot;
+  }
+  const oldest = sim10.plots.find((p) => p.kind !== "tree" && p.kind !== "castle" && fits(p));
+  if (!oldest) return null;
+  if (oldest.kind === "house") {
+    const right = sim10.plots.filter((p) => p !== oldest && p.kind !== "castle").map((p) => p.x).filter((x2) => x2 > oldest.x);
+    if ((right.length === 0 ? buildable() : Math.min(...right) - 1) - oldest.x >= widthOf2("bighouse")) oldest.kind = "bighouse";
+  }
+  oldest.progress = 0;
+  oldest.wasDone = false;
+  sim10.plots = [...sim10.plots.filter((p) => p !== oldest), oldest];
+  return oldest;
+}
+function finish(p, isQuiet = false) {
+  p.progress = sizeOf(p);
+  if (p.wasDone) return;
+  p.wasDone = true;
+  if (p.kind === "house" || p.kind === "bighouse") sim10.gain.houses += 1;
+  if (p.kind === "castle") sim10.gain.castles += 1;
+  if (!isQuiet) banner4(`${NAMES[p.kind]} BUILT`, GOLD2, 40);
+  sparkle2(p.x + widthOf2(p.kind) / 2, BASE2 - 4, [GOLD2, 16579836], 6);
+}
+function villager(id) {
+  let v = sim10.villagers.find((x) => x.id === id);
+  if (!v) {
+    const color = id === "main" ? 2846678 : HELPER_COLORS[sim10.villagers.length % HELPER_COLORS.length];
+    v = { id, x: id === "main" ? 2 : sim10.W - 3, face: 1, color, lastWork: sim10.t, isLeaving: false };
+    sim10.villagers.push(v);
+  }
+  v.lastWork = sim10.t;
+  v.isLeaving = false;
+  return v;
+}
+function work(who, n, counts = true) {
+  const v = villager(who);
+  for (let i = 0; i < n; i++) {
+    const p = site();
+    if (!p) return;
+    const list2 = blocksOf(BLUEPRINTS[p.kind]);
+    const b = list2[Math.min(p.progress, list2.length - 1)];
+    p.progress += 1;
+    if (counts) sim10.gain.blocks += 1;
+    v.x = clamp5(v.x, 0, sim10.W - 3);
+    sim10.particles.push({ x: p.x + b.dx, y: BASE2 + b.dy, vx: 0, vy: -0.2, age: 0, life: 4, color: 16579836 });
+    if (isDone(p)) finish(p);
+  }
+  sim10.isDirty = true;
+}
+function plantTree(counts = true) {
+  const trees = sim10.plots.filter((p) => p.kind === "tree").length;
+  const x = trees < Math.max(2, Math.floor(buildable() / 18)) ? freeSpan(5, true) : null;
+  if (x === null) {
+    for (const p of sim10.plots) if (p.kind === "tree") p.plantedAt = (p.plantedAt ?? 0) - 4;
+    sim10.isDirty = true;
+    return;
+  }
+  sim10.plots.push({ kind: "tree", x, progress: 0, wasDone: true, plantedAt: sim10.tools });
+  if (counts) sim10.gain.trees += 1;
+  sim10.particles.push({ x: x + 2, y: BASE2 - 2, vx: 0, vy: -0.3, age: 0, life: 8, color: 4170573 });
+  sim10.isDirty = true;
+}
+function raiseCastle(isWhole, counts = true) {
+  const x = castleX();
+  if (x === Infinity) {
+    banner4("NO ROOM FOR A CASTLE", GREY4, 40);
+    return;
+  }
+  let castle = sim10.plots.find((p) => p.kind === "castle");
+  if (!castle || isDone(castle) && castle.wasDone) {
+    if (castle) {
+      for (let i = 0; i < 4; i++) sparkle2(rand6(x, sim10.W - 2), rand6(1, 6), [GOLD2, 15017249, 5090295, 4170573], 12);
+      banner4("LONG LIVE THE CASTLE!", GOLD2, 60);
+      return;
+    }
+    castle = { kind: "castle", x, progress: 0, wasDone: false };
+    sim10.plots.push(castle);
+  }
+  castle.x = x;
+  const size = sizeOf(castle);
+  const goal = isWhole ? size : Math.min(size, castle.progress + Math.ceil(size / 3));
+  if (counts) sim10.gain.blocks += goal - castle.progress;
+  castle.progress = goal;
+  if (isDone(castle)) {
+    finish(castle, true);
+    banner4("CASTLE BUILT!", GOLD2, 70);
+    for (let i = 0; i < 4; i++) sparkle2(rand6(x, sim10.W - 2), rand6(1, 6), [GOLD2, 15017249, 5090295, 4170573], 12);
+  } else banner4("THE CASTLE GROWS", GOLD2, 45);
+  sim10.isDirty = true;
+}
+function creeper(counts = true) {
+  const targets = sim10.plots.filter((p) => p.kind !== "tree" && p.progress > 4 && p.x + widthOf2(p.kind) <= sim10.W);
+  const target2 = targets.length > 0 ? pick6(targets) : null;
+  const tx = target2 ? target2.x + Math.floor(widthOf2(target2.kind) / 2) : Math.floor(sim10.W / 2);
+  sim10.creepers.push({ x: tx < sim10.W / 2 ? -2 : sim10.W + 1, target: tx, fuse: -1 });
+  if (counts) sim10.gain.creepers += 1;
+}
+function explode(c) {
+  sparkle2(c.x, BASE2 - 2, [16579836, GREY4, 16749099], 14);
+  banner4("BOOM", 16749099, 30);
+  for (const p of sim10.plots) {
+    if (p.kind === "tree") continue;
+    const w = widthOf2(p.kind);
+    if (c.x >= p.x - 2 && c.x <= p.x + w + 1) p.progress = Math.max(0, p.progress - Math.ceil(sizeOf(p) * 0.35));
+  }
+  sim10.isDirty = true;
+}
+function step8() {
+  sim10.t += 1;
+  const isAsleep = !sim10.isTurn && sim10.working === 0 && sim10.creepers.length === 0 && sim10.t - sim10.lastActivity > SLEEP_AFTER3;
+  const target2 = sim10.plots.find((p) => p.kind !== "tree" && !isDone(p) && p.kind !== "castle");
+  for (const v of sim10.villagers) {
+    if (v.id !== "main" && sim10.t - v.lastWork > HELPER_IDLE) v.isLeaving = true;
+    const goal = v.isLeaving ? sim10.W + 4 : target2 ? target2.x + widthOf2(target2.kind) + (v.id === "main" ? 0 : -widthOf2(target2.kind) - 3) : v.x;
+    const speed2 = sim10.working > 0 || v.isLeaving ? 0.5 : sim10.isTurn ? 0.25 : 0.1;
+    if (Math.abs(goal - v.x) > 0.5) {
+      v.face = goal > v.x ? 1 : -1;
+      v.x += v.face * speed2;
+    }
+  }
+  sim10.villagers = sim10.villagers.filter((v) => !(v.isLeaving && v.x > sim10.W + 2));
+  for (const c of sim10.creepers) {
+    if (c.fuse < 0) {
+      c.x += c.x < c.target ? 0.35 : -0.35;
+      if (Math.abs(c.x - c.target) < 0.5) c.fuse = 24;
+    } else if ((c.fuse -= 1) === 0) explode(c);
+  }
+  sim10.creepers = sim10.creepers.filter((c) => c.fuse !== 0);
+  for (const p of sim10.particles) {
+    p.age += 1;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += p.gravity ?? 0;
+  }
+  sim10.particles = sim10.particles.filter((p) => p.age < p.life && p.x >= 0 && p.x < sim10.W && p.y >= 0 && p.y < PH4);
+  return isAsleep;
+}
+function put4(buf, x, y, color) {
+  x = Math.round(x);
+  y = Math.round(y);
+  if (x < 0 || x >= sim10.W || y < 0 || y >= PH4) return;
+  buf[y * sim10.W + x] = color;
+}
+function drawPlot(buf, p) {
+  if (p.x + widthOf2(p.kind) > sim10.W) return;
+  if (p.kind === "tree") {
+    const rows = rowsOf(p);
+    const w = rows[0].length;
+    const x = p.x + Math.floor((5 - w) / 2);
+    for (const b of blocksOf(rows)) put4(buf, x + b.dx, BASE2 + b.dy, b.color);
+    return;
+  }
+  const list2 = blocksOf(BLUEPRINTS[p.kind]);
+  for (let i = 0; i < Math.min(p.progress, list2.length); i++) put4(buf, p.x + list2[i].dx, BASE2 + list2[i].dy, list2[i].color);
+  if (!isDone(p) && p.progress > 0) {
+    const h2 = BLUEPRINTS[p.kind].length;
+    const w = widthOf2(p.kind);
+    for (let y = 0; y < h2; y += 2) {
+      put4(buf, p.x - 1, BASE2 - y, 6047280);
+      put4(buf, p.x + w, BASE2 - y, 6047280);
+    }
+  }
+}
+function drawVillager(buf, v) {
+  const x = Math.round(v.x);
+  const legs = Math.floor(sim10.t / 4) % 2;
+  put4(buf, x, BASE2 - 3, 16560240);
+  put4(buf, x, BASE2 - 2, v.color);
+  put4(buf, x + v.face, BASE2 - 2, v.id === "main" || sim10.t % 8 < 4 ? 16560240 : v.color);
+  put4(buf, x, BASE2 - 1, v.color);
+  put4(buf, x, BASE2, 4861976);
+  if (legs) put4(buf, x + v.face, BASE2, 4861976);
+}
+function drawCreeper(buf, c) {
+  const isFlash = c.fuse > 0 && c.fuse % 4 < 2;
+  const color = isFlash ? 16579836 : CREEPER;
+  const x = Math.round(c.x);
+  for (let y = BASE2 - 3; y <= BASE2; y++) put4(buf, x, y, color);
+  put4(buf, x + 1, BASE2 - 3, color);
+  put4(buf, x + 1, BASE2, color);
+  put4(buf, x, BASE2 - 3, 1793568);
+}
+function drawGround(buf) {
+  for (let x = 0; x < sim10.W; x++) {
+    put4(buf, x, GRASS2, x * 5 % 7 === 0 ? 3050298 : 4170573);
+    put4(buf, x, GRASS2 + 1, x * 3 % 5 === 0 ? 5913116 : 8014372);
+    put4(buf, x, GRASS2 + 2, x * 7 % 4 === 0 ? 7039851 : 9079434);
+  }
+}
+const statsLine9 = (s) => `${levelOf3(s.blocks)}  \u25A6 ${s.blocks}  \u2302 ${s.houses}  \u2663 ${s.trees}  \u265C ${s.castles}  \u2692 ${s.tools}`;
+function frame9(isAsleep, stats) {
+  const W5 = sim10.W;
+  const buf = new Uint32Array(W5 * PH4).fill(EMPTY4);
+  const over2 = /* @__PURE__ */ new Map();
+  const text = (x, row, s, color) => [...s].forEach((ch, i) => {
+    if (x + i >= 0 && x + i < W5 && row >= 0 && row < ROWS10) over2.set(row * W5 + x + i, { ch, color });
+  });
+  drawGround(buf);
+  for (const p of sim10.plots) drawPlot(buf, p);
+  if (!isAsleep) for (const v of sim10.villagers) drawVillager(buf, v);
+  for (const c of sim10.creepers) drawCreeper(buf, c);
+  for (const p of sim10.particles) {
+    if (p.ch) text(Math.round(p.x), Math.floor(Math.round(p.y) / 2), p.ch, p.color);
+    else put4(buf, p.x, p.y, p.color);
+  }
+  if (isAsleep) {
+    const home = sim10.plots.find((p) => (p.kind === "house" || p.kind === "bighouse") && isDone(p));
+    if (home) text(home.x + widthOf2(home.kind), Math.floor((BASE2 - 8) / 2), "z", GREY4);
+  }
+  text(W5 - stats.length - 1, 0, stats, GREY4);
+  if (sim10.banner && sim10.t < sim10.banner.until && (sim10.banner.until - sim10.t) % 8 > 1) {
+    text(Math.floor((W5 - sim10.banner.text.length) / 2), 1, sim10.banner.text, sim10.banner.color);
+  }
+  const words = new Uint32Array(W5 * ROWS10 * 3);
+  for (let cy = 0; cy < ROWS10; cy++) {
+    for (let cx = 0; cx < W5; cx++) {
+      const i = (cy * W5 + cx) * 3;
+      const top = buf[cy * 2 * W5 + cx];
+      const bottom = buf[(cy * 2 + 1) * W5 + cx];
+      const g = over2.get(cy * W5 + cx);
+      if (g) {
+        words[i] = g.ch.codePointAt(0);
+        words[i + 1] = g.color;
+        words[i + 2] = NONE8;
+      } else if (top === EMPTY4 && bottom === EMPTY4) {
+        words[i] = 32;
+        words[i + 1] = INK8;
+        words[i + 2] = NONE8;
+      } else if (top === bottom) {
+        words[i] = 9608;
+        words[i + 1] = top;
+        words[i + 2] = NONE8;
+      } else if (bottom === EMPTY4) {
+        words[i] = 9600;
+        words[i + 1] = top;
+        words[i + 2] = NONE8;
+      } else if (top === EMPTY4) {
+        words[i] = 9604;
+        words[i + 1] = bottom;
+        words[i + 2] = NONE8;
+      } else {
+        words[i] = 9600;
+        words[i + 1] = top;
+        words[i + 2] = bottom;
+      }
+    }
+  }
+  return base649(new Uint8Array(words.buffer));
+}
+const B649 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+function base649(bytes) {
+  let out = "";
+  let i = 0;
+  for (; i + 2 < bytes.length; i += 3) {
+    const n = bytes[i] << 16 | bytes[i + 1] << 8 | bytes[i + 2];
+    out += B649[n >> 18 & 63] + B649[n >> 12 & 63] + B649[n >> 6 & 63] + B649[n & 63];
+  }
+  const rest = bytes.length - i;
+  if (rest === 1) {
+    const n = bytes[i] << 16;
+    out += B649[n >> 18 & 63] + B649[n >> 12 & 63] + "==";
+  } else if (rest === 2) {
+    const n = bytes[i] << 16 | bytes[i + 1] << 8;
+    out += B649[n >> 18 & 63] + B649[n >> 12 & 63] + B649[n >> 6 & 63] + "=";
+  }
+  return out;
+}
+const score7 = atom11({ plugin: "arcade", key: "townScore" }, { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0, tools: 0 });
+const feat6 = atom11({ plugin: "arcade", key: "townFeat" }, "");
+async function notify10($, text) {
+  if (await isShown($, ID10)) $.ui.toast(text);
+}
+async function saveTown($) {
+  sim10.isDirty = false;
+  const saved = { plots: sim10.plots, next: sim10.next };
+  await $.store.set("town.map", saved);
+}
+async function save5($, change2) {
+  const next = await update10($, score7, change2);
+  sim10.stats = statsLine9(next);
+  await $.store.set("town.score", next);
+  return next;
+}
+async function celebrate6($, label, show, isPractice = false) {
+  sim10.lastActivity = sim10.t;
+  const counts = !isPractice;
+  if (show === "tree") return plantTree(counts);
+  if (show === "finish") {
+    const p = site();
+    if (p) {
+      if (counts) sim10.gain.blocks += Math.max(0, sizeOf(p) - p.progress);
+      finish(p);
+    }
+    sim10.isDirty = true;
+  } else raiseCastle(show === "whole", counts);
+  if (isPractice) return;
+  const what = { tree: "", finish: "a building finished", castle: "the castle grows", whole: "a castle raised" };
+  await update10($, feat6, () => `${label}: ${what[show]}`);
+  const say2 = { tree: "", finish: "Built", castle: "The castle grows", whole: "Castle" };
+  void notify10($, `\u{1F3F0} ${label}! ${say2[show]}!`);
+}
+const WHOLE = /* @__PURE__ */ new Set(["merge", "release", "deploy", "streak", "record", "squad"]);
+async function celebrateMoments10($, found) {
+  for (const m of found) {
+    if (m.tier === "small") await celebrate6($, m.label, "tree");
+    else if (m.tier === "medium") await celebrate6($, m.label, "finish");
+    else await celebrate6($, m.label, WHOLE.has(m.kind) ? "whole" : "castle");
+  }
+}
+const start10 = async ($, e, next) => {
+  const saved = await $.store.get("town.score");
+  if (saved) await update10($, score7, () => saved);
+  const s = saved ?? await read11($, score7);
+  sim10.stats = statsLine9(s);
+  sim10.tools = s.tools;
+  const map = await $.store.get("town.map");
+  if (map && Array.isArray(map.plots)) {
+    sim10.plots = map.plots;
+    sim10.next = map.next ?? 0;
+  }
+  await $.command.register({
+    name: "town",
+    description: 'Block Town above the prompt: the score. "/town build|tree|finish|castle|creeper" to show off.'
+  });
+  $.clock.every(FPS_MS9, () => {
+    const requestId = sim10.requestId;
+    if (requestId === null || sim10.W === 0) return;
+    const isAsleep = step8();
+    const g = sim10.gain;
+    if (g.blocks + g.houses + g.trees + g.castles + g.creepers > 0) {
+      sim10.gain = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0 };
+      void save5($, (old) => {
+        const next2 = {
+          ...old,
+          blocks: old.blocks + g.blocks,
+          houses: old.houses + g.houses,
+          trees: old.trees + g.trees,
+          castles: old.castles + g.castles,
+          creepers: old.creepers + g.creepers
+        };
+        if (levelOf3(next2.blocks) !== levelOf3(old.blocks)) {
+          banner4(levelOf3(next2.blocks).toUpperCase(), GOLD2, 60);
+          void notify10($, `\u{1F3F0} Your camp grew into a ${levelOf3(next2.blocks).toLowerCase()}: ${next2.blocks} blocks.`);
+        }
+        return next2;
+      });
+    }
+    if (sim10.isDirty && sim10.t % 30 === 0) void saveTown($);
+    if (sim10.isBlitting) return;
+    sim10.isBlitting = true;
+    void $.ui.blit({ requestId, key: RASTER9, cells: frame9(isAsleep, sim10.stats), columns: sim10.W }).then((r) => {
+      if (r.deny !== void 0) sim10.requestId = null;
+    }).finally(() => {
+      sim10.isBlitting = false;
+    });
+  });
+  return next(e);
+};
+const command10 = async ($, e) => {
+  const arg = (e.args ?? "").trim();
+  if (arg === "build") {
+    work("main", 6, false);
+    return { text: "Practice: six blocks go up, nothing counts." };
+  }
+  if (arg === "creeper") {
+    creeper(false);
+    return { text: "Practice: a creeper walks in, nothing counts." };
+  }
+  const practice = { tree: "tree", finish: "finish", castle: "castle" };
+  const show = practice[arg];
+  if (show) {
+    await celebrate6($, "Practice", show, true);
+    return { text: "Practice: nothing counts." };
+  }
+  const s = await read11($, score7);
+  const last2 = await read11($, feat6);
+  return {
+    text: `${statsLine9(s)}${last2 ? `
+Last win: ${last2}` : ""}
+Your villagers build the town while Claude works: every tool call lays two blocks (an edit or a write three), and each subagent sends a helper of its own. A failed tool brings a creeper that blows a hole in a building, and the villagers build it back. A small moment plants a tree, and trees grow as the work goes on; a medium moment (a commit, a skill, a sent message) finishes the building going up, a big one raises a third of the castle and a merge, release or deploy the rest. The town is kept between sessions; once the band is full, the oldest building is torn down and built again. The first word is the town's size (camp, hamlet, village, town, city); \u25A6 blocks laid, \u2302 houses, \u2663 trees, \u265C castles, \u2692 tool calls.`
+  };
+};
+const prompt10 = async ($, e, next) => {
+  sim10.isTurn = true;
+  sim10.lastActivity = sim10.t;
+  return next(e);
+};
+const turn10 = async ($, e, next) => {
+  if (e.agentId === void 0) sim10.isTurn = false;
+  sim10.lastActivity = sim10.t;
+  return next(e);
+};
+const tool10 = async ($, e, next) => {
+  const isMain = e.agentId === void 0;
+  if (isMain) sim10.working += 1;
+  sim10.lastActivity = sim10.t;
+  const ran = await next(e).finally(() => {
+    if (isMain) sim10.working = Math.max(0, sim10.working - 1);
+    sim10.lastActivity = sim10.t;
+  });
+  if (ran.deny !== void 0) return ran;
+  if (ran.isError === true) {
+    creeper(true);
+    return ran;
+  }
+  work(isMain ? "main" : String(e.agentId), e.tool === "Edit" || e.tool === "Write" ? 3 : 2);
+  if (isMain) {
+    const counted = await update10($, score7, (old) => ({ ...old, tools: old.tools + 1 }));
+    sim10.tools = counted.tools;
+    sim10.stats = statsLine9(counted);
+    if (counted.tools % 10 === 0) void $.store.set("town.score", counted);
+  }
+  return ran;
+};
+const render10 = async ($, e, next) => {
+  const below = await next(e);
+  if (e.surface !== "terminal" || e.props.hasSurvey || !await isShown($, ID10)) {
+    sim10.requestId = null;
+    return below;
+  }
+  const { Box, Raster } = $.ui.resolve(e);
+  sim10.W = clamp5(e.props.bodyColumns, MIN_COLUMNS5, MAX_COLUMNS5);
+  sim10.requestId = e.requestId;
+  sim10.stats = statsLine9(await read11($, score7));
+  return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Raster, { key: RASTER9, columns: sim10.W, rows: ROWS10, cells: frame9(false, sim10.stats) }), below ?? null);
+};
+const game10 = { id: ID10, title: "Block Town" };
+
 // src/milestones.ts
 const MARATHON_MS = 10 * 60 * 1e3;
 const MARATHON_TOOLS = 30;
@@ -3765,7 +4380,7 @@ const COMMANDS = [
   { test: /\bgit\b[^|;&]*\bpush\b/, tier: "medium", kind: "push", label: "Push" }
 ];
 const TESTS = /\b(npm|pnpm|yarn|bun)\s+(run\s+)?test\b|\bvitest\b|\bjest\b|\bpytest\b|\bgo\s+test\b|\bcargo\s+test\b|\bplugin\s+test\b|\brspec\b|\bphpunit\b/;
-const EMPTY4 = /nothing to commit|no changes added|Everything up-to-date/;
+const EMPTY5 = /nothing to commit|no changes added|Everything up-to-date/;
 const DELIVERABLE = /\.(pdf|docx?|xlsx?|pptx?|key|pages|numbers|csv|png|jpe?g|svg|gif|mp4|mp3|wav|epub)$/i;
 const OUTWARD = /^mcp__.+__.*(send|create|post|publish|schedule|upload|reply|forward|invite|share|comment)/i;
 const PRAISE = [
@@ -3809,7 +4424,7 @@ const config = {
   mediumCommands: null,
   praise: PRAISE
 };
-const turn10 = { startedAt: 0, tools: 0, errors: 0, subagents: 0, skills: [] };
+const turn11 = { startedAt: 0, tools: 0, errors: 0, subagents: 0, skills: [] };
 const session = { tools: 0, tasksMade: 0, tasksDone: 0, testsFailed: false, todosDone: false };
 function configureMilestones(options) {
   config.bigSkills = list(options.big_skills);
@@ -3830,60 +4445,60 @@ function streakMilestones(stored, now) {
   };
 }
 function promptMilestones(text, now) {
-  turn10.startedAt = now;
-  turn10.tools = 0;
-  turn10.errors = 0;
-  turn10.subagents = 0;
-  turn10.skills = [];
+  turn11.startedAt = now;
+  turn11.tools = 0;
+  turn11.errors = 0;
+  turn11.subagents = 0;
+  turn11.skills = [];
   const said = ` ${text.toLowerCase()} `;
   const isPraise = config.praise.some((word2) => new RegExp(`(^|[^\\p{L}])${word2}([^\\p{L}]|$)`, "u").test(said));
   return isPraise ? [{ tier: "medium", kind: "praise", label: "You said something nice" }] : [];
 }
 function skillSeen(skill) {
-  turn10.skills.push(skill);
+  turn11.skills.push(skill);
 }
 function subagentMilestones() {
-  turn10.subagents += 1;
+  turn11.subagents += 1;
   const found = [{ tier: "medium", kind: "subagent", label: "A subagent finished" }];
-  if (turn10.subagents === SQUAD) found.push({ tier: "big", kind: "squad", label: `${SQUAD} subagents done` });
+  if (turn11.subagents === SQUAD) found.push({ tier: "big", kind: "squad", label: `${SQUAD} subagents done` });
   return found;
 }
 function turnMilestones(now) {
   const found = [];
-  for (const skill of new Set(turn10.skills)) {
+  for (const skill of new Set(turn11.skills)) {
     const name = skill.toLowerCase().replace(/^.*:/, "");
     const full = skill.toLowerCase();
     if ([name, full].some((n) => config.quietSkills.includes(n))) continue;
     const isBig = [name, full].some((n) => config.bigSkills.includes(n));
     found.push({ tier: isBig ? "big" : "medium", kind: "skill", label: `Skill: ${name}` });
   }
-  const isMarathon = turn10.startedAt > 0 && now - turn10.startedAt > MARATHON_MS && turn10.tools >= MARATHON_TOOLS && turn10.errors === 0;
+  const isMarathon = turn11.startedAt > 0 && now - turn11.startedAt > MARATHON_MS && turn11.tools >= MARATHON_TOOLS && turn11.errors === 0;
   found.push(
     isMarathon ? { tier: "big", kind: "marathon", label: "A marathon turn, no errors" } : { tier: "small", kind: "turn", label: "Turn done" }
   );
-  turn10.skills = [];
+  turn11.skills = [];
   return found;
 }
 function toolMilestones(e, ran) {
-  const tool10 = String(e.tool);
+  const tool11 = String(e.tool);
   const input = e;
-  turn10.tools += 1;
+  turn11.tools += 1;
   session.tools += 1;
   const found = [];
   if (RECORDS.includes(session.tools)) found.push({ tier: "big", kind: "record", label: `${session.tools} tool calls` });
-  else if (turn10.tools % 10 === 0) found.push({ tier: "small", kind: "tools", label: `${turn10.tools} tools this turn` });
+  else if (turn11.tools % 10 === 0) found.push({ tier: "small", kind: "tools", label: `${turn11.tools} tools this turn` });
   if (ran.isError === true) {
-    turn10.errors += 1;
-    if (tool10 === "Bash" && TESTS.test(String(input.command ?? ""))) session.testsFailed = true;
+    turn11.errors += 1;
+    if (tool11 === "Bash" && TESTS.test(String(input.command ?? ""))) session.testsFailed = true;
     return found;
   }
-  if (tool10 === "Bash") {
-    const command10 = String(input.command ?? "");
-    if (EMPTY4.test(ran.text ?? "")) return found;
-    if (config.bigCommands?.test(command10)) return [...found, { tier: "big", kind: "command", label: "Big command done" }];
-    const known = COMMANDS.find((c) => c.test.test(command10));
+  if (tool11 === "Bash") {
+    const command11 = String(input.command ?? "");
+    if (EMPTY5.test(ran.text ?? "")) return found;
+    if (config.bigCommands?.test(command11)) return [...found, { tier: "big", kind: "command", label: "Big command done" }];
+    const known = COMMANDS.find((c) => c.test.test(command11));
     if (known) return [...found, { tier: known.tier, kind: known.kind, label: known.label }];
-    if (TESTS.test(command10)) {
+    if (TESTS.test(command11)) {
       const wasRed = session.testsFailed;
       session.testsFailed = false;
       return [
@@ -3891,35 +4506,35 @@ function toolMilestones(e, ran) {
         wasRed ? { tier: "big", kind: "green", label: "Tests back to green" } : { tier: "medium", kind: "tests", label: "Tests passed" }
       ];
     }
-    if (config.mediumCommands?.test(command10)) found.push({ tier: "medium", kind: "command", label: "Command done" });
+    if (config.mediumCommands?.test(command11)) found.push({ tier: "medium", kind: "command", label: "Command done" });
     return found;
   }
-  if (tool10 === "Write" || tool10 === "Edit" || tool10 === "NotebookEdit") {
+  if (tool11 === "Write" || tool11 === "Edit" || tool11 === "NotebookEdit") {
     const path = String(input.file_path ?? input.notebook_path ?? "");
     const name = path.split("/").pop() ?? path;
     const lines = String(input.content ?? "").split("\n").length;
-    if (tool10 === "Write" && DELIVERABLE.test(path)) found.push({ tier: "big", kind: "deliverable", label: `Made ${name}` });
-    else if (tool10 === "Write" && lines > LONG_FILE_LINES) found.push({ tier: "medium", kind: "long", label: `Wrote ${name}` });
+    if (tool11 === "Write" && DELIVERABLE.test(path)) found.push({ tier: "big", kind: "deliverable", label: `Made ${name}` });
+    else if (tool11 === "Write" && lines > LONG_FILE_LINES) found.push({ tier: "medium", kind: "long", label: `Wrote ${name}` });
     else found.push({ tier: "small", kind: "file", label: `Saved ${name}` });
     return found;
   }
-  if (tool10 === "Artifact") {
+  if (tool11 === "Artifact") {
     const action = String(input.action ?? "publish");
     if (action === "publish" && input.asset !== true && (input.file_path || input.type_url)) {
       found.push({ tier: "big", kind: "page", label: "Published a page" });
     }
     return found;
   }
-  if (tool10 === "ExitPlanMode") return [...found, { tier: "medium", kind: "plan", label: "Plan approved" }];
-  if (tool10 === "TodoWrite") {
+  if (tool11 === "ExitPlanMode") return [...found, { tier: "medium", kind: "plan", label: "Plan approved" }];
+  if (tool11 === "TodoWrite") {
     const todos = Array.isArray(input.todos) ? input.todos : [];
-    const isDone = todos.length >= 3 && todos.every((t) => t.status === "completed");
-    if (isDone && !session.todosDone) found.push({ tier: "big", kind: "todos", label: `All ${todos.length} tasks done` });
-    session.todosDone = isDone;
+    const isDone2 = todos.length >= 3 && todos.every((t) => t.status === "completed");
+    if (isDone2 && !session.todosDone) found.push({ tier: "big", kind: "todos", label: `All ${todos.length} tasks done` });
+    session.todosDone = isDone2;
     return found;
   }
-  if (tool10 === "TaskCreate") session.tasksMade += 1;
-  if (tool10 === "TaskUpdate" && input.status === "completed") {
+  if (tool11 === "TaskCreate") session.tasksMade += 1;
+  if (tool11 === "TaskUpdate" && input.status === "completed") {
     session.tasksDone += 1;
     if (session.tasksMade >= 3 && session.tasksDone >= session.tasksMade) {
       found.push({ tier: "big", kind: "todos", label: `All ${session.tasksMade} tasks done` });
@@ -3928,18 +4543,18 @@ function toolMilestones(e, ran) {
     }
     return found;
   }
-  if (OUTWARD.test(tool10)) {
-    const verb = tool10.match(/(send|create|post|publish|schedule|upload|reply|forward|invite|share|comment)/i)?.[1] ?? "send";
+  if (OUTWARD.test(tool11)) {
+    const verb = tool11.match(/(send|create|post|publish|schedule|upload|reply|forward|invite|share|comment)/i)?.[1] ?? "send";
     found.push({ tier: "medium", kind: "send", label: `${verb[0].toUpperCase()}${verb.slice(1).toLowerCase()} done` });
   }
   return found;
 }
 
 // src/arcade.tsx
-const GAMES = [game, game3, game5, game6, game7, game4, game2, game8, game9];
+const GAMES = [game, game3, game5, game6, game7, game4, game2, game8, game9, game10];
 const MODES = ["random", "rotate", "fixed", "all", "off"];
-const ALIASES = { "dragon-lair": "dragon", octo: "octopus", "octo-invader": "octopus", "duck-hunt": "duck", duckhunt: "duck", ducks: "duck", "bug-command": "bugs", bugcommand: "bugs", bug: "bugs", missile: "bugs", "missile-command": "bugs", mario: "dario", runner: "dario", "block-runner": "dario" };
-const pickedFor = atom11({ plugin: "arcade", key: "pickedFor" }, "");
+const ALIASES = { "dragon-lair": "dragon", octo: "octopus", "octo-invader": "octopus", "duck-hunt": "duck", duckhunt: "duck", ducks: "duck", "bug-command": "bugs", bugcommand: "bugs", bug: "bugs", missile: "bugs", "missile-command": "bugs", mario: "dario", runner: "dario", "block-runner": "dario", "block-town": "town", blocktown: "town", minecraft: "town", village: "town", castle: "town" };
+const pickedFor = atom12({ plugin: "arcade", key: "pickedFor" }, "");
 function gameId(word2) {
   const id = ALIASES[word2.toLowerCase()] ?? word2.toLowerCase();
   return GAMES.some((g) => g.id === id) ? id : void 0;
@@ -3951,7 +4566,7 @@ function poolOf(value) {
   const ids = String(value ?? "").split(/[\s,]+/).map((w) => w ? gameId(w) : void 0).filter((id) => id !== void 0);
   return ids.length > 0 ? [...new Set(ids)] : GAMES.map((g) => g.id);
 }
-async function pick6($, mode, pool) {
+async function pick7($, mode, pool) {
   if (mode === "off") return [];
   if (mode === "all") return pool;
   if (mode === "fixed") return pool.slice(0, 1);
@@ -3962,14 +4577,14 @@ async function pick6($, mode, pool) {
   return [next];
 }
 async function apply($, mode, pool) {
-  const ids = await pick6($, mode, pool);
-  await update10($, shown, () => ids);
-  await update10($, pickedFor, () => `${mode}|${pool.join(",")}`);
+  const ids = await pick7($, mode, pool);
+  await update11($, shown, () => ids);
+  await update11($, pickedFor, () => `${mode}|${pool.join(",")}`);
   return ids;
 }
 const title = (id) => GAMES.find((g) => g.id === id)?.title ?? id;
 async function status($, mode, pool) {
-  const on = await read11($, shown);
+  const on = await read12($, shown);
   const rows = GAMES.map((g) => `${on.includes(g.id) ? "\u25CF" : "\u25CB"} ${g.title} (${g.id})${pool.includes(g.id) ? "" : ", not in the pool"}`);
   const setting = mode === "fixed" ? `fixed on ${title(pool[0] ?? "")}` : mode === "off" ? "off" : `${mode}, from ${pool.map(title).join(", ")}`;
   return `Arcade on this account: ${setting}.
@@ -3978,7 +4593,7 @@ ${rows.join("\n")}
 "/arcade <game>" swaps this terminal's game, "/arcade <game> all" pins it for every terminal, "/arcade random|rotate|all|off" sets how new terminals pick, "/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal's game. "/arcade hide" clears this terminal only.`;
 }
 const over = (options) => `${String(options.mode ?? "")}|${String(options.pool ?? "")}`;
-async function save5($, options, mode, pool) {
+async function save6($, options, mode, pool) {
   try {
     const keys = new Set((await $.config.list()).map((row) => row.key));
     if (keys.has("arcade.mode") && keys.has("arcade.pool")) {
@@ -3994,7 +4609,7 @@ async function save5($, options, mode, pool) {
   const saved = { mode, pool: pool.join(","), over: over(options) };
   await $.store.set("setting", saved);
 }
-async function celebrate6($, found) {
+async function celebrate7($, found) {
   if (found.length === 0) return;
   await celebrateMoments($, found);
   await celebrateMoments3($, found);
@@ -4005,6 +4620,7 @@ async function celebrate6($, found) {
   await celebrateMoments2($, found);
   await celebrateMoments8($, found);
   await celebrateMoments9($, found);
+  await celebrateMoments10($, found);
 }
 export const register = (on, options) => {
   configureMilestones(options);
@@ -4016,11 +4632,11 @@ export const register = (on, options) => {
     });
     const saved = await $.store.get("setting");
     if (saved?.over === over(options)) Object.assign(setting, { mode: modeOf(saved.mode), pool: poolOf(saved.pool) });
-    if (await read11($, pickedFor) !== `${setting.mode}|${setting.pool.join(",")}`) await apply($, setting.mode, setting.pool);
-    const ran = await start($, e, ((e1) => start3($, e1, ((e2) => start5($, e2, ((e3) => start6($, e3, ((e4) => start7($, e4, ((e5) => start4($, e5, ((e6) => start2($, e6, ((e7) => start8($, e7, ((e8) => start9($, e8, next)))))))))))))))));
+    if (await read12($, pickedFor) !== `${setting.mode}|${setting.pool.join(",")}`) await apply($, setting.mode, setting.pool);
+    const ran = await start($, e, ((e1) => start3($, e1, ((e2) => start5($, e2, ((e3) => start6($, e3, ((e4) => start7($, e4, ((e5) => start4($, e5, ((e6) => start2($, e6, ((e7) => start8($, e7, ((e8) => start9($, e8, ((e9) => start10($, e9, next)))))))))))))))))));
     const streak = streakMilestones(await $.store.get("days"), await $.clock.now());
     await $.store.set("days", streak.days);
-    await celebrate6($, streak.found);
+    await celebrate7($, streak.found);
     return ran;
   });
   on("command.run", { command: "arcade" }, async ($, e) => {
@@ -4028,14 +4644,14 @@ export const register = (on, options) => {
     const [first = "", ...rest] = words.map((w) => w.toLowerCase());
     if (first === "") return { text: await status($, setting.mode, setting.pool) };
     if (first === "hide") {
-      await update10($, shown, () => []);
+      await update11($, shown, () => []);
       return { text: 'No game in this terminal. "/arcade next" brings one back; new terminals still follow the setting.' };
     }
     if (first === "next") {
-      const now = await read11($, shown);
+      const now = await read12($, shown);
       const at = setting.pool.indexOf(now[now.length - 1] ?? "");
       const id2 = setting.pool[(at + 1) % setting.pool.length] ?? "";
-      await update10($, shown, () => [id2]);
+      await update11($, shown, () => [id2]);
       return { text: `${title(id2)} in this terminal. New terminals still follow the setting.` };
     }
     if (first === "pool") {
@@ -4044,7 +4660,7 @@ export const register = (on, options) => {
         return { text: `Name the games for the pool: ${GAMES.map((g) => g.id).join(", ")}.` };
       }
       const pool2 = poolOf(ids.join(","));
-      await save5($, options, setting.mode, pool2);
+      await save6($, options, setting.mode, pool2);
       setting.pool = pool2;
       await apply($, setting.mode, pool2);
       return { text: await status($, setting.mode, pool2) };
@@ -4055,12 +4671,12 @@ export const register = (on, options) => {
       return { text: `No game or mode called "${first}". Games: ${GAMES.map((g) => g.id).join(", ")}. Modes: ${MODES.join(", ")}.` };
     }
     if (id !== void 0 && rest[0] !== "all") {
-      await update10($, shown, () => [id]);
+      await update11($, shown, () => [id]);
       return { text: `${title(id)} in this terminal. "/arcade ${id} all" pins it for every terminal.` };
     }
     const pool = id === void 0 ? setting.pool : [id, ...setting.pool.filter((x) => x !== id)];
     const next = id === void 0 ? mode : "fixed";
-    await save5($, options, next, pool);
+    await save6($, options, next, pool);
     Object.assign(setting, { mode: next, pool });
     await apply($, next, pool);
     return { text: await status($, next, pool) };
@@ -4071,7 +4687,7 @@ export const register = (on, options) => {
   });
   on("classic.SubagentStop", async ($, e, next) => {
     const ran = await next(e);
-    await celebrate6($, subagentMilestones());
+    await celebrate7($, subagentMilestones());
     return ran;
   });
   on("command.run", { command: "dragon" }, ($, e, next) => command($, e, next));
@@ -4083,21 +4699,22 @@ export const register = (on, options) => {
   on("command.run", { command: "duck" }, ($, e, next) => command2($, e, next));
   on("command.run", { command: "bugs" }, ($, e, next) => command8($, e, next));
   on("command.run", { command: "dario" }, ($, e, next) => command9($, e, next));
+  on("command.run", { command: "town" }, ($, e, next) => command10($, e, next));
   on("ui.message", ($, e, next) => message($, e, next));
   on("prompt.submit", async ($, e, next) => {
-    const ran = await prompt($, e, ((e1) => prompt3($, e1, ((e2) => prompt5($, e2, ((e3) => prompt6($, e3, ((e4) => prompt7($, e4, ((e5) => prompt4($, e5, ((e6) => prompt2($, e6, ((e7) => prompt8($, e7, ((e8) => prompt9($, e8, next)))))))))))))))));
-    await celebrate6($, promptMilestones(String(e.text ?? ""), await $.clock.now()));
+    const ran = await prompt($, e, ((e1) => prompt3($, e1, ((e2) => prompt5($, e2, ((e3) => prompt6($, e3, ((e4) => prompt7($, e4, ((e5) => prompt4($, e5, ((e6) => prompt2($, e6, ((e7) => prompt8($, e7, ((e8) => prompt9($, e8, ((e9) => prompt10($, e9, next)))))))))))))))))));
+    await celebrate7($, promptMilestones(String(e.text ?? ""), await $.clock.now()));
     return ran;
   });
   on("turn.complete", async ($, e, next) => {
-    const ran = await turn($, e, ((e1) => turn3($, e1, ((e2) => turn5($, e2, ((e3) => turn6($, e3, ((e4) => turn7($, e4, ((e5) => turn4($, e5, ((e6) => turn2($, e6, ((e7) => turn8($, e7, ((e8) => turn9($, e8, next)))))))))))))))));
-    if (e.agentId === void 0 && !e.isAborted) await celebrate6($, turnMilestones(await $.clock.now()));
+    const ran = await turn($, e, ((e1) => turn3($, e1, ((e2) => turn5($, e2, ((e3) => turn6($, e3, ((e4) => turn7($, e4, ((e5) => turn4($, e5, ((e6) => turn2($, e6, ((e7) => turn8($, e7, ((e8) => turn9($, e8, ((e9) => turn10($, e9, next)))))))))))))))))));
+    if (e.agentId === void 0 && !e.isAborted) await celebrate7($, turnMilestones(await $.clock.now()));
     return ran;
   });
   on("tool.call", async ($, e, next) => {
-    const ran = await tool($, e, ((e1) => tool3($, e1, ((e2) => tool5($, e2, ((e3) => tool6($, e3, ((e4) => tool7($, e4, ((e5) => tool4($, e5, ((e6) => tool2($, e6, ((e7) => tool8($, e7, ((e8) => tool9($, e8, next)))))))))))))))));
-    if (e.agentId === void 0 && ran.deny === void 0) await celebrate6($, toolMilestones(e, ran));
+    const ran = await tool($, e, ((e1) => tool3($, e1, ((e2) => tool5($, e2, ((e3) => tool6($, e3, ((e4) => tool7($, e4, ((e5) => tool4($, e5, ((e6) => tool2($, e6, ((e7) => tool8($, e7, ((e8) => tool9($, e8, ((e9) => tool10($, e9, next)))))))))))))))))));
+    if (e.agentId === void 0 && ran.deny === void 0) await celebrate7($, toolMilestones(e, ran));
     return ran;
   });
-  on("ui.render", { component: "AbovePrompt" }, ($, e, next) => render($, e, ((e1) => render3($, e1, ((e2) => render5($, e2, ((e3) => render6($, e3, ((e4) => render7($, e4, ((e5) => render4($, e5, ((e6) => render2($, e6, ((e7) => render8($, e7, ((e8) => render9($, e8, next))))))))))))))))));
+  on("ui.render", { component: "AbovePrompt" }, ($, e, next) => render($, e, ((e1) => render3($, e1, ((e2) => render5($, e2, ((e3) => render6($, e3, ((e4) => render7($, e4, ((e5) => render4($, e5, ((e6) => render2($, e6, ((e7) => render8($, e7, ((e8) => render9($, e8, ((e9) => render10($, e9, next))))))))))))))))))));
 };

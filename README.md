@@ -53,7 +53,7 @@ terminal (the default), rotate through them, or limit the choice with `/arcade p
 
 | Plugin | Kind | What it does |
 |---|---|---|
-| [`arcade`](plugins/arcade) | mod | Games above the prompt (`/dragon`, `/jackpot`, `/outlaw`, `/tama`, `/tetris`, `/octopus`, `/duck`, `/bugs`, `/dario`), one or several per terminal, chosen with `/arcade` |
+| [`arcade`](plugins/arcade) | mod | Games above the prompt (`/dragon`, `/jackpot`, `/outlaw`, `/tama`, `/tetris`, `/octopus`, `/duck`, `/bugs`, `/dario`, `/town`), one or several per terminal, chosen with `/arcade` |
 
 ## Install
 

@@ -23,7 +23,7 @@ test('fixed shows the first game of the pool and nothing else', { options: { mod
 test('all shows every game in the pool; an empty pool is every game', { options: { mode: 'all', pool: '' } }, async ($, on) => {
   world(on)
   await begin($, on)
-  expect(await showing($)).toEqual(['dragon', 'jackpot', 'outlaw', 'tama', 'tetris', 'octopus', 'duck', 'bugs', 'dario'])
+  expect(await showing($)).toEqual(['dragon', 'jackpot', 'outlaw', 'tama', 'tetris', 'octopus', 'duck', 'bugs', 'dario', 'town'])
 })
 
 test('off shows none', { options: { mode: 'off', pool: '' } }, async ($, on) => {

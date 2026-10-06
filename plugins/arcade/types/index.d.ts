@@ -49,6 +49,15 @@ export type OctoMood = 'idle' | 'work' | 'sad' | 'sleep' | 'rampage'
 export type DuckScore = { hits: number; escaped: number; tools: number }
 // bug-command
 // dario
+// block-town
+export type TownScore = { blocks: number; houses: number; trees: number; castles: number; creepers: number; tools: number }
+export type TownPlot = {
+  kind: 'house' | 'bighouse' | 'farm' | 'well' | 'tower' | 'castle' | 'tree'
+  x: number
+  progress: number
+  wasDone: boolean
+  plantedAt?: number
+}
 export type DarioScore = { coins: number; stomps: number; hits: number; clears: number; tools: number }
 export type BugsScore = { kills: number; mine: number; lost: number; ends: number; cities: number; tools: number }
 export type BugsFeed = {
@@ -82,6 +91,8 @@ declare module 'claude-code' {
       bugsFeat: string
       darioScore: DarioScore
       darioFeat: string
+      townScore: TownScore
+      townFeat: string
     }
   }
 }

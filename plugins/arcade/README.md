@@ -16,6 +16,7 @@ one you like, rotate through them, or get a random one in every new terminal. Pa
 | Octo Invader | `/octopus` | A pixel octopus that smashes a city the full width of the line while Claude edits |
 | Duck Hunt | `/duck` | A dog and a marsh the full width of the line: your moments shoot the ducks down, failed tools let them fly away |
 | Dario | `/dario` | A side scroller the full width of the line: tool calls bring ? blocks and coins, a failed tool sends a bug, moments stomp bugs and clear the course at the flag pole |
+| Block Town | `/town` | A side view medieval town in blocks that your agents build: every tool call lays blocks, subagents send helpers, creepers blow holes, big moments raise a castle |
 | Bug Command | `/bugs` | Bugs fall on six cities the full width of the line; Claude's tools shoot them down, and you can click the sky to fire too |
 
 ## Choosing the games
@@ -160,6 +161,20 @@ terminal.
 - **The score** sits at the right end of the strip: `1-3  ◎ 34  ✪ 5  ✗ 2  ⚒ 140` (world and course, coins, bugs stomped, knocks, tool calls). Every hundred coins is a `1UP`. It is kept between sessions.
 - **`/dario`** shows the score; `/dario coin`, `ouch`, `stomp`, `clear` and `world` are practice that counts nothing.
 
+### Block Town (`town`)
+
+A town in blocks, seen from the side, the full width of the line above the prompt: grass, dirt and
+stone, then houses, farms, a well, towers and a grove of trees. Your agents build it while they
+work, and it is kept between sessions, so a glance in the middle of a long session shows how much
+got done.
+
+- **Every tool call lays blocks** on the building going up (two, an edit or a write three), from the bottom row up, with scaffolding at its corners. The main agent's villager does it; **each subagent sends a helper villager** of its own colour, who goes home once that subagent is quiet.
+- **A failed tool** brings a creeper that walks up to a building, flashes and blows a hole in it (`BOOM`); the villagers build it back before starting anything new.
+- **Moments**: a small one plants a tree (trees grow as the work goes on, sapling to full tree; once the grove is full, they grow faster instead), a medium one finishes the building going up (`HOUSE BUILT`), a big one raises a third of the castle at the right end of the band (`THE CASTLE GROWS`), and a merge, release, deploy, streak or record raises the rest at once (`CASTLE BUILT!`, fireworks).
+- **When the band is full** the oldest building is torn down and built again, a house as a two storey hall.
+- **The score** sits at the right end of the strip: `Village  ▦ 309  ⌂ 2  ♣ 5  ♜ 1  ⚒ 27` (the town's size from camp, hamlet, village and town to city, blocks laid, houses, trees, castles, tool calls). **Two minutes of quiet** and the villagers go indoors.
+- **`/town`** shows the score; `/town build`, `tree`, `finish`, `castle` and `creeper` are practice that counts nothing.
+
 ### Bug Command (`bugs`)
 
 Six cities and three silos along the bottom of the line above the prompt, the full width of it. Bugs
@@ -277,6 +292,8 @@ test.
 - **Duck Hunt**: The ducks fly where they like; the crosshair finds them, it is not aimed by you.
 - **Dario**: The strip takes eight rows, like the octopus's and the duck hunt's.
 - **Dario**: Things queue at the right edge, so after a burst of tool calls a flag pole can take a few seconds to reach Dario.
+- **Block Town**: The town is laid out for the width of the terminal it was built in; a narrower terminal leaves out the buildings that do not fit, and a band under 64 columns has no room for the castle.
+- **Block Town**: The town is saved per account. Two terminals showing it at once each build their own copy from where it was, and the last one to save wins.
 - **Bug Command**: The sky is drawn as runs of coloured text rather than the raster the other strips use, so a busy sky redraws more than they do; a still sky does not redraw at all.
 - **Bug Command**: Only a terminal draws it; the Desktop Code tab, which draws the other games, does not show it yet.
 - **Bug Command**: A click hands the keyboard to the sky until Esc; typing into the prompt needs Esc first.
