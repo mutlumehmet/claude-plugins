@@ -52,7 +52,7 @@ when a task calls for them) or one mod (a hooks module that runs inside Claude C
 - One mod per plugin (Claude Code accepts one hooks module per plugin).
 - **The Arcade's games are one plugin.** Claude Code follows `$` only into functions declared in
   the module's own file and takes each event once per plugin, so the games live in
-  `plugins/arcade/src/` and `plugins/arcade/scripts/build.sh` joins them into `hooks/arcade.js`
+  `plugins/arcade/src/` and `plugins/arcade/scripts/build.sh` joins them into `hooks/arcade.jsx`
   (esbuild, pinned). Edit `src/`, rebuild, commit both; CI fails when they differ. A new game goes
   into the Arcade, never into a plugin of its own (see the Arcade README, "How it is built").
 - **Arcade games keep everything per project, and every game can be reset.** Decided 6 October

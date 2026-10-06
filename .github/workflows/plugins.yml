@@ -14,7 +14,7 @@ jobs:
           node-version: 22
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
-      - name: The Arcade's hooks/arcade.js is built from its src/
+      - name: The Arcade's hooks/arcade.jsx is built from its src/
         run: plugins/arcade/scripts/build.sh --check
       - name: Validate the marketplace and every plugin
         run: |

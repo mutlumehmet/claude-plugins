@@ -98,12 +98,12 @@ const FORGET_AFTER_MS = 90 * 24 * 60 * 60 * 1e3;
 const PROJECTS = "arcade.projects";
 const here = { project: "", path: "", home: "" };
 function hash(text) {
-  let h2 = 2166136261;
+  let h = 2166136261;
   for (let i = 0; i < text.length; i++) {
-    h2 ^= text.charCodeAt(i);
-    h2 = Math.imul(h2, 16777619) >>> 0;
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
   }
-  return h2.toString(36);
+  return h.toString(36);
 }
 const scoped = (key) => here.project ? `${key}@${here.project}` : key;
 const projectName = () => here.path.split("/").filter(Boolean).pop() ?? here.path;
@@ -646,7 +646,17 @@ const render = async ($, e, next) => {
   sim.requestId = e.requestId;
   const stash = await read2($, hoard);
   sim.level = levelOf(stash.gold);
-  return /* @__PURE__ */ h(Box, { flexDirection: "row", alignItems: "flex-end" }, /* @__PURE__ */ h(Box, { flexGrow: 1, flexDirection: "column" }, below ?? null), /* @__PURE__ */ h(Box, { flexDirection: "column", flexShrink: 0, minWidth: COLUMNS }, /* @__PURE__ */ h(Raster, { key: RASTER, columns: COLUMNS, rows: ROWS, cells: frame(activity()) }), /* @__PURE__ */ h(Text, { key: "stats", dimColor: true, wrap: "truncate" }, centred(statsLine(stash)))));
+  return <Box flexDirection="row" alignItems="flex-end">
+      <Box flexGrow={1} flexDirection="column">
+        {below ?? null}
+      </Box>
+      <Box flexDirection="column" flexShrink={0} minWidth={COLUMNS}>
+        <Raster key={RASTER} columns={COLUMNS} rows={ROWS} cells={frame(activity())} />
+        <Text key="stats" dimColor wrap="truncate">
+          {centred(statsLine(stash))}
+        </Text>
+      </Box>
+    </Box>;
 };
 async function reset($) {
   await update($, hoard, await keep($, "dragon.hoard", await read2($, hoard), () => hoard.initial));
@@ -1101,7 +1111,10 @@ const render2 = async ($, e, next) => {
   fit(clamp(e.props.bodyColumns, MIN_COLUMNS, MAX_COLUMNS));
   sim2.requestId = e.requestId;
   sim2.stats = statsLine2(await read3($, score));
-  return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Raster, { key: RASTER2, columns: sim2.W, rows: ROWS2, cells: frame2(false, sim2.stats) }), below ?? null);
+  return <Box flexDirection="column">
+      <Raster key={RASTER2} columns={sim2.W} rows={ROWS2} cells={frame2(false, sim2.stats)} />
+      {below ?? null}
+    </Box>;
 };
 async function reset2($) {
   const next = await update2($, score, await keep($, "duck.score", await read3($, score), () => score.initial));
@@ -1498,7 +1511,17 @@ const render3 = async ($, e, next) => {
   startLoop($);
   const b = await read4($, bank);
   const g = await read4($, golden);
-  return /* @__PURE__ */ h(Box, { flexDirection: "row", alignItems: "flex-end" }, /* @__PURE__ */ h(Box, { flexGrow: 1, flexDirection: "column" }, below ?? null), /* @__PURE__ */ h(Box, { flexDirection: "column", flexShrink: 0, minWidth: W, marginLeft: 2 }, /* @__PURE__ */ h(Raster, { key: RASTER3, columns: W, rows: ROWS3, cells: frame3() }), /* @__PURE__ */ h(Text, { key: "stats", dimColor: true, wrap: "truncate" }, statsLine3(b, g))));
+  return <Box flexDirection="row" alignItems="flex-end">
+      <Box flexGrow={1} flexDirection="column">
+        {below ?? null}
+      </Box>
+      <Box flexDirection="column" flexShrink={0} minWidth={W} marginLeft={2}>
+        <Raster key={RASTER3} columns={W} rows={ROWS3} cells={frame3()} />
+        <Text key="stats" dimColor wrap="truncate">
+          {statsLine3(b, g)}
+        </Text>
+      </Box>
+    </Box>;
 };
 async function reset3($) {
   await update3($, bank, await keep($, "jackpot.bank", await read4($, bank), () => bank.initial));
@@ -2226,7 +2249,10 @@ const render4 = async ($, e, next) => {
   sim4.requestId = e.requestId;
   const stats = statsLine4(await read5($, score3));
   lastStats = stats;
-  return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Raster, { key: RASTER4, columns: sim4.W, rows: ROWS4, cells: frame4(activity2(), stats) }), below ?? null);
+  return <Box flexDirection="column">
+      <Raster key={RASTER4} columns={sim4.W} rows={ROWS4} cells={frame4(activity2(), stats)} />
+      {below ?? null}
+    </Box>;
 };
 async function reset4($) {
   const next = await update4($, score3, await keep($, "octopus.score", await read5($, score3), () => score3.initial));
@@ -2532,7 +2558,17 @@ const render5 = async ($, e, next) => {
   const s = await read6($, score4);
   const line = statsLine5(s);
   const pad = " ".repeat(Math.max(0, Math.floor((W2 - line.length) / 2)));
-  return /* @__PURE__ */ h(Box, { flexDirection: "row", alignItems: "flex-end" }, /* @__PURE__ */ h(Box, { flexGrow: 1, flexDirection: "column" }, below ?? null), /* @__PURE__ */ h(Box, { flexDirection: "column", flexShrink: 0, minWidth: W2, marginLeft: 2 }, /* @__PURE__ */ h(Raster, { key: RASTER5, columns: W2, rows: ROWS5, cells: frame5() }), /* @__PURE__ */ h(Text, { key: "stats", dimColor: true, wrap: "truncate" }, pad + line)));
+  return <Box flexDirection="row" alignItems="flex-end">
+      <Box flexGrow={1} flexDirection="column">
+        {below ?? null}
+      </Box>
+      <Box flexDirection="column" flexShrink={0} minWidth={W2} marginLeft={2}>
+        <Raster key={RASTER5} columns={W2} rows={ROWS5} cells={frame5()} />
+        <Text key="stats" dimColor wrap="truncate">
+          {pad + line}
+        </Text>
+      </Box>
+    </Box>;
 };
 async function reset5($) {
   await update5($, score4, await keep($, "outlaw.score", await read6($, score4), () => score4.initial));
@@ -2898,7 +2934,17 @@ const render6 = async ($, e, next) => {
   sim6.requestId = e.requestId;
   const line = statsLine6(await read7($, pet));
   const pad = " ".repeat(Math.max(0, Math.floor((W3 - line.length) / 2)));
-  return /* @__PURE__ */ h(Box, { flexDirection: "row", alignItems: "flex-end" }, /* @__PURE__ */ h(Box, { flexGrow: 1, flexDirection: "column" }, below ?? null), /* @__PURE__ */ h(Box, { flexDirection: "column", flexShrink: 0, minWidth: W3, marginLeft: 2 }, /* @__PURE__ */ h(Raster, { key: RASTER6, columns: W3, rows: ROWS6, cells: frame6() }), /* @__PURE__ */ h(Text, { key: "stats", dimColor: true, wrap: "truncate" }, pad + line)));
+  return <Box flexDirection="row" alignItems="flex-end">
+      <Box flexGrow={1} flexDirection="column">
+        {below ?? null}
+      </Box>
+      <Box flexDirection="column" flexShrink={0} minWidth={W3} marginLeft={2}>
+        <Raster key={RASTER6} columns={W3} rows={ROWS6} cells={frame6()} />
+        <Text key="stats" dimColor wrap="truncate">
+          {pad + line}
+        </Text>
+      </Box>
+    </Box>;
 };
 async function reset6($) {
   sim6.now = await $.clock.now();
@@ -3220,7 +3266,17 @@ const render7 = async ($, e, next) => {
   const { Box, Raster, Text } = $.ui.resolve(e);
   sim7.requestId = e.requestId;
   const t = await read8($, tally);
-  return /* @__PURE__ */ h(Box, { flexDirection: "row", alignItems: "flex-end" }, /* @__PURE__ */ h(Box, { flexGrow: 1, flexDirection: "column" }, below ?? null), /* @__PURE__ */ h(Box, { flexDirection: "column", flexShrink: 0, minWidth: W4, marginLeft: 2 }, /* @__PURE__ */ h(Raster, { key: RASTER7, columns: W4, rows: ROWS7, cells: frame7() }), /* @__PURE__ */ h(Text, { key: "stats", dimColor: true, wrap: "truncate" }, centred2(`\u25A4 ${t.lines}  \u25C6 ${t.score}  Lv ${Math.floor(t.lines / 10)}`))));
+  return <Box flexDirection="row" alignItems="flex-end">
+      <Box flexGrow={1} flexDirection="column">
+        {below ?? null}
+      </Box>
+      <Box flexDirection="column" flexShrink={0} minWidth={W4} marginLeft={2}>
+        <Raster key={RASTER7} columns={W4} rows={ROWS7} cells={frame7()} />
+        <Text key="stats" dimColor wrap="truncate">
+          {centred2(`\u25A4 ${t.lines}  \u25C6 ${t.score}  Lv ${Math.floor(t.lines / 10)}`)}
+        </Text>
+      </Box>
+    </Box>;
 };
 async function reset7($) {
   await update7($, tally, await keep($, "tetris.tally", await read8($, tally), () => tally.initial));
@@ -3342,7 +3398,10 @@ const render8 = async ($, e, next) => {
   if (e.surface !== "terminal" || e.props.hasSurvey || !await isShown($, ID8)) return below;
   const { Box, Client } = $.ui.resolve(e);
   const W5 = clamp3(e.props.bodyColumns, MIN_COLUMNS3, MAX_COLUMNS3);
-  return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Client, { key: SKY, module: "./bug-sky.js", width: W5, height: ROWS8, props: await skyProps($, W5) }), below ?? null);
+  return <Box flexDirection="column">
+      <Client key={SKY} module="./bug-sky.js" width={W5} height={ROWS8} props={await skyProps($, W5)} />
+      {below ?? null}
+    </Box>;
 };
 async function reset8($) {
   await update8($, score5, await keep($, "bugs.score", await read9($, score5), () => score5.initial));
@@ -3841,7 +3900,10 @@ const render9 = async ($, e, next) => {
   fit2(clamp4(e.props.bodyColumns, MIN_COLUMNS4, MAX_COLUMNS4));
   sim9.requestId = e.requestId;
   sim9.stats = statsLine8(await read10($, score6));
-  return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Raster, { key: RASTER8, columns: sim9.W, rows: ROWS9, cells: frame8(false, sim9.stats) }), below ?? null);
+  return <Box flexDirection="column">
+      <Raster key={RASTER8} columns={sim9.W} rows={ROWS9} cells={frame8(false, sim9.stats)} />
+      {below ?? null}
+    </Box>;
 };
 async function reset9($) {
   const next = await update9($, score6, await keep($, "dario.score", await read10($, score6), () => score6.initial));
@@ -3908,8 +3970,8 @@ const TREE_STAGES = [
 ];
 function castleRows() {
   const w = 21;
-  const h2 = 12;
-  const g = Array.from({ length: h2 }, () => Array.from({ length: w }, () => "."));
+  const h = 12;
+  const g = Array.from({ length: h }, () => Array.from({ length: w }, () => "."));
   const fill = (x0, x1, y0, y1, c) => {
     for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) g[y][x] = c;
   };
@@ -4200,9 +4262,9 @@ function drawPlot(buf, p) {
   const list2 = blocksOf(BLUEPRINTS[p.kind]);
   for (let i = 0; i < Math.min(p.progress, list2.length); i++) put4(buf, p.x + list2[i].dx, BASE2 + list2[i].dy, list2[i].color);
   if (!isDone(p) && p.progress > 0) {
-    const h2 = BLUEPRINTS[p.kind].length;
+    const h = BLUEPRINTS[p.kind].length;
     const w = widthOf2(p.kind);
-    for (let y = 0; y < h2; y += 2) {
+    for (let y = 0; y < h; y += 2) {
       put4(buf, p.x - 1, BASE2 - y, 6047280);
       put4(buf, p.x + w, BASE2 - y, 6047280);
     }
@@ -4530,7 +4592,10 @@ const render10 = async ($, e, next) => {
   sim10.W = clamp5(e.props.bodyColumns, MIN_COLUMNS5, MAX_COLUMNS5);
   sim10.requestId = e.requestId;
   sim10.stats = statsLine9(await read11($, score7));
-  return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Raster, { key: RASTER9, columns: sim10.W, rows: ROWS10, cells: frame9(false, sim10.stats) }), below ?? null);
+  return <Box flexDirection="column">
+      <Raster key={RASTER9} columns={sim10.W} rows={ROWS10} cells={frame9(false, sim10.stats)} />
+      {below ?? null}
+    </Box>;
 };
 const game10 = { id: ID10, title: "Block Town" };
 

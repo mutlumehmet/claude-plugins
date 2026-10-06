@@ -298,7 +298,7 @@ hatches anew.
 The engine follows `$` only into functions declared in the hooks module's own file, so the games
 cannot be separate files at run time. They are in `src/` (one file per game in `src/games/`, and
 `src/arcade.tsx`, which picks the games, spots the moments once and chains the games' hooks), and
-`scripts/build.sh` joins them into `hooks/arcade.js` with esbuild. Bug Command's sky is a
+`scripts/build.sh` joins them into `hooks/arcade.jsx` with esbuild. Bug Command's sky is a
 `Client` (a region of the band that runs its own module, so it can take clicks and keys): its
 module is `src/clients/bug-sky.tsx`, which the same script builds into `hooks/bug-sky.js`.
 The sky runs the game loop; the hooks module hands it the session's events as props and keeps the
