@@ -1,6 +1,6 @@
 # arcade
 
-The Claude Code Arcade: seven pixel games in the line above the prompt, played by your work. Pin the
+The Claude Code Arcade: eight pixel games in the line above the prompt, played by your work. Pin the
 one you like, rotate through them, or get a random one in every new terminal. Part of
 [claude-plugins](../../README.md).
 
@@ -15,11 +15,12 @@ one you like, rotate through them, or get a random one in every new terminal. Pa
 | Tetris | `/tetris` | Tetris where Claude's tools drop the pieces |
 | Octo Invader | `/octopus` | A pixel octopus that smashes a city the full width of the line while Claude edits |
 | Duck Hunt | `/duck` | A dog and a marsh the full width of the line: your moments shoot the ducks down, failed tools let them fly away |
+| Bug Command | `/bugs` | Bugs fall on six cities the full width of the line; Claude's tools shoot them down, and you can click the sky to fire too |
 
 ## Choosing the games
 
 Each new terminal shows the games the `mode` and `pool` settings pick. By default it is one game at
-random from all seven.
+random from all eight.
 
 | Command | What it does |
 |---|---|
@@ -136,6 +137,20 @@ edit, passing tests, a commit, a merge); the window around the strip is a mock u
 - **The score** sits at the right end of the strip: `R 2  ▼ 14  ↗ 3  ⚒ 140` (round, ducks down, ducks that got away, tool calls). It is kept between sessions.
 - **`/duck`** shows the score; `/duck shot`, `hunt`, `double`, `perfect` and `flyaway` are practice that counts nothing.
 
+### Bug Command (`bugs`)
+
+Six cities and three silos along the bottom of the line above the prompt, the full width of it. Bugs
+fall on the cities; Claude's work fires the counter missiles, and you can fire too. The one Arcade
+game you can play along with while you wait.
+
+- **While Claude works** a bug falls now and then, a red trail from the top towards a city. **A failed tool** drops a fast one (`INCOMING`).
+- **Every finished tool call** fires a shot from the nearest silo at the lowest bug; most of them hit. A blast takes out every bug inside it, and each bug it takes out blasts too.
+- **Moments**: a small one is a shot (or a flare in an empty sky), a medium one a sure hit, a big one a salvo at every bug in the sky that also rebuilds a fallen city (`BONUS CITY`).
+- **A bug that gets through** ruins its city. When every city has fallen it is `THE END`, and new cities go up.
+- **You can shoot**: click anywhere in the sky and the nearest silo fires there. After a click the sky has the keyboard: the arrows move the crosshair (with shift, faster), space or Enter fires at it, and `1`, `2`, `3` fire from the left, middle or right silo. A silo you fire from greys out for a moment. Esc hands the keyboard back to the prompt.
+- **The score** sits at the right end of the strip: `✸ 14  ☞ 5  ✝ 2  ⚒ 140  ⌂ 6` (bugs shot down, the ones you shot yourself, cities lost, tool calls, cities standing). It is kept between sessions, the standing cities too.
+- **`/bugs`** shows the score and the controls; `/bugs flare`, `shot` and `salvo` are practice that counts nothing, and `/bugs incoming` drops a practice bug to shoot at.
+
 ## Moments
 
 The Arcade spots the moments once and hands each one to every game, coding or not.
@@ -157,7 +172,7 @@ All optional. Set them in `/plugin` (the plugin's settings) or in
 | Setting | What it is for | Example |
 |---|---|---|
 | `mode` | How each new terminal picks: `random` (one game from the pool, the default), `rotate` (the next one in turn), `fixed` (always the first in the pool), `all` (every game in the pool), `off` | `fixed` |
-| `pool` | Comma separated games to pick from; empty means all seven | `dragon, tetris` |
+| `pool` | Comma separated games to pick from; empty means all eight | `dragon, tetris` |
 | `big_skills` | Skills whose run is a big moment (every other skill is medium) | `release-notes, publish-report` |
 | `quiet_skills` | Skills that celebrate nothing | `commit` |
 | `big_commands` | A regular expression of shell commands whose success is big | `make ship` |
@@ -170,8 +185,9 @@ All optional. Set them in `/plugin` (the plugin's settings) or in
   line and whether its output says nothing changed; for file writes, the file name and its line
   count; skill names; the words of your message (only to spot praise); subagent start and finish.
 - **Keeps**: each game's score and state, and which game the last terminal showed, in Claude Code's plugin store on your machine; the mode and pool in your Claude Code settings.
-- **Draws**: the games it shows in the line above the prompt (a block at the right end, or the octopus's and the duck hunt's strips across the full width), and an occasional notice.
-- **Hooks**: `skill.prompt` only notes which skill ran, so a finished skill can count as a moment; it passes the skill's prompt on unchanged. `command.run` answers its own commands (`/arcade` and the seven game commands) and no other. `/arcade <game> all`, `/arcade <mode>` and `/arcade pool` write `arcade.mode` and `arcade.pool` through Claude Code's own settings call, the same as changing them in the menu.
+- **Draws**: the games it shows in the line above the prompt (a block at the right end, or the octopus's, the duck hunt's and Bug Command's strips across the full width), and an occasional notice.
+- **Hooks**: `skill.prompt` only notes which skill ran, so a finished skill can count as a moment; it passes the skill's prompt on unchanged. `command.run` answers its own commands (`/arcade` and the eight game commands) and no other. `/arcade <game> all`, `/arcade <mode>` and `/arcade pool` write `arcade.mode` and `arcade.pool` through Claude Code's own settings call, the same as changing them in the menu.
+- **Takes input**: only Bug Command, and only once you click its sky: from then until Esc, the keys you press go to the game, not the prompt. Clicks and keys never leave the game.
 - **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
 - **Never**: changes, blocks or delays a tool call or a message; sends anything anywhere (no network
   calls, no telemetry); reads file contents beyond counting lines of a file Claude writes.
@@ -200,8 +216,12 @@ hatches anew.
 The engine follows `$` only into functions declared in the hooks module's own file, so the games
 cannot be separate files at run time. They are in `src/` (one file per game in `src/games/`, and
 `src/arcade.tsx`, which picks the games, spots the moments once and chains the games' hooks), and
-`scripts/build.sh` joins them into `hooks/arcade.js` with esbuild. Edit `src/`, never
-`hooks/arcade.js`; CI fails when the two differ. A new game is one file in `src/games/`, one entry in
+`scripts/build.sh` joins them into `hooks/arcade.js` with esbuild. Bug Command's sky is a
+`Client` (a region of the band that runs its own module, so it can take clicks and keys): its
+module is `src/clients/bug-sky.tsx`, which the same script builds into `hooks/bug-sky.js`.
+The sky runs the game loop; the hooks module hands it the session's events as props and keeps the
+score the sky posts back. Edit `src/`, never
+`hooks/`; CI fails when the two differ. A new game is one file in `src/games/`, one entry in
 `GAMES` and one link in each chain in `src/arcade.tsx`, its state keys in `types/index.d.ts`, and a
 test.
 
@@ -222,6 +242,10 @@ test.
 - **Octo Invader**: The octopus is drawn with half blocks; a terminal with tall line spacing shows thin gaps between rows.
 - **Duck Hunt**: The strip takes eight rows, like the octopus's; with both showing the line above the prompt is sixteen rows tall.
 - **Duck Hunt**: The ducks fly where they like; the crosshair finds them, it is not aimed by you.
+- **Bug Command**: The sky is drawn as runs of coloured text rather than the raster the other strips use, so a busy sky redraws more than they do; a still sky does not redraw at all.
+- **Bug Command**: Only a terminal draws it; the Desktop Code tab, which draws the other games, does not show it yet.
+- **Bug Command**: A click hands the keyboard to the sky until Esc; typing into the prompt needs Esc first.
+- **Bug Command**: A terminal that does not report the position within a cell (tmux, among others) aims a click at the lower half of the cell.
 - **Octo Invader**: The score glyphs `⌂` and `✈` are single width in most terminal fonts; a font that draws `✈` as an emoji shifts the score by one cell.
 
 ## About

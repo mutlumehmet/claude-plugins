@@ -32,12 +32,25 @@ npx -y "$ESBUILD" src/arcade.tsx --bundle --format=esm --external:claude-code \
 } > "$out.final"
 mv "$out.final" "$out"
 
+# Bug Command's sky is a Client: a surface module of its own, loaded by the band beside
+# arcade.js. It reaches no `$`, so esbuild's output needs nothing more than the header.
+sky=$(mktemp)
+trap 'rm -f "$out" "$sky"' EXIT
+npx -y "$ESBUILD" src/clients/bug-sky.tsx --bundle --format=esm --external:claude-code \
+  --jsx=transform --jsx-factory=h --target=es2022 --log-level=warning --outfile="$sky"
+{
+  echo "// Built by scripts/build.sh from src/clients/ with $ESBUILD. Do not edit: edit src/ and rebuild."
+  cat "$sky"
+} > "$sky.final"
+mv "$sky.final" "$sky"
+
 if [ "${1:-}" = "--check" ]; then
-  if ! cmp -s "$out" hooks/arcade.js; then
-    echo "build: hooks/arcade.js is out of date with src/; run plugins/arcade/scripts/build.sh" >&2
+  if ! cmp -s "$out" hooks/arcade.js || ! cmp -s "$sky" hooks/bug-sky.js; then
+    echo "build: hooks/ is out of date with src/; run plugins/arcade/scripts/build.sh" >&2
     exit 1
   fi
 else
   cp "$out" hooks/arcade.js
-  echo "built hooks/arcade.js ($(wc -l < hooks/arcade.js | tr -d ' ') lines)"
+  cp "$sky" hooks/bug-sky.js
+  echo "built hooks/arcade.js ($(wc -l < hooks/arcade.js | tr -d ' ') lines) and hooks/bug-sky.js ($(wc -l < hooks/bug-sky.js | tr -d ' ') lines)"
 fi

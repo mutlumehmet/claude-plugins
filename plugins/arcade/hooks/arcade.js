@@ -1,6 +1,6 @@
 // Built by scripts/build.sh from src/ with esbuild@0.25.10. Do not edit: edit src/ and rebuild.
 // src/arcade.tsx
-import { atom as atom9, read as read9, update as update8 } from "claude-code";
+import { atom as atom10, read as read10, update as update9 } from "claude-code";
 
 // src/games/dragon-lair.tsx
 import { atom as atom2, read as read2, update } from "claude-code";
@@ -115,12 +115,12 @@ async function notify($, text) {
   if (!!await isShown($, ID)) $.ui.toast(text);
 }
 const SHOW_FRAMES = { puff: 20, breath: 32, blaze: 48, roar: 72 };
-function workOf(tool8) {
-  if (tool8 === "Read") return "read";
-  if (tool8 === "Grep" || tool8 === "Glob" || tool8 === "LSP") return "search";
-  if (tool8 === "Edit" || tool8 === "Write" || tool8 === "NotebookEdit") return "edit";
-  if (tool8 === "WebFetch" || tool8 === "WebSearch" || tool8.startsWith("mcp__")) return "web";
-  if (tool8 === "Agent" || tool8 === "Task") return "agent";
+function workOf(tool9) {
+  if (tool9 === "Read") return "read";
+  if (tool9 === "Grep" || tool9 === "Glob" || tool9 === "LSP") return "search";
+  if (tool9 === "Edit" || tool9 === "Write" || tool9 === "NotebookEdit") return "edit";
+  if (tool9 === "WebFetch" || tool9 === "WebSearch" || tool9.startsWith("mcp__")) return "web";
+  if (tool9 === "Agent" || tool9 === "Task") return "agent";
   return "bash";
 }
 const SLOTS = [
@@ -1257,9 +1257,9 @@ function frame3() {
   for (const c of sim3.coins) set(c.x, c.y, (c.age + Math.round(c.x)) % 3 === 0 ? 16777215 : 16765773);
   if (isWinning) {
     const text = isJackpot ? sim3.payout > 0 ? cycle2(["JACKPOT!", `+${sim3.payout}`], 8) : "JACKPOT!" : sim3.payout > 0 ? `+${sim3.payout}` : "";
-    const start8 = Math.floor((W - text.length) / 2);
+    const start9 = Math.floor((W - text.length) / 2);
     const fg = isJackpot ? hueColour(sim3.t * 40 % 360) : 16765773;
-    text.split("").forEach((ch, i) => over2.set(start8 + i, { ch, fg }));
+    text.split("").forEach((ch, i) => over2.set(start9 + i, { ch, fg }));
   } else if (sim3.queue.some((s) => s.isGolden) || sim3.spin?.isGolden) {
     "GOLDEN".split("").forEach((ch, i) => over2.set(11 + i, { ch, fg: cycle2([16765773, 16773800], 4) }));
   }
@@ -1515,12 +1515,12 @@ async function notify4($, text) {
   if (!!await isShown($, ID4)) $.ui.toast(text);
 }
 const SHOW_FRAMES3 = { ink: 24, plane: 260, rampage: 110, conquer: 150 };
-function workOf2(tool8) {
-  if (tool8 === "Read") return "read";
-  if (tool8 === "Grep" || tool8 === "Glob" || tool8 === "LSP") return "search";
-  if (tool8 === "Edit" || tool8 === "Write" || tool8 === "NotebookEdit") return "edit";
-  if (tool8 === "WebFetch" || tool8 === "WebSearch" || tool8.startsWith("mcp__")) return "web";
-  if (tool8 === "Agent" || tool8 === "Task") return "agent";
+function workOf2(tool9) {
+  if (tool9 === "Read") return "read";
+  if (tool9 === "Grep" || tool9 === "Glob" || tool9 === "LSP") return "search";
+  if (tool9 === "Edit" || tool9 === "Write" || tool9 === "NotebookEdit") return "edit";
+  if (tool9 === "WebFetch" || tool9 === "WebSearch" || tool9.startsWith("mcp__")) return "web";
+  if (tool9 === "Agent" || tool9 === "Task") return "agent";
   return "bash";
 }
 const sim4 = {
@@ -2687,8 +2687,8 @@ async function celebrateMoments6($, found) {
 const start6 = async ($, e, next) => {
   sim6.now = await $.clock.now();
   const saved = await $.store.get("tama.pet");
-  const start8 = saved ?? fresh(sim6.now, 1);
-  sim6.pet = await update6($, pet, () => age(start8, sim6.now));
+  const start9 = saved ?? fresh(sim6.now, 1);
+  sim6.pet = await update6($, pet, () => age(start9, sim6.now));
   await $.store.set("tama.pet", sim6.pet);
   await $.command.register({
     name: "tama",
@@ -2906,8 +2906,8 @@ function choose(shape) {
       const bump = heights.slice(1).reduce((s, height, i) => s + Math.abs(height - heights[i]), 0);
       const value = -0.51 * heights.reduce((s, height) => s + height, 0) + 0.76 * lines - 0.36 * holes - 0.18 * bump;
       if (!best || value > best.value) {
-        const start8 = Math.floor((G - widthOf(cells)) / 2);
-        best = { piece: { cells, col: start8, targetCol: col, row: -2, targetRow: row }, value };
+        const start9 = Math.floor((G - widthOf(cells)) / 2);
+        best = { piece: { cells, col: start9, targetCol: col, row: -2, targetRow: row }, value };
       }
     }
   }
@@ -3126,6 +3126,127 @@ const render7 = async ($, e, next) => {
 };
 const game7 = { id: ID7, title: "Tetris" };
 
+// src/games/bug-command.tsx
+import { read as read9, update as update8, atom as atom9 } from "claude-code";
+const ID8 = "bugs";
+const SKY = "bug-sky";
+const ROWS8 = 8;
+const MIN_COLUMNS3 = 24;
+const MAX_COLUMNS3 = 512;
+const CITIES = 6;
+const KEEP = 12;
+const score5 = atom9({ plugin: "arcade", key: "bugsScore" }, { kills: 0, mine: 0, lost: 0, ends: 0, cities: CITIES, tools: 0 });
+const feed = atom9({ plugin: "arcade", key: "bugsFeed" }, { events: [], next: 1, working: false });
+const feat4 = atom9({ plugin: "arcade", key: "bugsFeat" }, "");
+const sim8 = { working: 0, isTurn: false };
+const clamp3 = (v, a, b) => Math.max(a, Math.min(b, v));
+async function notify8($, text) {
+  if (await isShown($, ID8)) $.ui.toast(text);
+}
+async function push($, kind, practice = false) {
+  await update8($, feed, (f) => ({ ...f, next: f.next + 1, events: [...f.events, { id: f.next, kind, practice }].slice(-KEEP) }));
+}
+async function setWorking($) {
+  const working = sim8.isTurn || sim8.working > 0;
+  if ((await read9($, feed)).working !== working) await update8($, feed, (f) => ({ ...f, working }));
+}
+const statsLine7 = (s) => `\u2738 ${s.kills}  \u261E ${s.mine}  \u271D ${s.lost}  \u2692 ${s.tools}`;
+async function save3($, change2) {
+  const next = await update8($, score5, change2);
+  await $.store.set("bugs.score", next);
+  return next;
+}
+async function celebrate4($, label, kind, isPractice = false) {
+  await push($, kind, isPractice);
+  if (kind === "small" || isPractice) return;
+  const what = kind === "medium" ? "a bug shot down" : "a salvo";
+  await update8($, feat4, () => `${label}: ${what}`);
+  void notify8($, `\u{1F680} ${label}! ${kind === "medium" ? "Bug down" : "Sky clear"}!`);
+}
+async function celebrateMoments8($, found) {
+  for (const m of found) await celebrate4($, m.label, m.tier);
+}
+const start8 = async ($, e, next) => {
+  const saved = await $.store.get("bugs.score");
+  if (saved) await update8($, score5, () => ({ ...saved, cities: saved.cities > 0 ? saved.cities : CITIES }));
+  await $.command.register({
+    name: "bugs",
+    description: 'Bug Command above the prompt: the score. Click the sky to fire. "/bugs shot|salvo|incoming" to show off.'
+  });
+  return next(e);
+};
+const command8 = async ($, e) => {
+  const arg = (e.args ?? "").trim();
+  const practice = { shot: "medium", salvo: "big", flare: "small" };
+  if (practice[arg]) {
+    await celebrate4($, "Practice", practice[arg], true);
+    return { text: "Practice: nothing counts." };
+  }
+  if (arg === "incoming") {
+    await push($, "fail", true);
+    return { text: "A practice bug is falling: shoot it down." };
+  }
+  const last2 = await read9($, feat4);
+  return {
+    text: `${statsLine7(await read9($, score5))}${last2 ? `
+Last win: ${last2}` : ""}
+Bugs fall on your cities while Claude works, and a failed tool drops a fast one. Every finished tool call fires a shot (most hit), a medium moment (a commit, a skill, a sent message) is a sure hit, a big one (a merge, a deploy) a salvo that clears the sky and rebuilds a city. You can fire too: click the sky to shoot from the nearest silo. After a click the sky has the keyboard: arrows move the crosshair, space fires, 1 2 3 fire from the left, middle or right silo; Esc gives the keyboard back to the prompt. \u2738 bugs shot down, \u261E the ones you shot yourself, \u271D cities lost, \u2692 tool calls; \u2302 in the band is the cities standing.`
+  };
+};
+const prompt8 = async ($, e, next) => {
+  sim8.isTurn = true;
+  await setWorking($);
+  return next(e);
+};
+const turn8 = async ($, e, next) => {
+  if (e.agentId === void 0) sim8.isTurn = false;
+  await setWorking($);
+  return next(e);
+};
+const tool8 = async ($, e, next) => {
+  if (e.agentId !== void 0) return next(e);
+  sim8.working += 1;
+  await setWorking($);
+  const ran = await next(e).finally(() => {
+    sim8.working = Math.max(0, sim8.working - 1);
+  });
+  await setWorking($);
+  if (ran.deny !== void 0) return ran;
+  const counted = await update8($, score5, (old) => ({ ...old, tools: old.tools + 1 }));
+  if (counted.tools % 10 === 0) void $.store.set("bugs.score", counted);
+  await push($, ran.isError === true ? "fail" : "tool");
+  return ran;
+};
+const message = async ($, e, next) => {
+  if (e.element !== SKY) return next(e);
+  const g = e.data;
+  const n = (v) => typeof v === "number" && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0;
+  const s = await save3($, (old) => ({
+    ...old,
+    kills: old.kills + n(g.kills),
+    mine: old.mine + n(g.mine),
+    lost: old.lost + n(g.lost),
+    ends: old.ends + n(g.ends),
+    cities: clamp3(typeof g.cities === "number" ? Math.floor(g.cities) : old.cities, 0, CITIES)
+  }));
+  if (n(g.ends) > 0) void notify8($, "\u{1F680} THE END: every city fell. New cities are up.");
+  if (n(g.mine) > 0 && s.mine % 10 === 0) void notify8($, `\u{1F680} ${s.mine} bugs shot down by hand!`);
+  return { props: await skyProps($, 0) };
+};
+async function skyProps($, columns) {
+  const f = await read9($, feed);
+  const s = await read9($, score5);
+  return { events: [...f.events], stats: statsLine7(s), working: f.working, cities: s.cities, columns };
+}
+const render8 = async ($, e, next) => {
+  const below = await next(e);
+  if (e.surface !== "terminal" || e.props.hasSurvey || !await isShown($, ID8)) return below;
+  const { Box, Client } = $.ui.resolve(e);
+  const W5 = clamp3(e.props.bodyColumns, MIN_COLUMNS3, MAX_COLUMNS3);
+  return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Client, { key: SKY, module: "./bug-sky.js", width: W5, height: ROWS8, props: await skyProps($, W5) }), below ?? null);
+};
+const game8 = { id: ID8, title: "Bug Command" };
+
 // src/milestones.ts
 const MARATHON_MS = 10 * 60 * 1e3;
 const MARATHON_TOOLS = 30;
@@ -3191,7 +3312,7 @@ const config = {
   mediumCommands: null,
   praise: PRAISE
 };
-const turn8 = { startedAt: 0, tools: 0, errors: 0, subagents: 0, skills: [] };
+const turn9 = { startedAt: 0, tools: 0, errors: 0, subagents: 0, skills: [] };
 const session = { tools: 0, tasksMade: 0, tasksDone: 0, testsFailed: false, todosDone: false };
 function configureMilestones(options) {
   config.bigSkills = list(options.big_skills);
@@ -3212,60 +3333,60 @@ function streakMilestones(stored, now) {
   };
 }
 function promptMilestones(text, now) {
-  turn8.startedAt = now;
-  turn8.tools = 0;
-  turn8.errors = 0;
-  turn8.subagents = 0;
-  turn8.skills = [];
+  turn9.startedAt = now;
+  turn9.tools = 0;
+  turn9.errors = 0;
+  turn9.subagents = 0;
+  turn9.skills = [];
   const said = ` ${text.toLowerCase()} `;
   const isPraise = config.praise.some((word2) => new RegExp(`(^|[^\\p{L}])${word2}([^\\p{L}]|$)`, "u").test(said));
   return isPraise ? [{ tier: "medium", kind: "praise", label: "You said something nice" }] : [];
 }
 function skillSeen(skill) {
-  turn8.skills.push(skill);
+  turn9.skills.push(skill);
 }
 function subagentMilestones() {
-  turn8.subagents += 1;
+  turn9.subagents += 1;
   const found = [{ tier: "medium", kind: "subagent", label: "A subagent finished" }];
-  if (turn8.subagents === SQUAD) found.push({ tier: "big", kind: "squad", label: `${SQUAD} subagents done` });
+  if (turn9.subagents === SQUAD) found.push({ tier: "big", kind: "squad", label: `${SQUAD} subagents done` });
   return found;
 }
 function turnMilestones(now) {
   const found = [];
-  for (const skill of new Set(turn8.skills)) {
+  for (const skill of new Set(turn9.skills)) {
     const name = skill.toLowerCase().replace(/^.*:/, "");
     const full = skill.toLowerCase();
     if ([name, full].some((n) => config.quietSkills.includes(n))) continue;
     const isBig = [name, full].some((n) => config.bigSkills.includes(n));
     found.push({ tier: isBig ? "big" : "medium", kind: "skill", label: `Skill: ${name}` });
   }
-  const isMarathon = turn8.startedAt > 0 && now - turn8.startedAt > MARATHON_MS && turn8.tools >= MARATHON_TOOLS && turn8.errors === 0;
+  const isMarathon = turn9.startedAt > 0 && now - turn9.startedAt > MARATHON_MS && turn9.tools >= MARATHON_TOOLS && turn9.errors === 0;
   found.push(
     isMarathon ? { tier: "big", kind: "marathon", label: "A marathon turn, no errors" } : { tier: "small", kind: "turn", label: "Turn done" }
   );
-  turn8.skills = [];
+  turn9.skills = [];
   return found;
 }
 function toolMilestones(e, ran) {
-  const tool8 = String(e.tool);
+  const tool9 = String(e.tool);
   const input = e;
-  turn8.tools += 1;
+  turn9.tools += 1;
   session.tools += 1;
   const found = [];
   if (RECORDS.includes(session.tools)) found.push({ tier: "big", kind: "record", label: `${session.tools} tool calls` });
-  else if (turn8.tools % 10 === 0) found.push({ tier: "small", kind: "tools", label: `${turn8.tools} tools this turn` });
+  else if (turn9.tools % 10 === 0) found.push({ tier: "small", kind: "tools", label: `${turn9.tools} tools this turn` });
   if (ran.isError === true) {
-    turn8.errors += 1;
-    if (tool8 === "Bash" && TESTS.test(String(input.command ?? ""))) session.testsFailed = true;
+    turn9.errors += 1;
+    if (tool9 === "Bash" && TESTS.test(String(input.command ?? ""))) session.testsFailed = true;
     return found;
   }
-  if (tool8 === "Bash") {
-    const command8 = String(input.command ?? "");
+  if (tool9 === "Bash") {
+    const command9 = String(input.command ?? "");
     if (EMPTY3.test(ran.text ?? "")) return found;
-    if (config.bigCommands?.test(command8)) return [...found, { tier: "big", kind: "command", label: "Big command done" }];
-    const known = COMMANDS.find((c) => c.test.test(command8));
+    if (config.bigCommands?.test(command9)) return [...found, { tier: "big", kind: "command", label: "Big command done" }];
+    const known = COMMANDS.find((c) => c.test.test(command9));
     if (known) return [...found, { tier: known.tier, kind: known.kind, label: known.label }];
-    if (TESTS.test(command8)) {
+    if (TESTS.test(command9)) {
       const wasRed = session.testsFailed;
       session.testsFailed = false;
       return [
@@ -3273,35 +3394,35 @@ function toolMilestones(e, ran) {
         wasRed ? { tier: "big", kind: "green", label: "Tests back to green" } : { tier: "medium", kind: "tests", label: "Tests passed" }
       ];
     }
-    if (config.mediumCommands?.test(command8)) found.push({ tier: "medium", kind: "command", label: "Command done" });
+    if (config.mediumCommands?.test(command9)) found.push({ tier: "medium", kind: "command", label: "Command done" });
     return found;
   }
-  if (tool8 === "Write" || tool8 === "Edit" || tool8 === "NotebookEdit") {
+  if (tool9 === "Write" || tool9 === "Edit" || tool9 === "NotebookEdit") {
     const path = String(input.file_path ?? input.notebook_path ?? "");
     const name = path.split("/").pop() ?? path;
     const lines = String(input.content ?? "").split("\n").length;
-    if (tool8 === "Write" && DELIVERABLE.test(path)) found.push({ tier: "big", kind: "deliverable", label: `Made ${name}` });
-    else if (tool8 === "Write" && lines > LONG_FILE_LINES) found.push({ tier: "medium", kind: "long", label: `Wrote ${name}` });
+    if (tool9 === "Write" && DELIVERABLE.test(path)) found.push({ tier: "big", kind: "deliverable", label: `Made ${name}` });
+    else if (tool9 === "Write" && lines > LONG_FILE_LINES) found.push({ tier: "medium", kind: "long", label: `Wrote ${name}` });
     else found.push({ tier: "small", kind: "file", label: `Saved ${name}` });
     return found;
   }
-  if (tool8 === "Artifact") {
+  if (tool9 === "Artifact") {
     const action = String(input.action ?? "publish");
     if (action === "publish" && input.asset !== true && (input.file_path || input.type_url)) {
       found.push({ tier: "big", kind: "page", label: "Published a page" });
     }
     return found;
   }
-  if (tool8 === "ExitPlanMode") return [...found, { tier: "medium", kind: "plan", label: "Plan approved" }];
-  if (tool8 === "TodoWrite") {
+  if (tool9 === "ExitPlanMode") return [...found, { tier: "medium", kind: "plan", label: "Plan approved" }];
+  if (tool9 === "TodoWrite") {
     const todos = Array.isArray(input.todos) ? input.todos : [];
     const isDone = todos.length >= 3 && todos.every((t) => t.status === "completed");
     if (isDone && !session.todosDone) found.push({ tier: "big", kind: "todos", label: `All ${todos.length} tasks done` });
     session.todosDone = isDone;
     return found;
   }
-  if (tool8 === "TaskCreate") session.tasksMade += 1;
-  if (tool8 === "TaskUpdate" && input.status === "completed") {
+  if (tool9 === "TaskCreate") session.tasksMade += 1;
+  if (tool9 === "TaskUpdate" && input.status === "completed") {
     session.tasksDone += 1;
     if (session.tasksMade >= 3 && session.tasksDone >= session.tasksMade) {
       found.push({ tier: "big", kind: "todos", label: `All ${session.tasksMade} tasks done` });
@@ -3310,18 +3431,18 @@ function toolMilestones(e, ran) {
     }
     return found;
   }
-  if (OUTWARD.test(tool8)) {
-    const verb = tool8.match(/(send|create|post|publish|schedule|upload|reply|forward|invite|share|comment)/i)?.[1] ?? "send";
+  if (OUTWARD.test(tool9)) {
+    const verb = tool9.match(/(send|create|post|publish|schedule|upload|reply|forward|invite|share|comment)/i)?.[1] ?? "send";
     found.push({ tier: "medium", kind: "send", label: `${verb[0].toUpperCase()}${verb.slice(1).toLowerCase()} done` });
   }
   return found;
 }
 
 // src/arcade.tsx
-const GAMES = [game, game3, game5, game6, game7, game4, game2];
+const GAMES = [game, game3, game5, game6, game7, game4, game2, game8];
 const MODES = ["random", "rotate", "fixed", "all", "off"];
-const ALIASES = { "dragon-lair": "dragon", octo: "octopus", "octo-invader": "octopus", "duck-hunt": "duck", duckhunt: "duck", ducks: "duck" };
-const pickedFor = atom9({ plugin: "arcade", key: "pickedFor" }, "");
+const ALIASES = { "dragon-lair": "dragon", octo: "octopus", "octo-invader": "octopus", "duck-hunt": "duck", duckhunt: "duck", ducks: "duck", "bug-command": "bugs", bugcommand: "bugs", bug: "bugs", missile: "bugs", "missile-command": "bugs" };
+const pickedFor = atom10({ plugin: "arcade", key: "pickedFor" }, "");
 function gameId(word2) {
   const id = ALIASES[word2.toLowerCase()] ?? word2.toLowerCase();
   return GAMES.some((g) => g.id === id) ? id : void 0;
@@ -3345,13 +3466,13 @@ async function pick5($, mode, pool) {
 }
 async function apply($, mode, pool) {
   const ids = await pick5($, mode, pool);
-  await update8($, shown, () => ids);
-  await update8($, pickedFor, () => `${mode}|${pool.join(",")}`);
+  await update9($, shown, () => ids);
+  await update9($, pickedFor, () => `${mode}|${pool.join(",")}`);
   return ids;
 }
 const title = (id) => GAMES.find((g) => g.id === id)?.title ?? id;
 async function status($, mode, pool) {
-  const on = await read9($, shown);
+  const on = await read10($, shown);
   const rows = GAMES.map((g) => `${on.includes(g.id) ? "\u25CF" : "\u25CB"} ${g.title} (${g.id})${pool.includes(g.id) ? "" : ", not in the pool"}`);
   const setting = mode === "fixed" ? `fixed on ${title(pool[0] ?? "")}` : mode === "off" ? "off" : `${mode}, from ${pool.map(title).join(", ")}`;
   return `Arcade on this account: ${setting}.
@@ -3360,7 +3481,7 @@ ${rows.join("\n")}
 "/arcade <game>" swaps this terminal's game, "/arcade <game> all" pins it for every terminal, "/arcade random|rotate|all|off" sets how new terminals pick, "/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal's game. "/arcade hide" clears this terminal only.`;
 }
 const over = (options) => `${String(options.mode ?? "")}|${String(options.pool ?? "")}`;
-async function save3($, options, mode, pool) {
+async function save4($, options, mode, pool) {
   try {
     const keys = new Set((await $.config.list()).map((row) => row.key));
     if (keys.has("arcade.mode") && keys.has("arcade.pool")) {
@@ -3376,7 +3497,7 @@ async function save3($, options, mode, pool) {
   const saved = { mode, pool: pool.join(","), over: over(options) };
   await $.store.set("setting", saved);
 }
-async function celebrate4($, found) {
+async function celebrate5($, found) {
   if (found.length === 0) return;
   await celebrateMoments($, found);
   await celebrateMoments3($, found);
@@ -3385,6 +3506,7 @@ async function celebrate4($, found) {
   await celebrateMoments7($, found);
   await celebrateMoments4($, found);
   await celebrateMoments2($, found);
+  await celebrateMoments8($, found);
 }
 export const register = (on, options) => {
   configureMilestones(options);
@@ -3396,11 +3518,11 @@ export const register = (on, options) => {
     });
     const saved = await $.store.get("setting");
     if (saved?.over === over(options)) Object.assign(setting, { mode: modeOf(saved.mode), pool: poolOf(saved.pool) });
-    if (await read9($, pickedFor) !== `${setting.mode}|${setting.pool.join(",")}`) await apply($, setting.mode, setting.pool);
-    const ran = await start($, e, ((e1) => start3($, e1, ((e2) => start5($, e2, ((e3) => start6($, e3, ((e4) => start7($, e4, ((e5) => start4($, e5, ((e6) => start2($, e6, next)))))))))))));
+    if (await read10($, pickedFor) !== `${setting.mode}|${setting.pool.join(",")}`) await apply($, setting.mode, setting.pool);
+    const ran = await start($, e, ((e1) => start3($, e1, ((e2) => start5($, e2, ((e3) => start6($, e3, ((e4) => start7($, e4, ((e5) => start4($, e5, ((e6) => start2($, e6, ((e7) => start8($, e7, next)))))))))))))));
     const streak = streakMilestones(await $.store.get("days"), await $.clock.now());
     await $.store.set("days", streak.days);
-    await celebrate4($, streak.found);
+    await celebrate5($, streak.found);
     return ran;
   });
   on("command.run", { command: "arcade" }, async ($, e) => {
@@ -3408,14 +3530,14 @@ export const register = (on, options) => {
     const [first = "", ...rest] = words.map((w) => w.toLowerCase());
     if (first === "") return { text: await status($, setting.mode, setting.pool) };
     if (first === "hide") {
-      await update8($, shown, () => []);
+      await update9($, shown, () => []);
       return { text: 'No game in this terminal. "/arcade next" brings one back; new terminals still follow the setting.' };
     }
     if (first === "next") {
-      const now = await read9($, shown);
+      const now = await read10($, shown);
       const at = setting.pool.indexOf(now[now.length - 1] ?? "");
       const id2 = setting.pool[(at + 1) % setting.pool.length] ?? "";
-      await update8($, shown, () => [id2]);
+      await update9($, shown, () => [id2]);
       return { text: `${title(id2)} in this terminal. New terminals still follow the setting.` };
     }
     if (first === "pool") {
@@ -3424,7 +3546,7 @@ export const register = (on, options) => {
         return { text: `Name the games for the pool: ${GAMES.map((g) => g.id).join(", ")}.` };
       }
       const pool2 = poolOf(ids.join(","));
-      await save3($, options, setting.mode, pool2);
+      await save4($, options, setting.mode, pool2);
       setting.pool = pool2;
       await apply($, setting.mode, pool2);
       return { text: await status($, setting.mode, pool2) };
@@ -3435,12 +3557,12 @@ export const register = (on, options) => {
       return { text: `No game or mode called "${first}". Games: ${GAMES.map((g) => g.id).join(", ")}. Modes: ${MODES.join(", ")}.` };
     }
     if (id !== void 0 && rest[0] !== "all") {
-      await update8($, shown, () => [id]);
+      await update9($, shown, () => [id]);
       return { text: `${title(id)} in this terminal. "/arcade ${id} all" pins it for every terminal.` };
     }
     const pool = id === void 0 ? setting.pool : [id, ...setting.pool.filter((x) => x !== id)];
     const next = id === void 0 ? mode : "fixed";
-    await save3($, options, next, pool);
+    await save4($, options, next, pool);
     Object.assign(setting, { mode: next, pool });
     await apply($, next, pool);
     return { text: await status($, next, pool) };
@@ -3451,7 +3573,7 @@ export const register = (on, options) => {
   });
   on("classic.SubagentStop", async ($, e, next) => {
     const ran = await next(e);
-    await celebrate4($, subagentMilestones());
+    await celebrate5($, subagentMilestones());
     return ran;
   });
   on("command.run", { command: "dragon" }, ($, e, next) => command($, e, next));
@@ -3461,20 +3583,22 @@ export const register = (on, options) => {
   on("command.run", { command: "tetris" }, ($, e, next) => command7($, e, next));
   on("command.run", { command: "octopus" }, ($, e, next) => command4($, e, next));
   on("command.run", { command: "duck" }, ($, e, next) => command2($, e, next));
+  on("command.run", { command: "bugs" }, ($, e, next) => command8($, e, next));
+  on("ui.message", ($, e, next) => message($, e, next));
   on("prompt.submit", async ($, e, next) => {
-    const ran = await prompt($, e, ((e1) => prompt3($, e1, ((e2) => prompt5($, e2, ((e3) => prompt6($, e3, ((e4) => prompt7($, e4, ((e5) => prompt4($, e5, ((e6) => prompt2($, e6, next)))))))))))));
-    await celebrate4($, promptMilestones(String(e.text ?? ""), await $.clock.now()));
+    const ran = await prompt($, e, ((e1) => prompt3($, e1, ((e2) => prompt5($, e2, ((e3) => prompt6($, e3, ((e4) => prompt7($, e4, ((e5) => prompt4($, e5, ((e6) => prompt2($, e6, ((e7) => prompt8($, e7, next)))))))))))))));
+    await celebrate5($, promptMilestones(String(e.text ?? ""), await $.clock.now()));
     return ran;
   });
   on("turn.complete", async ($, e, next) => {
-    const ran = await turn($, e, ((e1) => turn3($, e1, ((e2) => turn5($, e2, ((e3) => turn6($, e3, ((e4) => turn7($, e4, ((e5) => turn4($, e5, ((e6) => turn2($, e6, next)))))))))))));
-    if (e.agentId === void 0 && !e.isAborted) await celebrate4($, turnMilestones(await $.clock.now()));
+    const ran = await turn($, e, ((e1) => turn3($, e1, ((e2) => turn5($, e2, ((e3) => turn6($, e3, ((e4) => turn7($, e4, ((e5) => turn4($, e5, ((e6) => turn2($, e6, ((e7) => turn8($, e7, next)))))))))))))));
+    if (e.agentId === void 0 && !e.isAborted) await celebrate5($, turnMilestones(await $.clock.now()));
     return ran;
   });
   on("tool.call", async ($, e, next) => {
-    const ran = await tool($, e, ((e1) => tool3($, e1, ((e2) => tool5($, e2, ((e3) => tool6($, e3, ((e4) => tool7($, e4, ((e5) => tool4($, e5, ((e6) => tool2($, e6, next)))))))))))));
-    if (e.agentId === void 0 && ran.deny === void 0) await celebrate4($, toolMilestones(e, ran));
+    const ran = await tool($, e, ((e1) => tool3($, e1, ((e2) => tool5($, e2, ((e3) => tool6($, e3, ((e4) => tool7($, e4, ((e5) => tool4($, e5, ((e6) => tool2($, e6, ((e7) => tool8($, e7, next)))))))))))))));
+    if (e.agentId === void 0 && ran.deny === void 0) await celebrate5($, toolMilestones(e, ran));
     return ran;
   });
-  on("ui.render", { component: "AbovePrompt" }, ($, e, next) => render($, e, ((e1) => render3($, e1, ((e2) => render5($, e2, ((e3) => render6($, e3, ((e4) => render7($, e4, ((e5) => render4($, e5, ((e6) => render2($, e6, next))))))))))))));
+  on("ui.render", { component: "AbovePrompt" }, ($, e, next) => render($, e, ((e1) => render3($, e1, ((e2) => render5($, e2, ((e3) => render6($, e3, ((e4) => render7($, e4, ((e5) => render4($, e5, ((e6) => render2($, e6, ((e7) => render8($, e7, next))))))))))))))));
 };

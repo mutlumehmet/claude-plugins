@@ -44,7 +44,7 @@ Small mods for long sessions. Install them all with `/plugin install toolkit@meh
 
 ![The Claude Code Arcade: the dragon, the slot machine, the duel, the Tamagotchi and Tetris, played by a session's work](docs/images/arcade-hero.gif)
 
-Seven games that live above your prompt and are played by your work, in one plugin,
+Eight games that live above your prompt and are played by your work, in one plugin,
 [`arcade`](plugins/arcade): a pixel dragon, a slot machine, an Atari duel, a Tamagotchi, Tetris, an
 octopus that invades a city and a duck hunt. The Arcade spots the moments worth celebrating, coding or not: small (a
 turn done, a file saved), medium (a commit, a skill run, a message sent) and big (a merge, a deploy,
@@ -53,7 +53,7 @@ terminal (the default), rotate through them, or limit the choice with `/arcade p
 
 | Plugin | Kind | What it does |
 |---|---|---|
-| [`arcade`](plugins/arcade) | mod | Seven games above the prompt (`/dragon`, `/jackpot`, `/outlaw`, `/tama`, `/tetris`, `/octopus`, `/duck`), one or several per terminal, chosen with `/arcade` |
+| [`arcade`](plugins/arcade) | mod | Eight games above the prompt (`/dragon`, `/jackpot`, `/outlaw`, `/tama`, `/tetris`, `/octopus`, `/duck`, `/bugs`), one or several per terminal, chosen with `/arcade` |
 
 ## Install
 

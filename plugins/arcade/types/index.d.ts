@@ -47,6 +47,13 @@ export type OctoScore = { xp: number; toppled: number; planes: number; tools: nu
 export type OctoMood = 'idle' | 'work' | 'sad' | 'sleep' | 'rampage'
 // duck-hunt
 export type DuckScore = { hits: number; escaped: number; tools: number }
+// bug-command
+export type BugsScore = { kills: number; mine: number; lost: number; ends: number; cities: number; tools: number }
+export type BugsFeed = {
+  events: { id: number; kind: 'tool' | 'fail' | 'small' | 'medium' | 'big'; practice: boolean }[]
+  next: number
+  working: boolean
+}
 
 declare module 'claude-code' {
   interface PluginState {
@@ -68,6 +75,9 @@ declare module 'claude-code' {
       octopusFeat: string
       duckScore: DuckScore
       duckFeat: string
+      bugsScore: BugsScore
+      bugsFeed: BugsFeed
+      bugsFeat: string
     }
   }
 }
