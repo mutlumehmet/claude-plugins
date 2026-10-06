@@ -4106,6 +4106,11 @@ function syncMobs() {
     for (const m of mine.slice(needed)) m.isLeaving = true;
   }
 }
+function animalsLine() {
+  const kinds = ["sheep", "pig", "chicken", "cow"];
+  const counts = kinds.map((k) => [k, sim10.mobs.filter((m) => m.kind === k && !m.isLeaving).length]).filter(([, n]) => n > 0).map(([k, n]) => `${n} ${k === "sheep" || n === 1 ? k : `${k}s`}`);
+  return `Animals: ${counts.length > 0 ? counts.join(", ") : "none yet (a finished farm or house brings some)"}`;
+}
 function stepMobs(isAsleep) {
   if (sim10.t % 30 === 0) syncMobs();
   for (const m of sim10.mobs) {
@@ -4635,6 +4640,7 @@ const command10 = async ($, e) => {
   return {
     text: `${statsLine9(s)}${last2 ? `
 Last win: ${last2}` : ""}
+${animalsLine()}
 Your villagers build the town while Claude works: every tool call lays two blocks (an edit or a write three), and each subagent sends a helper of its own. A failed tool brings a creeper that blows a hole in a building, and the villagers build it back. A small moment plants a tree, and trees grow as the work goes on; a medium moment (a commit, a skill, a sent message) finishes the building going up, a big one raises a third of the castle and a merge, release or deploy the rest. The town is kept between sessions and shared by every terminal of this account; once the band is full, the oldest building is torn down and built again. "/town reset" starts over. The first word is the town's size (camp, hamlet, village, town, city); \u25A6 blocks laid, \u2302 houses, \u2663 trees, \u265C castles, \u2692 tool calls.`
   };
 };

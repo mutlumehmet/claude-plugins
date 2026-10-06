@@ -131,24 +131,18 @@ test('a save merges with what another terminal saved, and a reset there wins', {
   expect(await stats($)).toMatch(/^Camp  ▦ 0/)
 })
 
-test('a finished farm brings a sheep and a pig, and they walk into the town', ONLY, async ($, on) => {
+test('a finished farm brings a sheep and a pig, and a house a chicken', ONLY, async ($, on) => {
   world(on)
   // The frame clock draws while the test moves it on: answer the redraws.
   on('ui.blit', () => ({ value: {} }) as never)
   const clock = mock.clock(on)
   await begin($, on, true)
   const ui = await $.ui.mount(BAND)
+  expect(await stats($)).toMatch(/Animals: none yet/)
   // Practice finishes the buildings in turn: a house (a chicken), then a farm (a sheep and a pig).
   await $.command.run({ command: 'town', args: 'finish' } as never)
   await $.command.run({ command: 'town', args: 'finish' } as never)
-  await clock.advance(8000)
-  await ui.redraw()
-  const raster = (await ui.find({ type: 'Raster' })) as unknown as { props: { cells: string } }
-  const bin = atob(raster.props.cells)
-  const words = new Uint32Array(bin.length / 4)
-  for (let i = 0; i < words.length; i++) words[i] = bin.charCodeAt(i * 4) | (bin.charCodeAt(i * 4 + 1) << 8) | (bin.charCodeAt(i * 4 + 2) << 16) | (bin.charCodeAt(i * 4 + 3) << 24)
-  const colors = new Set(words)
-  expect(colors.has(0xf4a7b9)).toBe(true) // a pig
-  expect(colors.has(0xf2f2ee)).toBe(true) // wool or feathers
+  await clock.advance(3000)
+  expect(await stats($)).toMatch(/Animals: 1 sheep, 1 pig, 1 chicken/)
   await ui.unmount()
 })

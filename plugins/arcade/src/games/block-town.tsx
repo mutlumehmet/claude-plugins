@@ -216,6 +216,16 @@ function syncMobs() {
   }
 }
 
+// "Animals: 2 sheep, 1 pig" for /town; the ones walking off are not counted.
+function animalsLine() {
+  const kinds: MobKind[] = ['sheep', 'pig', 'chicken', 'cow']
+  const counts = kinds
+    .map(k => [k, sim.mobs.filter(m => m.kind === k && !m.isLeaving).length] as const)
+    .filter(([, n]) => n > 0)
+    .map(([k, n]) => `${n} ${k === 'sheep' || n === 1 ? k : `${k}s`}`)
+  return `Animals: ${counts.length > 0 ? counts.join(', ') : 'none yet (a finished farm or house brings some)'}`
+}
+
 function stepMobs(isAsleep: boolean) {
   if (sim.t % 30 === 0) syncMobs()
   for (const m of sim.mobs) {
@@ -834,6 +844,7 @@ export const command: MatchedHook<'command.run', { command: 'town' }> = async ($
   return {
     text:
       `${statsLine(s)}${last ? `\nLast win: ${last}` : ''}\n` +
+      `${animalsLine()}\n` +
       'Your villagers build the town while Claude works: every tool call lays two blocks (an edit or a write three), and each subagent sends a helper of its own. ' +
       'A failed tool brings a creeper that blows a hole in a building, and the villagers build it back. A small moment plants a tree, and trees grow as the work goes on; ' +
       'a medium moment (a commit, a skill, a sent message) finishes the building going up, a big one raises a third of the castle and a merge, release or deploy the rest. ' +
