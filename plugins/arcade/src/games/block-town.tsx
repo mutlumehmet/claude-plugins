@@ -153,6 +153,11 @@ const sim = {
   isDirty: false,
   stats: '',
   tools: 0,
+  // Tool calls not yet added to the stored score.
+  toolGain: 0,
+  // When the town was last reset; a session that loaded an older town gives its copy up.
+  epoch: 0,
+  resetAskedAt: -Infinity,
 }
 
 const rand = (a: number, b: number) => a + Math.random() * (b - a)
@@ -227,6 +232,7 @@ function site(): Plot | null {
   }
   oldest.progress = 0
   oldest.wasDone = false
+  oldest.v = (oldest.v ?? 0) + 1
   // Move it to the end of the list, so the next renewal is the next oldest.
   sim.plots = [...sim.plots.filter(p => p !== oldest), oldest]
   return oldest
@@ -333,7 +339,10 @@ function explode(c: Creeper) {
   for (const p of sim.plots) {
     if (p.kind === 'tree') continue
     const w = widthOf(p.kind)
-    if (c.x >= p.x - 2 && c.x <= p.x + w + 1) p.progress = Math.max(0, p.progress - Math.ceil(sizeOf(p) * 0.35))
+    if (c.x >= p.x - 2 && c.x <= p.x + w + 1) {
+      p.progress = Math.max(0, p.progress - Math.ceil(sizeOf(p) * 0.35))
+      p.v = (p.v ?? 0) + 1
+    }
   }
   sim.isDirty = true
 }
@@ -530,19 +539,107 @@ async function notify($: EngineInterface, text: string) {
   if (await isShown($, ID)) $.ui.toast(text)
 }
 
-type Saved = { plots: Plot[]; next: number }
+// `width` is the band's width when last shown, so a town that is not shown still has room to build.
+type Saved = { plots: Plot[]; next: number; epoch?: number; width?: number }
+const ZERO: Score = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0, tools: 0 }
 
-async function saveTown($: EngineInterface) {
-  sim.isDirty = false
-  const saved: Saved = { plots: sim.plots, next: sim.next }
-  await $.store.set('town.map', saved)
+// Two terminals can show the town at once, each with its own copy. A save merges this copy into
+// the stored one instead of writing over it: per plot, the newer version wins (a creeper's hole or
+// a rebuild bumps `v`), and within one version the more built copy. Plots that would overlap keep
+// the more built one. The castle is one plot whatever the band's width.
+function mergeTowns(stored: Plot[], mine: Plot[]): Plot[] {
+  const better = (a: Plot, b: Plot) => ((a.v ?? 0) !== (b.v ?? 0) ? (a.v ?? 0) > (b.v ?? 0) : a.progress >= b.progress)
+  const keyOf = (p: Plot) => (p.kind === 'castle' ? 'castle' : `${p.x}`)
+  const best = new Map<string, Plot>()
+  for (const p of [...mine, ...stored]) {
+    const key = keyOf(p)
+    const had = best.get(key)
+    if (!had) best.set(key, p)
+    else if (had.kind === 'tree' && p.kind === 'tree') best.set(key, { ...had, plantedAt: Math.min(had.plantedAt ?? 0, p.plantedAt ?? 0) })
+    else if (!better(had, p)) best.set(key, p)
+  }
+  const ranked = [...best.values()].sort((a, b) => (better(a, b) ? -1 : 1))
+  const kept: Plot[] = []
+  for (const p of ranked) {
+    if (p.kind === 'castle') {
+      kept.push(p)
+      continue
+    }
+    const overlaps = kept.some(k => k.kind !== 'castle' && p.x <= k.x + widthOf(k.kind) && k.x <= p.x + widthOf(p.kind))
+    if (!overlaps) kept.push(p)
+  }
+  // Keep this session's order (oldest first, for rebuilds), with the other terminal's plots after it.
+  const order = [...best.values()]
+  return order.filter(p => kept.includes(p))
 }
 
-async function save($: EngineInterface, change: (s: Score) => Score) {
-  const next = await update($, score, change)
-  sim.stats = statsLine(next)
-  await $.store.set('town.score', next)
-  return next
+// Writes what changed: the score as the stored one plus this session's gains, and the town merged
+// with the stored one. Runs on its own timer, so a town that is not shown keeps its work too.
+async function flush($: EngineInterface) {
+  const map = (await $.store.get('town.map')) as Saved | undefined
+  if (map && (map.epoch ?? 0) > sim.epoch) {
+    // Reset in another terminal: this copy is from before it, so it gives way.
+    sim.epoch = map.epoch ?? 0
+    sim.plots = Array.isArray(map.plots) ? map.plots : []
+    sim.next = map.next ?? 0
+    sim.gain = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0 }
+    sim.toolGain = 0
+    sim.isDirty = false
+    const fresh = ((await $.store.get('town.score')) as Score | undefined) ?? ZERO
+    await update($, score, () => fresh)
+    sim.stats = statsLine(fresh)
+    sim.tools = fresh.tools
+    return
+  }
+  const g = sim.gain
+  if (g.blocks + g.houses + g.trees + g.castles + g.creepers + sim.toolGain > 0) {
+    sim.gain = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0 }
+    const tools = sim.toolGain
+    sim.toolGain = 0
+    const old = ((await $.store.get('town.score')) as Score | undefined) ?? ZERO
+    const next: Score = {
+      blocks: old.blocks + g.blocks,
+      houses: old.houses + g.houses,
+      trees: old.trees + g.trees,
+      castles: old.castles + g.castles,
+      creepers: old.creepers + g.creepers,
+      tools: old.tools + tools,
+    }
+    await $.store.set('town.score', next)
+    await update($, score, () => next)
+    sim.stats = statsLine(next)
+    sim.tools = next.tools
+    if (levelOf(next.blocks) !== levelOf(old.blocks)) {
+      banner(levelOf(next.blocks).toUpperCase(), GOLD, 60)
+      void notify($, `🏰 Your camp grew into a ${levelOf(next.blocks).toLowerCase()}: ${next.blocks} blocks.`)
+    }
+  }
+  if (sim.isDirty) {
+    sim.isDirty = false
+    sim.plots = mergeTowns(map && Array.isArray(map.plots) ? map.plots : [], sim.plots)
+    sim.next = Math.max(sim.next, map?.next ?? 0)
+    const saved: Saved = { plots: sim.plots, next: sim.next, epoch: sim.epoch, width: sim.W }
+    await $.store.set('town.map', saved)
+  }
+}
+
+// `/town reset` asks first; `/town reset yes` within a minute clears the town and its score.
+async function reset($: EngineInterface) {
+  sim.epoch = await $.clock.now()
+  sim.plots = []
+  sim.next = 0
+  sim.villagers = []
+  sim.creepers = []
+  sim.gain = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0 }
+  sim.toolGain = 0
+  sim.isDirty = false
+  sim.tools = 0
+  const saved: Saved = { plots: [], next: 0, epoch: sim.epoch, width: sim.W }
+  await $.store.set('town.map', saved)
+  await $.store.set('town.score', ZERO)
+  await update($, score, () => ZERO)
+  await update($, feat, () => '')
+  sim.stats = statsLine(ZERO)
 }
 
 type Show = 'tree' | 'finish' | 'castle' | 'whole'
@@ -589,36 +686,20 @@ export const start: Hook<'session.start'> = async ($, e, next) => {
   if (map && Array.isArray(map.plots)) {
     sim.plots = map.plots
     sim.next = map.next ?? 0
+    sim.epoch = map.epoch ?? 0
   }
+  // Until the band is drawn, build to the width it last had (or a common one).
+  if (sim.W === 0) sim.W = clamp(map?.width ?? 100, MIN_COLUMNS, MAX_COLUMNS)
   await $.command.register({
     name: 'town',
-    description: 'Block Town above the prompt: the score. "/town build|tree|finish|castle|creeper" to show off.',
+    description: 'Block Town above the prompt: the score. "/town build|tree|finish|castle|creeper" to show off, "/town reset" to start over.',
   })
+  // Saving runs on its own clock, shown or not: every two seconds, only when something changed.
+  $.clock.every(2000, () => void flush($))
   $.clock.every(FPS_MS, () => {
     const requestId = sim.requestId
     if (requestId === null || sim.W === 0) return
     const isAsleep = step()
-    // Blocks, houses, trees, castles and creepers go to the score; the town itself to the store.
-    const g = sim.gain
-    if (g.blocks + g.houses + g.trees + g.castles + g.creepers > 0) {
-      sim.gain = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0 }
-      void save($, old => {
-        const next = {
-          ...old,
-          blocks: old.blocks + g.blocks,
-          houses: old.houses + g.houses,
-          trees: old.trees + g.trees,
-          castles: old.castles + g.castles,
-          creepers: old.creepers + g.creepers,
-        }
-        if (levelOf(next.blocks) !== levelOf(old.blocks)) {
-          banner(levelOf(next.blocks).toUpperCase(), GOLD, 60)
-          void notify($, `🏰 Your camp grew into a ${levelOf(next.blocks).toLowerCase()}: ${next.blocks} blocks.`)
-        }
-        return next
-      })
-    }
-    if (sim.isDirty && sim.t % 30 === 0) void saveTown($)
     if (sim.isBlitting) return
     sim.isBlitting = true
     void $.ui.blit({ requestId, key: RASTER, cells: frame(isAsleep, sim.stats), columns: sim.W })
@@ -634,6 +715,17 @@ export const start: Hook<'session.start'> = async ($, e, next) => {
 
 export const command: MatchedHook<'command.run', { command: 'town' }> = async ($, e) => {
   const arg = (e.args ?? '').trim()
+  if (arg === 'reset') {
+    sim.resetAskedAt = await $.clock.now()
+    return { text: 'This clears the town and its score: every building, tree and castle, and the counts. Type "/town reset yes" within a minute to do it; anything else keeps the town.' }
+  }
+  if (arg === 'reset yes') {
+    if ((await $.clock.now()) - sim.resetAskedAt > 60_000) return { text: 'Nothing cleared. Type "/town reset" first, then "/town reset yes" within a minute.' }
+    sim.resetAskedAt = -Infinity
+    await reset($)
+    return { text: 'The town is cleared: back to an empty camp. Other terminals showing it start over within a few seconds.' }
+  }
+  sim.resetAskedAt = -Infinity
   if (arg === 'build') {
     work('main', 6, false)
     return { text: 'Practice: six blocks go up, nothing counts.' }
@@ -656,7 +748,7 @@ export const command: MatchedHook<'command.run', { command: 'town' }> = async ($
       'Your villagers build the town while Claude works: every tool call lays two blocks (an edit or a write three), and each subagent sends a helper of its own. ' +
       'A failed tool brings a creeper that blows a hole in a building, and the villagers build it back. A small moment plants a tree, and trees grow as the work goes on; ' +
       'a medium moment (a commit, a skill, a sent message) finishes the building going up, a big one raises a third of the castle and a merge, release or deploy the rest. ' +
-      'The town is kept between sessions; once the band is full, the oldest building is torn down and built again. ' +
+      'The town is kept between sessions and shared by every terminal of this account; once the band is full, the oldest building is torn down and built again. "/town reset" starts over. ' +
       `The first word is the town's size (camp, hamlet, village, town, city); ▦ blocks laid, ⌂ houses, ♣ trees, ♜ castles, ⚒ tool calls.`,
   }
 }
@@ -689,10 +781,11 @@ export const tool: Hook<'tool.call'> = async ($, e, next) => {
   }
   work(isMain ? 'main' : String(e.agentId), e.tool === 'Edit' || e.tool === 'Write' ? 3 : 2)
   if (isMain) {
+    // Counted here for the band at once; the next flush adds it to the stored score.
+    sim.toolGain += 1
     const counted = await update($, score, old => ({ ...old, tools: old.tools + 1 }))
     sim.tools = counted.tools
     sim.stats = statsLine(counted)
-    if (counted.tools % 10 === 0) void $.store.set('town.score', counted)
   }
   return ran
 }

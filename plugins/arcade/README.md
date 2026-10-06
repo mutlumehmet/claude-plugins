@@ -173,7 +173,8 @@ got done.
 - **Moments**: a small one plants a tree (trees grow as the work goes on, sapling to full tree; once the grove is full, they grow faster instead), a medium one finishes the building going up (`HOUSE BUILT`), a big one raises a third of the castle at the right end of the band (`THE CASTLE GROWS`), and a merge, release, deploy, streak or record raises the rest at once (`CASTLE BUILT!`, fireworks).
 - **When the band is full** the oldest building is torn down and built again, a house as a two storey hall.
 - **The score** sits at the right end of the strip: `Village  ▦ 309  ⌂ 2  ♣ 5  ♜ 1  ⚒ 27` (the town's size from camp, hamlet, village and town to city, blocks laid, houses, trees, castles, tool calls). **Two minutes of quiet** and the villagers go indoors.
-- **`/town`** shows the score; `/town build`, `tree`, `finish`, `castle` and `creeper` are practice that counts nothing.
+- **Kept and shared**: the town and its score are saved every two seconds while something changes, also while the town is not shown, and every terminal of the account builds the same town: a save merges with what another terminal saved (the more built copy of each building wins, and a creeper's hole or a rebuild is kept).
+- **`/town`** shows the score; `/town build`, `tree`, `finish`, `castle` and `creeper` are practice that counts nothing. **`/town reset`** starts over: it asks first, and only `/town reset yes` within a minute clears the town and its score, in every terminal.
 
 ### Bug Command (`bugs`)
 
@@ -293,7 +294,7 @@ test.
 - **Dario**: The strip takes eight rows, like the octopus's and the duck hunt's.
 - **Dario**: Things queue at the right edge, so after a burst of tool calls a flag pole can take a few seconds to reach Dario.
 - **Block Town**: The town is laid out for the width of the terminal it was built in; a narrower terminal leaves out the buildings that do not fit, and a band under 64 columns has no room for the castle.
-- **Block Town**: The town is saved per account. Two terminals showing it at once each build their own copy from where it was, and the last one to save wins.
+- **Block Town**: Two terminals building the same spot at the same moment can each start a different building there; the merge keeps the more built one and the other one's blocks are lost. The last two seconds of work before a session closes may not be saved.
 - **Bug Command**: The sky is drawn as runs of coloured text rather than the raster the other strips use, so a busy sky redraws more than they do; a still sky does not redraw at all.
 - **Bug Command**: Only a terminal draws it; the Desktop Code tab, which draws the other games, does not show it yet.
 - **Bug Command**: A click hands the keyboard to the sky until Esc; typing into the prompt needs Esc first.

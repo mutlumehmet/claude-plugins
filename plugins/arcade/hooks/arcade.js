@@ -3879,7 +3879,12 @@ const sim10 = {
   gain: { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0 },
   isDirty: false,
   stats: "",
-  tools: 0
+  tools: 0,
+  // Tool calls not yet added to the stored score.
+  toolGain: 0,
+  // When the town was last reset; a session that loaded an older town gives its copy up.
+  epoch: 0,
+  resetAskedAt: -Infinity
 };
 const rand6 = (a, b) => a + Math.random() * (b - a);
 const pick6 = (list2) => list2[Math.floor(Math.random() * list2.length)];
@@ -3942,6 +3947,7 @@ function site() {
   }
   oldest.progress = 0;
   oldest.wasDone = false;
+  oldest.v = (oldest.v ?? 0) + 1;
   sim10.plots = [...sim10.plots.filter((p) => p !== oldest), oldest];
   return oldest;
 }
@@ -4034,7 +4040,10 @@ function explode(c) {
   for (const p of sim10.plots) {
     if (p.kind === "tree") continue;
     const w = widthOf2(p.kind);
-    if (c.x >= p.x - 2 && c.x <= p.x + w + 1) p.progress = Math.max(0, p.progress - Math.ceil(sizeOf(p) * 0.35));
+    if (c.x >= p.x - 2 && c.x <= p.x + w + 1) {
+      p.progress = Math.max(0, p.progress - Math.ceil(sizeOf(p) * 0.35));
+      p.v = (p.v ?? 0) + 1;
+    }
   }
   sim10.isDirty = true;
 }
@@ -4203,16 +4212,93 @@ const feat6 = atom11({ plugin: "arcade", key: "townFeat" }, "");
 async function notify10($, text) {
   if (await isShown($, ID10)) $.ui.toast(text);
 }
-async function saveTown($) {
-  sim10.isDirty = false;
-  const saved = { plots: sim10.plots, next: sim10.next };
-  await $.store.set("town.map", saved);
+const ZERO = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0, tools: 0 };
+function mergeTowns(stored, mine) {
+  const better = (a, b) => (a.v ?? 0) !== (b.v ?? 0) ? (a.v ?? 0) > (b.v ?? 0) : a.progress >= b.progress;
+  const keyOf2 = (p) => p.kind === "castle" ? "castle" : `${p.x}`;
+  const best = /* @__PURE__ */ new Map();
+  for (const p of [...mine, ...stored]) {
+    const key = keyOf2(p);
+    const had = best.get(key);
+    if (!had) best.set(key, p);
+    else if (had.kind === "tree" && p.kind === "tree") best.set(key, { ...had, plantedAt: Math.min(had.plantedAt ?? 0, p.plantedAt ?? 0) });
+    else if (!better(had, p)) best.set(key, p);
+  }
+  const ranked = [...best.values()].sort((a, b) => better(a, b) ? -1 : 1);
+  const kept = [];
+  for (const p of ranked) {
+    if (p.kind === "castle") {
+      kept.push(p);
+      continue;
+    }
+    const overlaps = kept.some((k) => k.kind !== "castle" && p.x <= k.x + widthOf2(k.kind) && k.x <= p.x + widthOf2(p.kind));
+    if (!overlaps) kept.push(p);
+  }
+  const order = [...best.values()];
+  return order.filter((p) => kept.includes(p));
 }
-async function save5($, change2) {
-  const next = await update10($, score7, change2);
-  sim10.stats = statsLine9(next);
-  await $.store.set("town.score", next);
-  return next;
+async function flush($) {
+  const map = await $.store.get("town.map");
+  if (map && (map.epoch ?? 0) > sim10.epoch) {
+    sim10.epoch = map.epoch ?? 0;
+    sim10.plots = Array.isArray(map.plots) ? map.plots : [];
+    sim10.next = map.next ?? 0;
+    sim10.gain = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0 };
+    sim10.toolGain = 0;
+    sim10.isDirty = false;
+    const fresh2 = await $.store.get("town.score") ?? ZERO;
+    await update10($, score7, () => fresh2);
+    sim10.stats = statsLine9(fresh2);
+    sim10.tools = fresh2.tools;
+    return;
+  }
+  const g = sim10.gain;
+  if (g.blocks + g.houses + g.trees + g.castles + g.creepers + sim10.toolGain > 0) {
+    sim10.gain = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0 };
+    const tools = sim10.toolGain;
+    sim10.toolGain = 0;
+    const old = await $.store.get("town.score") ?? ZERO;
+    const next = {
+      blocks: old.blocks + g.blocks,
+      houses: old.houses + g.houses,
+      trees: old.trees + g.trees,
+      castles: old.castles + g.castles,
+      creepers: old.creepers + g.creepers,
+      tools: old.tools + tools
+    };
+    await $.store.set("town.score", next);
+    await update10($, score7, () => next);
+    sim10.stats = statsLine9(next);
+    sim10.tools = next.tools;
+    if (levelOf3(next.blocks) !== levelOf3(old.blocks)) {
+      banner4(levelOf3(next.blocks).toUpperCase(), GOLD2, 60);
+      void notify10($, `\u{1F3F0} Your camp grew into a ${levelOf3(next.blocks).toLowerCase()}: ${next.blocks} blocks.`);
+    }
+  }
+  if (sim10.isDirty) {
+    sim10.isDirty = false;
+    sim10.plots = mergeTowns(map && Array.isArray(map.plots) ? map.plots : [], sim10.plots);
+    sim10.next = Math.max(sim10.next, map?.next ?? 0);
+    const saved = { plots: sim10.plots, next: sim10.next, epoch: sim10.epoch, width: sim10.W };
+    await $.store.set("town.map", saved);
+  }
+}
+async function reset($) {
+  sim10.epoch = await $.clock.now();
+  sim10.plots = [];
+  sim10.next = 0;
+  sim10.villagers = [];
+  sim10.creepers = [];
+  sim10.gain = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0 };
+  sim10.toolGain = 0;
+  sim10.isDirty = false;
+  sim10.tools = 0;
+  const saved = { plots: [], next: 0, epoch: sim10.epoch, width: sim10.W };
+  await $.store.set("town.map", saved);
+  await $.store.set("town.score", ZERO);
+  await update10($, score7, () => ZERO);
+  await update10($, feat6, () => "");
+  sim10.stats = statsLine9(ZERO);
 }
 async function celebrate6($, label, show, isPractice = false) {
   sim10.lastActivity = sim10.t;
@@ -4250,35 +4336,18 @@ const start10 = async ($, e, next) => {
   if (map && Array.isArray(map.plots)) {
     sim10.plots = map.plots;
     sim10.next = map.next ?? 0;
+    sim10.epoch = map.epoch ?? 0;
   }
+  if (sim10.W === 0) sim10.W = clamp5(map?.width ?? 100, MIN_COLUMNS5, MAX_COLUMNS5);
   await $.command.register({
     name: "town",
-    description: 'Block Town above the prompt: the score. "/town build|tree|finish|castle|creeper" to show off.'
+    description: 'Block Town above the prompt: the score. "/town build|tree|finish|castle|creeper" to show off, "/town reset" to start over.'
   });
+  $.clock.every(2e3, () => void flush($));
   $.clock.every(FPS_MS9, () => {
     const requestId = sim10.requestId;
     if (requestId === null || sim10.W === 0) return;
     const isAsleep = step8();
-    const g = sim10.gain;
-    if (g.blocks + g.houses + g.trees + g.castles + g.creepers > 0) {
-      sim10.gain = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0 };
-      void save5($, (old) => {
-        const next2 = {
-          ...old,
-          blocks: old.blocks + g.blocks,
-          houses: old.houses + g.houses,
-          trees: old.trees + g.trees,
-          castles: old.castles + g.castles,
-          creepers: old.creepers + g.creepers
-        };
-        if (levelOf3(next2.blocks) !== levelOf3(old.blocks)) {
-          banner4(levelOf3(next2.blocks).toUpperCase(), GOLD2, 60);
-          void notify10($, `\u{1F3F0} Your camp grew into a ${levelOf3(next2.blocks).toLowerCase()}: ${next2.blocks} blocks.`);
-        }
-        return next2;
-      });
-    }
-    if (sim10.isDirty && sim10.t % 30 === 0) void saveTown($);
     if (sim10.isBlitting) return;
     sim10.isBlitting = true;
     void $.ui.blit({ requestId, key: RASTER9, cells: frame9(isAsleep, sim10.stats), columns: sim10.W }).then((r) => {
@@ -4291,6 +4360,17 @@ const start10 = async ($, e, next) => {
 };
 const command10 = async ($, e) => {
   const arg = (e.args ?? "").trim();
+  if (arg === "reset") {
+    sim10.resetAskedAt = await $.clock.now();
+    return { text: 'This clears the town and its score: every building, tree and castle, and the counts. Type "/town reset yes" within a minute to do it; anything else keeps the town.' };
+  }
+  if (arg === "reset yes") {
+    if (await $.clock.now() - sim10.resetAskedAt > 6e4) return { text: 'Nothing cleared. Type "/town reset" first, then "/town reset yes" within a minute.' };
+    sim10.resetAskedAt = -Infinity;
+    await reset($);
+    return { text: "The town is cleared: back to an empty camp. Other terminals showing it start over within a few seconds." };
+  }
+  sim10.resetAskedAt = -Infinity;
   if (arg === "build") {
     work("main", 6, false);
     return { text: "Practice: six blocks go up, nothing counts." };
@@ -4310,7 +4390,7 @@ const command10 = async ($, e) => {
   return {
     text: `${statsLine9(s)}${last2 ? `
 Last win: ${last2}` : ""}
-Your villagers build the town while Claude works: every tool call lays two blocks (an edit or a write three), and each subagent sends a helper of its own. A failed tool brings a creeper that blows a hole in a building, and the villagers build it back. A small moment plants a tree, and trees grow as the work goes on; a medium moment (a commit, a skill, a sent message) finishes the building going up, a big one raises a third of the castle and a merge, release or deploy the rest. The town is kept between sessions; once the band is full, the oldest building is torn down and built again. The first word is the town's size (camp, hamlet, village, town, city); \u25A6 blocks laid, \u2302 houses, \u2663 trees, \u265C castles, \u2692 tool calls.`
+Your villagers build the town while Claude works: every tool call lays two blocks (an edit or a write three), and each subagent sends a helper of its own. A failed tool brings a creeper that blows a hole in a building, and the villagers build it back. A small moment plants a tree, and trees grow as the work goes on; a medium moment (a commit, a skill, a sent message) finishes the building going up, a big one raises a third of the castle and a merge, release or deploy the rest. The town is kept between sessions and shared by every terminal of this account; once the band is full, the oldest building is torn down and built again. "/town reset" starts over. The first word is the town's size (camp, hamlet, village, town, city); \u25A6 blocks laid, \u2302 houses, \u2663 trees, \u265C castles, \u2692 tool calls.`
   };
 };
 const prompt10 = async ($, e, next) => {
@@ -4338,10 +4418,10 @@ const tool10 = async ($, e, next) => {
   }
   work(isMain ? "main" : String(e.agentId), e.tool === "Edit" || e.tool === "Write" ? 3 : 2);
   if (isMain) {
+    sim10.toolGain += 1;
     const counted = await update10($, score7, (old) => ({ ...old, tools: old.tools + 1 }));
     sim10.tools = counted.tools;
     sim10.stats = statsLine9(counted);
-    if (counted.tools % 10 === 0) void $.store.set("town.score", counted);
   }
   return ran;
 };
@@ -4593,7 +4673,7 @@ ${rows.join("\n")}
 "/arcade <game>" swaps this terminal's game, "/arcade <game> all" pins it for every terminal, "/arcade random|rotate|all|off" sets how new terminals pick, "/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal's game. "/arcade hide" clears this terminal only.`;
 }
 const over = (options) => `${String(options.mode ?? "")}|${String(options.pool ?? "")}`;
-async function save6($, options, mode, pool) {
+async function save5($, options, mode, pool) {
   try {
     const keys = new Set((await $.config.list()).map((row) => row.key));
     if (keys.has("arcade.mode") && keys.has("arcade.pool")) {
@@ -4660,7 +4740,7 @@ export const register = (on, options) => {
         return { text: `Name the games for the pool: ${GAMES.map((g) => g.id).join(", ")}.` };
       }
       const pool2 = poolOf(ids.join(","));
-      await save6($, options, setting.mode, pool2);
+      await save5($, options, setting.mode, pool2);
       setting.pool = pool2;
       await apply($, setting.mode, pool2);
       return { text: await status($, setting.mode, pool2) };
@@ -4676,7 +4756,7 @@ export const register = (on, options) => {
     }
     const pool = id === void 0 ? setting.pool : [id, ...setting.pool.filter((x) => x !== id)];
     const next = id === void 0 ? mode : "fixed";
-    await save6($, options, next, pool);
+    await save5($, options, next, pool);
     Object.assign(setting, { mode: next, pool });
     await apply($, next, pool);
     return { text: await status($, next, pool) };

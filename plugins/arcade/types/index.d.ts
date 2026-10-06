@@ -57,6 +57,8 @@ export type TownPlot = {
   progress: number
   wasDone: boolean
   plantedAt?: number
+  // Goes up each time the plot loses blocks (a creeper, a rebuild), so a merge keeps the loss.
+  v?: number
 }
 export type DarioScore = { coins: number; stomps: number; hits: number; clears: number; tools: number }
 export type BugsScore = { kills: number; mine: number; lost: number; ends: number; cities: number; tools: number }
