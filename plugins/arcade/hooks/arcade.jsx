@@ -4043,6 +4043,7 @@ const sim10 = {
   villagers: [],
   creepers: [],
   particles: [],
+  mobs: [],
   banner: null,
   gain: { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0 },
   isDirty: false,
@@ -4057,6 +4058,76 @@ const rand6 = (a, b) => a + Math.random() * (b - a);
 const pick6 = (list2) => list2[Math.floor(Math.random() * list2.length)];
 const clamp5 = (v, a, b) => Math.max(a, Math.min(b, v));
 const HELPER_COLORS = [14721072, 11558102, 2864035, 15231634, 9159498];
+const MOB_COLORS = {
+  W: 15921902,
+  // wool, feathers
+  g: 6250335,
+  // a sheep's face
+  P: 16033721,
+  // pig
+  p: 14252175,
+  // snout
+  B: 3881787,
+  // a cow's patches
+  w: 14211288,
+  // a cow's face
+  r: 15017249,
+  // comb
+  y: 15905076,
+  // a chicken's legs
+  k: 4861976
+  // hooves
+};
+const MOBS = {
+  chicken: { body: ["..r", "WWW"], legs: [".y.", "y.y"], speed: 0.12 },
+  pig: { body: ["PPPp"], legs: ["k..k", ".kk."], speed: 0.09 },
+  sheep: { body: ["WWWg", "WWW."], legs: ["k.k.", ".k.k"], speed: 0.08 },
+  cow: { body: ["BWBBw", "WBWW."], legs: ["k..k.", ".k..k"], speed: 0.07 }
+};
+function wantedMobs() {
+  const out = [];
+  for (const p of sim10.plots) {
+    if (!isDone(p) || p.kind === "tree") continue;
+    if (p.kind === "farm") out.push("sheep", "pig");
+    if (p.kind === "house") out.push("chicken");
+    if (p.kind === "bighouse") out.push("cow");
+  }
+  return out.slice(0, Math.max(1, Math.floor(buildable() / 14)));
+}
+function syncMobs() {
+  const want = wantedMobs();
+  const have = sim10.mobs.filter((m) => !m.isLeaving);
+  for (const kind of /* @__PURE__ */ new Set([...want, ...have.map((m) => m.kind)])) {
+    const mine = have.filter((m) => m.kind === kind);
+    const needed = want.filter((k) => k === kind).length;
+    for (let i = mine.length; i < needed; i++) {
+      sim10.mobs.push({ kind, x: -6, face: 1, goal: rand6(2, Math.max(4, buildable() - 6)), restUntil: 0, isLeaving: false });
+    }
+    for (const m of mine.slice(needed)) m.isLeaving = true;
+  }
+}
+function stepMobs(isAsleep) {
+  if (sim10.t % 30 === 0) syncMobs();
+  for (const m of sim10.mobs) {
+    const scare = sim10.creepers.find((c) => Math.abs(c.x - m.x) < 10);
+    if (scare) {
+      m.face = m.x < scare.x ? -1 : 1;
+      m.x = clamp5(m.x + m.face * 0.45, 0, Math.max(0, buildable() - 6));
+      m.restUntil = sim10.t + 40;
+      continue;
+    }
+    if (isAsleep && !m.isLeaving) continue;
+    const goal = m.isLeaving ? -8 : m.goal;
+    if (Math.abs(goal - m.x) > 0.3) {
+      m.face = goal > m.x ? 1 : -1;
+      m.x += m.face * MOBS[m.kind].speed * (m.isLeaving ? 3 : 1);
+    } else if (sim10.t >= m.restUntil) {
+      m.restUntil = sim10.t + Math.floor(rand6(40, 160));
+      m.goal = clamp5(m.x + rand6(-14, 14), 1, Math.max(2, buildable() - 6));
+    }
+  }
+  sim10.mobs = sim10.mobs.filter((m) => !(m.isLeaving && m.x < -7));
+}
 function levelOf3(blocks) {
   if (blocks < 50) return "Camp";
   if (blocks < 200) return "Hamlet";
@@ -4235,6 +4306,7 @@ function step8() {
     } else if ((c.fuse -= 1) === 0) explode(c);
   }
   sim10.creepers = sim10.creepers.filter((c) => c.fuse !== 0);
+  stepMobs(isAsleep);
   for (const p of sim10.particles) {
     p.age += 1;
     p.x += p.vx;
@@ -4280,6 +4352,21 @@ function drawVillager(buf, v) {
   put4(buf, x, BASE2, 4861976);
   if (legs) put4(buf, x + v.face, BASE2, 4861976);
 }
+function drawMob(buf, m, isAsleep) {
+  const look = MOBS[m.kind];
+  const isMoving = !isAsleep && Math.abs((m.isLeaving ? -8 : m.goal) - m.x) > 0.3;
+  const rows = isAsleep ? look.body : [...look.body, look.legs[isMoving ? Math.floor(sim10.t / 5) % 2 : 0]];
+  const top = BASE2 - rows.length + 1;
+  const w = rows[0].length;
+  const dip = !isMoving && !isAsleep && sim10.t % 90 < 20 ? 1 : 0;
+  rows.forEach((row, dy) => {
+    for (let dx = 0; dx < w; dx++) {
+      const c = MOB_COLORS[row[m.face < 0 ? w - 1 - dx : dx]];
+      const isHead = (m.face < 0 ? dx === 0 : dx === w - 1) && dy < look.body.length;
+      if (c !== void 0) put4(buf, Math.round(m.x) + dx, top + dy + (isHead ? dip : 0), c);
+    }
+  });
+}
 function drawCreeper(buf, c) {
   const isFlash = c.fuse > 0 && c.fuse % 4 < 2;
   const color = isFlash ? 16579836 : CREEPER;
@@ -4305,6 +4392,7 @@ function frame9(isAsleep, stats) {
     if (x + i >= 0 && x + i < W5 && row >= 0 && row < ROWS10) over2.set(row * W5 + x + i, { ch, color });
   });
   drawGround(buf);
+  for (const m of sim10.mobs) drawMob(buf, m, isAsleep);
   for (const p of sim10.plots) drawPlot(buf, p);
   if (!isAsleep) for (const v of sim10.villagers) drawVillager(buf, v);
   for (const c of sim10.creepers) drawCreeper(buf, c);

@@ -134,6 +134,9 @@ const CYCLE: Kind[] = ['house', 'farm', 'house', 'well', 'house', 'tower', 'bigh
 
 type Villager = { id: string; x: number; face: number; color: number; lastWork: number; isLeaving: boolean }
 type Creeper = { x: number; target: number; fuse: number }
+type MobKind = 'sheep' | 'pig' | 'chicken' | 'cow'
+// An animal wanders the town on its own: walking to a spot, grazing there a while, then moving on.
+type Mob = { kind: MobKind; x: number; face: number; goal: number; restUntil: number; isLeaving: boolean }
 type Particle = { x: number; y: number; vx: number; vy: number; age: number; life: number; color: number; ch?: string; gravity?: number }
 
 const sim = {
@@ -149,6 +152,7 @@ const sim = {
   villagers: [] as Villager[],
   creepers: [] as Creeper[],
   particles: [] as Particle[],
+  mobs: [] as Mob[],
   banner: null as null | { text: string; color: number; until: number },
   gain: { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0 },
   isDirty: false,
@@ -164,6 +168,78 @@ const rand = (a: number, b: number) => a + Math.random() * (b - a)
 const pick = <T,>(list: T[]) => list[Math.floor(Math.random() * list.length)]!
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v))
 const HELPER_COLORS = [0xe0a030, 0xb05cd6, 0x2bb3a3, 0xe86a92, 0x8bc34a]
+
+// ---- The animals: drawn facing right, top row first; the last row is the legs, in two steps ----
+
+const MOB_COLORS: Record<string, number> = {
+  W: 0xf2f2ee, // wool, feathers
+  g: 0x5f5f5f, // a sheep's face
+  P: 0xf4a7b9, // pig
+  p: 0xd9788f, // snout
+  B: 0x3b3b3b, // a cow's patches
+  w: 0xd8d8d8, // a cow's face
+  r: 0xe52521, // comb
+  y: 0xf2b134, // a chicken's legs
+  k: 0x4a3018, // hooves
+}
+const MOBS: Record<MobKind, { body: string[]; legs: [string, string]; speed: number }> = {
+  chicken: { body: ['..r', 'WWW'], legs: ['.y.', 'y.y'], speed: 0.12 },
+  pig: { body: ['PPPp'], legs: ['k..k', '.kk.'], speed: 0.09 },
+  sheep: { body: ['WWWg', 'WWW.'], legs: ['k.k.', '.k.k'], speed: 0.08 },
+  cow: { body: ['BWBBw', 'WBWW.'], legs: ['k..k.', '.k..k'], speed: 0.07 },
+}
+
+// The animals a town has: a sheep and a pig for every finished farm, a chicken for every house and
+// a cow for every hall, as many as the band has room for.
+function wantedMobs(): MobKind[] {
+  const out: MobKind[] = []
+  for (const p of sim.plots) {
+    if (!isDone(p) || p.kind === 'tree') continue
+    if (p.kind === 'farm') out.push('sheep', 'pig')
+    if (p.kind === 'house') out.push('chicken')
+    if (p.kind === 'bighouse') out.push('cow')
+  }
+  return out.slice(0, Math.max(1, Math.floor(buildable() / 14)))
+}
+
+// Animals arrive from the left as the town earns them, and wander off when it loses them.
+function syncMobs() {
+  const want = wantedMobs()
+  const have = sim.mobs.filter(m => !m.isLeaving)
+  for (const kind of new Set<MobKind>([...want, ...have.map(m => m.kind)])) {
+    const mine = have.filter(m => m.kind === kind)
+    const needed = want.filter(k => k === kind).length
+    for (let i = mine.length; i < needed; i++) {
+      sim.mobs.push({ kind, x: -6, face: 1, goal: rand(2, Math.max(4, buildable() - 6)), restUntil: 0, isLeaving: false })
+    }
+    for (const m of mine.slice(needed)) m.isLeaving = true
+  }
+}
+
+function stepMobs(isAsleep: boolean) {
+  if (sim.t % 30 === 0) syncMobs()
+  for (const m of sim.mobs) {
+    // A creeper on its way scares every animal near it into a run.
+    const scare = sim.creepers.find(c => Math.abs(c.x - m.x) < 10)
+    if (scare) {
+      m.face = m.x < scare.x ? -1 : 1
+      m.x = clamp(m.x + m.face * 0.45, 0, Math.max(0, buildable() - 6))
+      m.restUntil = sim.t + 40
+      continue
+    }
+    if (isAsleep && !m.isLeaving) continue
+    const goal = m.isLeaving ? -8 : m.goal
+    if (Math.abs(goal - m.x) > 0.3) {
+      m.face = goal > m.x ? 1 : -1
+      m.x += m.face * MOBS[m.kind].speed * (m.isLeaving ? 3 : 1)
+    } else if (sim.t >= m.restUntil) {
+      // Graze here a while, then pick the next spot nearby.
+      m.restUntil = sim.t + Math.floor(rand(40, 160))
+      m.goal = clamp(m.x + rand(-14, 14), 1, Math.max(2, buildable() - 6))
+    }
+  }
+  sim.mobs = sim.mobs.filter(m => !(m.isLeaving && m.x < -7))
+}
 
 function levelOf(blocks: number) {
   if (blocks < 50) return 'Camp'
@@ -371,6 +447,7 @@ function step() {
     } else if ((c.fuse -= 1) === 0) explode(c)
   }
   sim.creepers = sim.creepers.filter(c => c.fuse !== 0)
+  stepMobs(isAsleep)
 
   for (const p of sim.particles) {
     p.age += 1
@@ -424,6 +501,24 @@ function drawVillager(buf: Uint32Array, v: Villager) {
   if (legs) put(buf, x + v.face, BASE, 0x4a3018)
 }
 
+function drawMob(buf: Uint32Array, m: Mob, isAsleep: boolean) {
+  const look = MOBS[m.kind]
+  const isMoving = !isAsleep && Math.abs((m.isLeaving ? -8 : m.goal) - m.x) > 0.3
+  // Asleep, an animal lies down: its body on the grass, no legs.
+  const rows: string[] = isAsleep ? look.body : [...look.body, look.legs[isMoving ? Math.floor(sim.t / 5) % 2 : 0]!]
+  const top = BASE - rows.length + 1
+  const w = rows[0]!.length
+  // A grazing animal dips its head now and then.
+  const dip = !isMoving && !isAsleep && sim.t % 90 < 20 ? 1 : 0
+  rows.forEach((row, dy) => {
+    for (let dx = 0; dx < w; dx++) {
+      const c = MOB_COLORS[row[m.face < 0 ? w - 1 - dx : dx]!]
+      const isHead = (m.face < 0 ? dx === 0 : dx === w - 1) && dy < look.body.length
+      if (c !== undefined) put(buf, Math.round(m.x) + dx, top + dy + (isHead ? dip : 0), c)
+    }
+  })
+}
+
 function drawCreeper(buf: Uint32Array, c: Creeper) {
   const isFlash = c.fuse > 0 && c.fuse % 4 < 2
   const color = isFlash ? 0xfcfcfc : CREEPER
@@ -454,6 +549,8 @@ function frame(isAsleep: boolean, stats: string): string {
     })
 
   drawGround(buf)
+  // The animals go behind the buildings, so one passing a house walks behind it.
+  for (const m of sim.mobs) drawMob(buf, m, isAsleep)
   for (const p of sim.plots) drawPlot(buf, p)
   if (!isAsleep) for (const v of sim.villagers) drawVillager(buf, v)
   for (const c of sim.creepers) drawCreeper(buf, c)

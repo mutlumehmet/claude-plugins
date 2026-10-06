@@ -1,6 +1,6 @@
 {
   "name": "arcade",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "The Claude Code Arcade: pixel games above the prompt, played by your work (a dragon, a slot machine, an Outlaw duel, a Tamagotchi, Tetris, an invading octopus, a duck hunt, Dario, a block town your agents build, and Bug Command, which you can play along with). Pin one, rotate them, or get a random one in every terminal.",
   "author": {
     "name": "Mehmet Mutlu"
