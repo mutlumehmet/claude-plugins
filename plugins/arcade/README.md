@@ -168,11 +168,11 @@ stone, then houses, farms, a well, towers and a grove of trees. Your agents buil
 work, and it is kept between sessions, so a glance in the middle of a long session shows how much
 got done.
 
-![Block Town in a terminal: the main agent and a helper villager build a house, a farm and a grove, a failing test brings a creeper, green tests raise part of the castle, a commit finishes a house and a merge builds the castle](../../docs/images/block-town-terminal.gif)
+![Block Town in a terminal: the main agent and a helper villager build a house, a farm and a grove while sheep, a pig and chickens wander between them, a failing test brings a creeper, green tests raise part of the castle, a commit finishes a house and a merge builds the castle](../../docs/images/block-town-terminal.gif)
 
 The strip on its own, as the mod draws it:
 
-![The Block Town strip: grass, dirt and stone the width of the terminal, houses, a farm, trees and a finished castle](../../docs/images/block-town.gif)
+![The Block Town strip: grass, dirt and stone the width of the terminal, houses, a farm with a sheep and a pig, chickens, trees and a finished castle](../../docs/images/block-town.gif)
 
 Both GIFs are drawn by the Arcade's own code from a scripted session (edits and reads with a
 subagent helping, a failing test, edits, passing tests, a commit, a merge); the window around the
