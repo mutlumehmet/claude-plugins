@@ -93,6 +93,82 @@ function drawBaby(ink, columns, x, y, frame10) {
   });
 }
 
+// src/save.ts
+const FORGET_AFTER_MS = 90 * 24 * 60 * 60 * 1e3;
+const PROJECTS = "arcade.projects";
+const here = { project: "", path: "" };
+function hash(text) {
+  let h2 = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    h2 ^= text.charCodeAt(i);
+    h2 = Math.imul(h2, 16777619) >>> 0;
+  }
+  return h2.toString(36);
+}
+const scoped = (key) => here.project ? `${key}@${here.project}` : key;
+const projectName = () => here.path.split("/").filter(Boolean).pop() ?? here.path;
+async function rootOf($, cwd) {
+  let dir = cwd.replace(/\/+$/, "") || "/";
+  for (let i = 0; i < 64; i++) {
+    const git = `${dir === "/" ? "" : dir}/.git`;
+    let isThere = false;
+    try {
+      isThere = await $.fs.exists(git);
+    } catch {
+      return cwd;
+    }
+    if (isThere) {
+      try {
+        const line = (await $.fs.read(git)).match(/^gitdir:\s*(.+)$/m)?.[1]?.trim() ?? "";
+        const at = line.indexOf("/.git/worktrees/");
+        if (at > 0) return line.slice(0, at);
+      } catch {
+      }
+      return dir;
+    }
+    if (dir === "/") break;
+    dir = dir.slice(0, dir.lastIndexOf("/")) || "/";
+  }
+  return cwd;
+}
+async function useProject($, cwd) {
+  here.path = await rootOf($, cwd);
+  here.project = hash(here.path);
+  try {
+    const now = await $.clock.now();
+    const seen = { ...await $.store.get(PROJECTS) ?? {} };
+    seen[here.project] = { path: here.path, at: now };
+    const stale = Object.keys(seen).filter((p) => now - seen[p].at > FORGET_AFTER_MS);
+    if (stale.length > 0) {
+      for (const key of await $.store.keys()) if (stale.some((p) => key.endsWith(`@${p}`))) await $.store.delete(key);
+      for (const p of stale) delete seen[p];
+    }
+    await $.store.set(PROJECTS, seen);
+  } catch {
+  }
+}
+async function loadKept($, key) {
+  const value = await $.store.get(scoped(key));
+  if (value !== void 0 || scoped(key) === key) return value;
+  const old = await $.store.get(key);
+  if (old === void 0) return void 0;
+  await $.store.set(scoped(key), old);
+  await $.store.delete(key);
+  return old;
+}
+const queues = /* @__PURE__ */ new Map();
+function keep($, key, current, change2) {
+  const k = scoped(key);
+  const run = (queues.get(k) ?? Promise.resolve()).catch(() => void 0).then(async () => {
+    const stored = await $.store.get(k);
+    const next = change2(stored ?? current);
+    await $.store.set(k, next);
+    return () => next;
+  });
+  queues.set(k, run);
+  return run;
+}
+
 // src/shown.ts
 import { atom, read } from "claude-code";
 const shown = atom({ plugin: "arcade", key: "shown" }, []);
@@ -423,10 +499,9 @@ async function celebrate($, label, gold, show, isQuiet = false) {
   sim.show = { kind: show, until: sim.t + SHOW_FRAMES[show] };
   sim.lastActivity = sim.t;
   const before = levelOf((await read2($, hoard)).gold);
-  const next = await update($, hoard, (old) => ({ ...old, gold: old.gold + gold, feats: old.feats + 1 }));
+  const next = await update($, hoard, await keep($, "dragon.hoard", await read2($, hoard), (old) => ({ ...old, gold: old.gold + gold, feats: old.feats + 1 })));
   const after = levelOf(next.gold);
   await update($, feat, () => `${label}: +${gold} gold`);
-  await $.store.set("dragon.hoard", next);
   if (after > before) {
     sim.level = after;
     sim.levelUntil = sim.show.until + 45;
@@ -446,7 +521,7 @@ async function celebrateMoments($, found) {
   for (const m of found) await onMilestone($, m.tier, m.kind, m.label);
 }
 const start = async ($, e, next) => {
-  const saved = await $.store.get("dragon.hoard");
+  const saved = await loadKept($, "dragon.hoard");
   if (saved) await update($, hoard, () => saved);
   await $.command.register({
     name: "dragon",
@@ -493,8 +568,7 @@ const start = async ($, e, next) => {
           if (a?.status === "completed" || a?.status === "idle" || isGone) {
             b.state = "home";
             b.since = sim.t;
-            const fed = await update($, hoard, (old) => ({ ...old, gold: old.gold + 2 }));
-            await $.store.set("dragon.hoard", fed);
+            const fed = await update($, hoard, await keep($, "dragon.hoard", await read2($, hoard), (old) => ({ ...old, gold: old.gold + 2 })));
           } else if (a?.status === "failed" || a?.status === "killed") {
             b.state = "fall";
             b.since = sim.t;
@@ -547,8 +621,7 @@ const tool = async ($, e, next) => {
     sim.lastActivity = sim.t;
   });
   if (ran.deny !== void 0) return ran;
-  const snack = await update($, hoard, (old) => ({ ...old, meals: old.meals + 1 }));
-  if (snack.meals % 10 === 0) void $.store.set("dragon.hoard", snack);
+  const snack = await update($, hoard, await keep($, "dragon.hoard", await read2($, hoard), (old) => ({ ...old, meals: old.meals + 1 })));
   if (ran.isError === true) {
     sim.sadUntil = sim.t + 30;
     return ran;
@@ -567,6 +640,11 @@ const render = async ($, e, next) => {
   sim.level = levelOf(stash.gold);
   return /* @__PURE__ */ h(Box, { flexDirection: "row", alignItems: "flex-end" }, /* @__PURE__ */ h(Box, { flexGrow: 1, flexDirection: "column" }, below ?? null), /* @__PURE__ */ h(Box, { flexDirection: "column", flexShrink: 0, minWidth: COLUMNS }, /* @__PURE__ */ h(Raster, { key: RASTER, columns: COLUMNS, rows: ROWS, cells: frame(activity()) }), /* @__PURE__ */ h(Text, { key: "stats", dimColor: true, wrap: "truncate" }, centred(statsLine(stash)))));
 };
+async function reset($) {
+  await update($, hoard, await keep($, "dragon.hoard", await read2($, hoard), () => hoard.initial));
+  await update($, feat, () => "");
+  sim.level = 1;
+}
 const game = { id: ID, title: "Dragon Lair" };
 
 // src/games/duck-hunt.tsx
@@ -896,9 +974,8 @@ function base642(bytes) {
   return out;
 }
 async function save($, change2) {
-  const next = await update2($, score, change2);
+  const next = await update2($, score, await keep($, "duck.score", await read3($, score), change2));
   sim2.stats = statsLine2(next);
-  await $.store.set("duck.score", next);
   return next;
 }
 const RANK = { shot: 0, hunt: 1, double: 2, perfect: 3 };
@@ -929,7 +1006,7 @@ async function celebrateMoments2($, found) {
   for (const m of found) await onMilestone2($, m.tier, m.kind, m.label);
 }
 const start2 = async ($, e, next) => {
-  const saved = await $.store.get("duck.score");
+  const saved = await loadKept($, "duck.score");
   if (saved) await update2($, score, () => saved);
   sim2.stats = statsLine2(saved ?? await read3($, score));
   sim2.round = roundOf((saved ?? await read3($, score)).hits);
@@ -939,8 +1016,6 @@ const start2 = async ($, e, next) => {
   });
   $.clock.every(FPS_MS2, () => {
     const requestId = sim2.requestId;
-    if (requestId === null || sim2.W === 0) return;
-    const isAsleep = step2();
     if (sim2.gain.hits > 0 || sim2.gain.escaped > 0) {
       const gain = sim2.gain;
       sim2.gain = { hits: 0, escaped: 0 };
@@ -953,6 +1028,8 @@ const start2 = async ($, e, next) => {
         }
       });
     }
+    if (requestId === null || sim2.W === 0) return;
+    const isAsleep = step2();
     if (sim2.isBlitting) return;
     sim2.isBlitting = true;
     void $.ui.blit({ requestId, key: RASTER2, cells: frame2(isAsleep, sim2.stats), columns: sim2.W }).then((r) => {
@@ -1001,9 +1078,8 @@ const tool2 = async ($, e, next) => {
     sim2.lastActivity = sim2.t;
   });
   if (ran.deny !== void 0) return ran;
-  const counted = await update2($, score, (old) => ({ ...old, tools: old.tools + 1 }));
+  const counted = await update2($, score, await keep($, "duck.score", await read3($, score), (old) => ({ ...old, tools: old.tools + 1 })));
   sim2.stats = statsLine2(counted);
-  if (counted.tools % 10 === 0) void $.store.set("duck.score", counted);
   if (ran.isError === true) flyAway(false);
   return ran;
 };
@@ -1019,6 +1095,12 @@ const render2 = async ($, e, next) => {
   sim2.stats = statsLine2(await read3($, score));
   return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Raster, { key: RASTER2, columns: sim2.W, rows: ROWS2, cells: frame2(false, sim2.stats) }), below ?? null);
 };
+async function reset2($) {
+  const next = await update2($, score, await keep($, "duck.score", await read3($, score), () => score.initial));
+  sim2.stats = statsLine2(next);
+  sim2.round = 1;
+  await update2($, feat2, () => "");
+}
 const game2 = { id: ID2, title: "Duck Hunt" };
 
 // src/games/jackpot.tsx
@@ -1164,14 +1246,13 @@ async function finishSpin($) {
     }
   }
   if (spin.isPractice) return;
-  const next = await update3($, bank, (old) => ({
+  const next = await update3($, bank, await keep($, "jackpot.bank", await read4($, bank), (old) => ({
     ...old,
     chips: old.chips + payout,
     spins: old.spins + 1,
     jackpots: old.jackpots + (win === "jackpot" ? 1 : 0),
     best: Math.max(old.best, payout)
-  }));
-  await $.store.set("jackpot.bank", next);
+  })));
   const names = sim3.result.join(" ");
   await update3($, last, () => payout > 0 ? `${names}: +${payout}` : names);
   if (win === "jackpot") void notify3($, `\u{1F3B0} JACKPOT! 7 7 7 pays ${payout} chips`);
@@ -1344,7 +1425,7 @@ async function celebrateMoments3($, found) {
   for (const m of found) await onMilestone3($, m.tier, m.kind, m.label);
 }
 const start3 = async ($, e, next) => {
-  const saved = await $.store.get("jackpot.bank");
+  const saved = await loadKept($, "jackpot.bank");
   if (saved) await update3($, bank, () => ({ ...saved, streak: saved.streak ?? 0 }));
   await $.command.register({
     name: "jackpot",
@@ -1394,8 +1475,7 @@ const turn3 = async ($, e, next) => {
   if (e.agentId !== void 0 || e.isAborted) return ran;
   const hadError = sim3.hadError;
   sim3.hadError = false;
-  const b = await update3($, bank, (old) => ({ ...old, streak: hadError ? 0 : old.streak + 1 }));
-  await $.store.set("jackpot.bank", b);
+  const b = await update3($, bank, await keep($, "jackpot.bank", await read4($, bank), (old) => ({ ...old, streak: hadError ? 0 : old.streak + 1 })));
   pull($, { isGolden: false, isPractice: false });
   return ran;
 };
@@ -1412,6 +1492,11 @@ const render3 = async ($, e, next) => {
   const g = await read4($, golden);
   return /* @__PURE__ */ h(Box, { flexDirection: "row", alignItems: "flex-end" }, /* @__PURE__ */ h(Box, { flexGrow: 1, flexDirection: "column" }, below ?? null), /* @__PURE__ */ h(Box, { flexDirection: "column", flexShrink: 0, minWidth: W, marginLeft: 2 }, /* @__PURE__ */ h(Raster, { key: RASTER3, columns: W, rows: ROWS3, cells: frame3() }), /* @__PURE__ */ h(Text, { key: "stats", dimColor: true, wrap: "truncate" }, statsLine3(b, g))));
 };
+async function reset3($) {
+  await update3($, bank, await keep($, "jackpot.bank", await read4($, bank), () => bank.initial));
+  await update3($, golden, () => 0);
+  await update3($, last, () => "");
+}
 const game3 = { id: ID3, title: "Jackpot" };
 
 // src/games/octo-invader.tsx
@@ -1973,9 +2058,8 @@ function base644(bytes) {
 }
 let lastStats = statsLine4({ xp: 0, toppled: 0, planes: 0, tools: 0 });
 async function save2($, change2) {
-  const next = await update4($, score3, change2);
+  const next = await update4($, score3, await keep($, "octopus.score", await read5($, score3), change2));
   lastStats = statsLine4(next);
-  await $.store.set("octopus.score", next);
   return next;
 }
 const RANK2 = { ink: 0, plane: 1, rampage: 2, conquer: 3 };
@@ -2012,7 +2096,7 @@ async function celebrateMoments4($, found) {
   for (const m of found) await onMilestone4($, m.tier, m.kind, m.label);
 }
 const start4 = async ($, e, next) => {
-  const saved = await $.store.get("octopus.score");
+  const saved = await loadKept($, "octopus.score");
   if (saved) {
     await update4($, score3, () => saved);
     lastStats = statsLine4(saved);
@@ -2030,13 +2114,13 @@ const start4 = async ($, e, next) => {
       void update4($, mood2, () => m);
     }
     const requestId = sim4.requestId;
-    if (requestId === null || sim4.W === 0) return;
-    step3(a);
     if (sim4.gain.toppled > 0 || sim4.gain.planes > 0) {
       const gain = sim4.gain;
       sim4.gain = { toppled: 0, planes: 0 };
       void save2($, (old) => ({ ...old, toppled: old.toppled + gain.toppled, planes: old.planes + gain.planes }));
     }
+    if (requestId === null || sim4.W === 0) return;
+    step3(a);
     if (sim4.isBlitting) return;
     sim4.isBlitting = true;
     void $.ui.blit({ requestId, key: RASTER4, cells: frame4(a, lastStats), columns: sim4.W }).then((r) => {
@@ -2118,9 +2202,8 @@ const tool4 = async ($, e, next) => {
     sim4.lastActivity = sim4.t;
   });
   if (ran.deny !== void 0) return ran;
-  const counted = await update4($, score3, (old) => ({ ...old, tools: old.tools + 1 }));
+  const counted = await update4($, score3, await keep($, "octopus.score", await read5($, score3), (old) => ({ ...old, tools: old.tools + 1 })));
   lastStats = statsLine4(counted);
-  if (counted.tools % 10 === 0) void $.store.set("octopus.score", counted);
   if (ran.isError === true) sim4.sadUntil = sim4.t + 30;
   return ran;
 };
@@ -2137,6 +2220,11 @@ const render4 = async ($, e, next) => {
   lastStats = stats;
   return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Raster, { key: RASTER4, columns: sim4.W, rows: ROWS4, cells: frame4(activity2(), stats) }), below ?? null);
 };
+async function reset4($) {
+  const next = await update4($, score3, await keep($, "octopus.score", await read5($, score3), () => score3.initial));
+  lastStats = statsLine4(next);
+  await update4($, feat3, () => "");
+}
 const game4 = { id: ID4, title: "Octo Invader" };
 
 // src/games/outlaw.tsx
@@ -2227,7 +2315,7 @@ async function land($, duel, isHit) {
   sim5.men[target2].fallUntil = sim5.t + 36;
   say(xOf(target2) + 2, 0, duel.by === "you" ? "GOT HIM" : "OUCH", 20);
   if (sim5.practice) return;
-  const next = await update5($, score4, (old) => {
+  const next = await update5($, score4, await keep($, "outlaw.score", await read6($, score4), (old) => {
     const streak = duel.by === "you" ? old.streak + 1 : 0;
     return {
       you: old.you + (duel.by === "you" ? 1 : 0),
@@ -2235,8 +2323,7 @@ async function land($, duel, isHit) {
       streak,
       best: Math.max(old.best, streak)
     };
-  });
-  await $.store.set("outlaw.score", next);
+  }));
 }
 function step4($) {
   sim5.t += 1;
@@ -2377,7 +2464,7 @@ async function celebrateMoments5($, found) {
   for (const m of found) await onMilestone5($, m.tier, m.kind, m.label);
 }
 const start5 = async ($, e, next) => {
-  const saved = await $.store.get("outlaw.score");
+  const saved = await loadKept($, "outlaw.score");
   if (saved) await update5($, score4, () => saved);
   await $.command.register({
     name: "outlaw",
@@ -2439,6 +2526,9 @@ const render5 = async ($, e, next) => {
   const pad = " ".repeat(Math.max(0, Math.floor((W2 - line.length) / 2)));
   return /* @__PURE__ */ h(Box, { flexDirection: "row", alignItems: "flex-end" }, /* @__PURE__ */ h(Box, { flexGrow: 1, flexDirection: "column" }, below ?? null), /* @__PURE__ */ h(Box, { flexDirection: "column", flexShrink: 0, minWidth: W2, marginLeft: 2 }, /* @__PURE__ */ h(Raster, { key: RASTER5, columns: W2, rows: ROWS5, cells: frame5() }), /* @__PURE__ */ h(Text, { key: "stats", dimColor: true, wrap: "truncate" }, pad + line)));
 };
+async function reset5($) {
+  await update5($, score4, await keep($, "outlaw.score", await read6($, score4), () => score4.initial));
+}
 const game5 = { id: ID5, title: "Outlaw" };
 
 // src/games/tama.tsx
@@ -2560,9 +2650,8 @@ const isNight = (now) => {
 async function change($, fn) {
   const now = await $.clock.now();
   sim6.now = now;
-  const changed = await update6($, pet, (p) => fn(age(p, now)));
+  const changed = await update6($, pet, await keep($, "tama.pet", await read7($, pet), (p) => fn(age(p, now))));
   sim6.pet = changed;
-  await $.store.set("tama.pet", changed);
   return changed;
 }
 function hearts(count) {
@@ -2686,10 +2775,9 @@ async function celebrateMoments6($, found) {
 }
 const start6 = async ($, e, next) => {
   sim6.now = await $.clock.now();
-  const saved = await $.store.get("tama.pet");
+  const saved = await loadKept($, "tama.pet");
   const start11 = saved ?? fresh(sim6.now, 1);
-  sim6.pet = await update6($, pet, () => age(start11, sim6.now));
-  await $.store.set("tama.pet", sim6.pet);
+  sim6.pet = await update6($, pet, await keep($, "tama.pet", await read7($, pet), () => age(start11, sim6.now)));
   await $.command.register({
     name: "tama",
     description: 'The Tamagotchi above the prompt: how it is doing. "/tama feed|play|clean" to care for it by hand.'
@@ -2804,6 +2892,10 @@ const render6 = async ($, e, next) => {
   const pad = " ".repeat(Math.max(0, Math.floor((W3 - line.length) / 2)));
   return /* @__PURE__ */ h(Box, { flexDirection: "row", alignItems: "flex-end" }, /* @__PURE__ */ h(Box, { flexGrow: 1, flexDirection: "column" }, below ?? null), /* @__PURE__ */ h(Box, { flexDirection: "column", flexShrink: 0, minWidth: W3, marginLeft: 2 }, /* @__PURE__ */ h(Raster, { key: RASTER6, columns: W3, rows: ROWS6, cells: frame6() }), /* @__PURE__ */ h(Text, { key: "stats", dimColor: true, wrap: "truncate" }, pad + line)));
 };
+async function reset6($) {
+  sim6.now = await $.clock.now();
+  sim6.pet = await update6($, pet, await keep($, "tama.pet", await read7($, pet), () => fresh(sim6.now, 1)));
+}
 const game6 = { id: ID6, title: "Tama" };
 
 // src/games/tetris.tsx
@@ -2923,21 +3015,19 @@ async function scoreLines($, lines, isBomb) {
   const before = await read8($, tally);
   const level = Math.floor(before.lines / 10);
   const points = isBomb ? 50 * lines * (level + 1) : LINE_SCORE[Math.min(4, lines)] * (level + 1);
-  const saved = await update7($, tally, (old) => ({ ...old, score: old.score + points, lines: old.lines + lines }));
-  await $.store.set("tetris.tally", saved);
+  const saved = await update7($, tally, await keep($, "tetris.tally", await read8($, tally), (old) => ({ ...old, score: old.score + points, lines: old.lines + lines })));
   if (!isBomb && lines >= 4) void notify7($, "\u{1F9F1} TETRIS! Four lines at once");
   if (Math.floor(saved.lines / 10) > level) void notify7($, `\u{1F9F1} Level ${Math.floor(saved.lines / 10)}`);
 }
 async function gameOver($) {
   sim7.wipe = 0;
   sim7.active = null;
-  const saved = await update7($, tally, (old) => ({
+  const saved = await update7($, tally, await keep($, "tetris.tally", await read8($, tally), (old) => ({
     score: 0,
     lines: 0,
     best: Math.max(old.best, old.score),
     games: old.games + 1
-  }));
-  await $.store.set("tetris.tally", saved);
+  })));
   void notify7($, `\u{1F9F1} Game over. Best ${saved.best}`);
 }
 async function onMilestone7($, tier, _kind, label) {
@@ -3063,7 +3153,7 @@ async function celebrateMoments7($, found) {
   for (const m of found) await onMilestone7($, m.tier, m.kind, m.label);
 }
 const start7 = async ($, e, next) => {
-  const saved = await $.store.get("tetris.tally");
+  const saved = await loadKept($, "tetris.tally");
   if (saved) await update7($, tally, () => saved);
   await $.command.register({
     name: "tetris",
@@ -3124,6 +3214,9 @@ const render7 = async ($, e, next) => {
   const t = await read8($, tally);
   return /* @__PURE__ */ h(Box, { flexDirection: "row", alignItems: "flex-end" }, /* @__PURE__ */ h(Box, { flexGrow: 1, flexDirection: "column" }, below ?? null), /* @__PURE__ */ h(Box, { flexDirection: "column", flexShrink: 0, minWidth: W4, marginLeft: 2 }, /* @__PURE__ */ h(Raster, { key: RASTER7, columns: W4, rows: ROWS7, cells: frame7() }), /* @__PURE__ */ h(Text, { key: "stats", dimColor: true, wrap: "truncate" }, centred2(`\u25A4 ${t.lines}  \u25C6 ${t.score}  Lv ${Math.floor(t.lines / 10)}`))));
 };
+async function reset7($) {
+  await update7($, tally, await keep($, "tetris.tally", await read8($, tally), () => tally.initial));
+}
 const game7 = { id: ID7, title: "Tetris" };
 
 // src/games/bug-command.tsx
@@ -3152,8 +3245,7 @@ async function setWorking($) {
 }
 const statsLine7 = (s) => `\u2738 ${s.kills}  \u261E ${s.mine}  \u271D ${s.lost}  \u2692 ${s.tools}`;
 async function save3($, change2) {
-  const next = await update8($, score5, change2);
-  await $.store.set("bugs.score", next);
+  const next = await update8($, score5, await keep($, "bugs.score", await read9($, score5), change2));
   return next;
 }
 async function celebrate4($, label, kind, isPractice = false) {
@@ -3167,7 +3259,7 @@ async function celebrateMoments8($, found) {
   for (const m of found) await celebrate4($, m.label, m.tier);
 }
 const start8 = async ($, e, next) => {
-  const saved = await $.store.get("bugs.score");
+  const saved = await loadKept($, "bugs.score");
   if (saved) await update8($, score5, () => ({ ...saved, cities: saved.cities > 0 ? saved.cities : CITIES }));
   await $.command.register({
     name: "bugs",
@@ -3212,8 +3304,7 @@ const tool8 = async ($, e, next) => {
   });
   await setWorking($);
   if (ran.deny !== void 0) return ran;
-  const counted = await update8($, score5, (old) => ({ ...old, tools: old.tools + 1 }));
-  if (counted.tools % 10 === 0) void $.store.set("bugs.score", counted);
+  const counted = await update8($, score5, await keep($, "bugs.score", await read9($, score5), (old) => ({ ...old, tools: old.tools + 1 })));
   await push($, ran.isError === true ? "fail" : "tool");
   return ran;
 };
@@ -3245,6 +3336,10 @@ const render8 = async ($, e, next) => {
   const W5 = clamp3(e.props.bodyColumns, MIN_COLUMNS3, MAX_COLUMNS3);
   return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Client, { key: SKY, module: "./bug-sky.js", width: W5, height: ROWS8, props: await skyProps($, W5) }), below ?? null);
 };
+async function reset8($) {
+  await update8($, score5, await keep($, "bugs.score", await read9($, score5), () => score5.initial));
+  await update8($, feat4, () => "");
+}
 const game8 = { id: ID8, title: "Bug Command" };
 
 // src/games/dario.tsx
@@ -3605,9 +3700,8 @@ async function notify9($, text) {
   if (await isShown($, ID9)) $.ui.toast(text);
 }
 async function save4($, change2) {
-  const next = await update9($, score6, change2);
+  const next = await update9($, score6, await keep($, "dario.score", await read10($, score6), change2));
   sim9.stats = statsLine8(next);
-  await $.store.set("dario.score", next);
   return next;
 }
 async function celebrate5($, label, show, isPractice = false) {
@@ -3640,7 +3734,7 @@ async function celebrateMoments9($, found) {
   }
 }
 const start9 = async ($, e, next) => {
-  const saved = await $.store.get("dario.score");
+  const saved = await loadKept($, "dario.score");
   if (saved) await update9($, score6, () => saved);
   sim9.stats = statsLine8(saved ?? await read10($, score6));
   await $.command.register({
@@ -3649,9 +3743,6 @@ const start9 = async ($, e, next) => {
   });
   $.clock.every(FPS_MS8, () => {
     const requestId = sim9.requestId;
-    if (requestId === null || sim9.W === 0) return;
-    sim9.course += speed();
-    const isAsleep = step7();
     if (sim9.gain.coins + sim9.gain.stomps + sim9.gain.hits + sim9.gain.clears > 0) {
       const gain = sim9.gain;
       sim9.gain = { coins: 0, stomps: 0, hits: 0, clears: 0 };
@@ -3668,6 +3759,9 @@ const start9 = async ($, e, next) => {
         }
       });
     }
+    if (requestId === null || sim9.W === 0) return;
+    sim9.course += speed();
+    const isAsleep = step7();
     if (sim9.isBlitting) return;
     sim9.isBlitting = true;
     void $.ui.blit({ requestId, key: RASTER8, cells: frame8(isAsleep, sim9.stats), columns: sim9.W }).then((r) => {
@@ -3722,9 +3816,8 @@ const tool9 = async ($, e, next) => {
     sim9.lastActivity = sim9.t;
   });
   if (ran.deny !== void 0) return ran;
-  const counted = await update9($, score6, (old) => ({ ...old, tools: old.tools + 1 }));
+  const counted = await update9($, score6, await keep($, "dario.score", await read10($, score6), (old) => ({ ...old, tools: old.tools + 1 })));
   sim9.stats = statsLine8(counted);
-  if (counted.tools % 10 === 0) void $.store.set("dario.score", counted);
   if (ran.isError === true) addBug(false, true);
   else if (sim9.things.filter((t) => t.kind === "block" && !t.used).length < 2) addBlock(true);
   else sim9.gain.coins += 1;
@@ -3742,6 +3835,11 @@ const render9 = async ($, e, next) => {
   sim9.stats = statsLine8(await read10($, score6));
   return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Raster, { key: RASTER8, columns: sim9.W, rows: ROWS9, cells: frame8(false, sim9.stats) }), below ?? null);
 };
+async function reset9($) {
+  const next = await update9($, score6, await keep($, "dario.score", await read10($, score6), () => score6.initial));
+  sim9.stats = statsLine8(next);
+  await update9($, feat5, () => "");
+}
 const game9 = { id: ID9, title: "Dario" };
 
 // src/games/block-town.tsx
@@ -3883,8 +3981,7 @@ const sim10 = {
   // Tool calls not yet added to the stored score.
   toolGain: 0,
   // When the town was last reset; a session that loaded an older town gives its copy up.
-  epoch: 0,
-  resetAskedAt: -Infinity
+  epoch: 0
 };
 const rand6 = (a, b) => a + Math.random() * (b - a);
 const pick6 = (list2) => list2[Math.floor(Math.random() * list2.length)];
@@ -4238,15 +4335,15 @@ function mergeTowns(stored, mine) {
   return order.filter((p) => kept.includes(p));
 }
 async function flush($) {
-  const map = await $.store.get("town.map");
+  const map = await $.store.get(scoped("town.map"));
   if (map && (map.epoch ?? 0) > sim10.epoch) {
     sim10.epoch = map.epoch ?? 0;
-    sim10.plots = Array.isArray(map.plots) ? map.plots : [];
+    sim10.plots = Array.isArray(map.plots) ? copyPlots(map.plots) : [];
     sim10.next = map.next ?? 0;
     sim10.gain = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0 };
     sim10.toolGain = 0;
     sim10.isDirty = false;
-    const fresh2 = await $.store.get("town.score") ?? ZERO;
+    const fresh2 = await $.store.get(scoped("town.score")) ?? ZERO;
     await update10($, score7, () => fresh2);
     sim10.stats = statsLine9(fresh2);
     sim10.tools = fresh2.tools;
@@ -4257,7 +4354,7 @@ async function flush($) {
     sim10.gain = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0 };
     const tools = sim10.toolGain;
     sim10.toolGain = 0;
-    const old = await $.store.get("town.score") ?? ZERO;
+    const old = await $.store.get(scoped("town.score")) ?? ZERO;
     const next = {
       blocks: old.blocks + g.blocks,
       houses: old.houses + g.houses,
@@ -4266,7 +4363,7 @@ async function flush($) {
       creepers: old.creepers + g.creepers,
       tools: old.tools + tools
     };
-    await $.store.set("town.score", next);
+    await $.store.set(scoped("town.score"), next);
     await update10($, score7, () => next);
     sim10.stats = statsLine9(next);
     sim10.tools = next.tools;
@@ -4277,13 +4374,13 @@ async function flush($) {
   }
   if (sim10.isDirty) {
     sim10.isDirty = false;
-    sim10.plots = mergeTowns(map && Array.isArray(map.plots) ? map.plots : [], sim10.plots);
+    sim10.plots = copyPlots(mergeTowns(map && Array.isArray(map.plots) ? map.plots : [], sim10.plots));
     sim10.next = Math.max(sim10.next, map?.next ?? 0);
     const saved = { plots: sim10.plots, next: sim10.next, epoch: sim10.epoch, width: sim10.W };
-    await $.store.set("town.map", saved);
+    await $.store.set(scoped("town.map"), saved);
   }
 }
-async function reset($) {
+async function reset10($) {
   sim10.epoch = await $.clock.now();
   sim10.plots = [];
   sim10.next = 0;
@@ -4294,8 +4391,8 @@ async function reset($) {
   sim10.isDirty = false;
   sim10.tools = 0;
   const saved = { plots: [], next: 0, epoch: sim10.epoch, width: sim10.W };
-  await $.store.set("town.map", saved);
-  await $.store.set("town.score", ZERO);
+  await $.store.set(scoped("town.map"), saved);
+  await $.store.set(scoped("town.score"), ZERO);
   await update10($, score7, () => ZERO);
   await update10($, feat6, () => "");
   sim10.stats = statsLine9(ZERO);
@@ -4326,15 +4423,16 @@ async function celebrateMoments10($, found) {
     else await celebrate6($, m.label, WHOLE.has(m.kind) ? "whole" : "castle");
   }
 }
+const copyPlots = (plots) => plots.map((p) => ({ ...p }));
 const start10 = async ($, e, next) => {
-  const saved = await $.store.get("town.score");
+  const saved = await loadKept($, "town.score");
   if (saved) await update10($, score7, () => saved);
   const s = saved ?? await read11($, score7);
   sim10.stats = statsLine9(s);
   sim10.tools = s.tools;
-  const map = await $.store.get("town.map");
+  const map = await loadKept($, "town.map");
   if (map && Array.isArray(map.plots)) {
-    sim10.plots = map.plots;
+    sim10.plots = copyPlots(map.plots);
     sim10.next = map.next ?? 0;
     sim10.epoch = map.epoch ?? 0;
   }
@@ -4360,17 +4458,6 @@ const start10 = async ($, e, next) => {
 };
 const command10 = async ($, e) => {
   const arg = (e.args ?? "").trim();
-  if (arg === "reset") {
-    sim10.resetAskedAt = await $.clock.now();
-    return { text: 'This clears the town and its score: every building, tree and castle, and the counts. Type "/town reset yes" within a minute to do it; anything else keeps the town.' };
-  }
-  if (arg === "reset yes") {
-    if (await $.clock.now() - sim10.resetAskedAt > 6e4) return { text: 'Nothing cleared. Type "/town reset" first, then "/town reset yes" within a minute.' };
-    sim10.resetAskedAt = -Infinity;
-    await reset($);
-    return { text: "The town is cleared: back to an empty camp. Other terminals showing it start over within a few seconds." };
-  }
-  sim10.resetAskedAt = -Infinity;
   if (arg === "build") {
     work("main", 6, false);
     return { text: "Practice: six blocks go up, nothing counts." };
@@ -4670,7 +4757,7 @@ async function status($, mode, pool) {
   return `Arcade on this account: ${setting}.
 This terminal:
 ${rows.join("\n")}
-"/arcade <game>" swaps this terminal's game, "/arcade <game> all" pins it for every terminal, "/arcade random|rotate|all|off" sets how new terminals pick, "/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal's game. "/arcade hide" clears this terminal only.`;
+"/arcade <game>" swaps this terminal's game, "/arcade <game> all" pins it for every terminal, "/arcade random|rotate|all|off" sets how new terminals pick, "/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal's game. "/arcade hide" clears this terminal only. Scores, the town and the pet are kept per project (this one: ${projectName()}); "/<game> reset" or "/arcade reset" starts this project over.`;
 }
 const over = (options) => `${String(options.mode ?? "")}|${String(options.pool ?? "")}`;
 async function save5($, options, mode, pool) {
@@ -4702,10 +4789,46 @@ async function celebrate7($, found) {
   await celebrateMoments9($, found);
   await celebrateMoments10($, found);
 }
+const RESET_WINDOW_MS = 6e4;
+const asked = /* @__PURE__ */ new Map();
+async function resetGame($, id) {
+  if (id === "dragon") return reset($);
+  if (id === "jackpot") return reset3($);
+  if (id === "outlaw") return reset5($);
+  if (id === "tama") return reset6($);
+  if (id === "tetris") return reset7($);
+  if (id === "octopus") return reset4($);
+  if (id === "duck") return reset2($);
+  if (id === "bugs") return reset8($);
+  if (id === "dario") return reset9($);
+  if (id === "town") return reset10($);
+}
+async function askReset($, id, args) {
+  const arg = (args ?? "").trim().toLowerCase();
+  if (arg !== "reset" && arg !== "reset yes") {
+    asked.delete(id);
+    return void 0;
+  }
+  const what = id === "arcade" ? "every Arcade game" : title(id);
+  const now = await $.clock.now();
+  if (arg === "reset") {
+    asked.set(id, now);
+    return {
+      text: `This clears ${what} for the project ${projectName()}: its score${id === "town" || id === "arcade" ? ", its town" : ""}${id === "tama" || id === "arcade" ? ", its pet" : ""}. Other projects keep theirs. Type "/${id} reset yes" within a minute to do it; anything else keeps it.`
+    };
+  }
+  if (now - (asked.get(id) ?? -Infinity) > RESET_WINDOW_MS) {
+    return { text: `Nothing cleared. Type "/${id} reset" first, then "/${id} reset yes" within a minute.` };
+  }
+  asked.delete(id);
+  for (const g of id === "arcade" ? GAMES.map((x) => x.id) : [id]) await resetGame($, g);
+  return { text: `${what === title(id) ? what : "Every Arcade game"} cleared for ${projectName()}. Other terminals of this project start from it on their next save.` };
+}
 export const register = (on, options) => {
   configureMilestones(options);
   const setting = { mode: modeOf(options.mode), pool: poolOf(options.pool) };
   on("session.start", async ($, e, next) => {
+    await useProject($, String(e.cwd ?? ""));
     await $.command.register({
       name: "arcade",
       description: 'Which Arcade games show: "/arcade <game>" for this terminal, "/arcade <game> all" pins one everywhere, "/arcade random|rotate|all|off", "/arcade pool <games>", "/arcade next" or "/arcade hide" for this terminal.'
@@ -4723,6 +4846,8 @@ export const register = (on, options) => {
     const words = (e.args ?? "").trim().split(/[\s,]+/).filter(Boolean);
     const [first = "", ...rest] = words.map((w) => w.toLowerCase());
     if (first === "") return { text: await status($, setting.mode, setting.pool) };
+    const reset11 = await askReset($, "arcade", e.args);
+    if (reset11) return reset11;
     if (first === "hide") {
       await update11($, shown, () => []);
       return { text: 'No game in this terminal. "/arcade next" brings one back; new terminals still follow the setting.' };
@@ -4770,16 +4895,16 @@ export const register = (on, options) => {
     await celebrate7($, subagentMilestones());
     return ran;
   });
-  on("command.run", { command: "dragon" }, ($, e, next) => command($, e, next));
-  on("command.run", { command: "jackpot" }, ($, e, next) => command3($, e, next));
-  on("command.run", { command: "outlaw" }, ($, e, next) => command5($, e, next));
-  on("command.run", { command: "tama" }, ($, e, next) => command6($, e, next));
-  on("command.run", { command: "tetris" }, ($, e, next) => command7($, e, next));
-  on("command.run", { command: "octopus" }, ($, e, next) => command4($, e, next));
-  on("command.run", { command: "duck" }, ($, e, next) => command2($, e, next));
-  on("command.run", { command: "bugs" }, ($, e, next) => command8($, e, next));
-  on("command.run", { command: "dario" }, ($, e, next) => command9($, e, next));
-  on("command.run", { command: "town" }, ($, e, next) => command10($, e, next));
+  on("command.run", { command: "dragon" }, async ($, e, next) => await askReset($, "dragon", e.args) ?? command($, e, next));
+  on("command.run", { command: "jackpot" }, async ($, e, next) => await askReset($, "jackpot", e.args) ?? command3($, e, next));
+  on("command.run", { command: "outlaw" }, async ($, e, next) => await askReset($, "outlaw", e.args) ?? command5($, e, next));
+  on("command.run", { command: "tama" }, async ($, e, next) => await askReset($, "tama", e.args) ?? command6($, e, next));
+  on("command.run", { command: "tetris" }, async ($, e, next) => await askReset($, "tetris", e.args) ?? command7($, e, next));
+  on("command.run", { command: "octopus" }, async ($, e, next) => await askReset($, "octopus", e.args) ?? command4($, e, next));
+  on("command.run", { command: "duck" }, async ($, e, next) => await askReset($, "duck", e.args) ?? command2($, e, next));
+  on("command.run", { command: "bugs" }, async ($, e, next) => await askReset($, "bugs", e.args) ?? command8($, e, next));
+  on("command.run", { command: "dario" }, async ($, e, next) => await askReset($, "dario", e.args) ?? command9($, e, next));
+  on("command.run", { command: "town" }, async ($, e, next) => await askReset($, "town", e.args) ?? command10($, e, next));
   on("ui.message", ($, e, next) => message($, e, next));
   on("prompt.submit", async ($, e, next) => {
     const ran = await prompt($, e, ((e1) => prompt3($, e1, ((e2) => prompt5($, e2, ((e3) => prompt6($, e3, ((e4) => prompt7($, e4, ((e5) => prompt4($, e5, ((e6) => prompt2($, e6, ((e7) => prompt8($, e7, ((e8) => prompt9($, e8, ((e9) => prompt10($, e9, next)))))))))))))))))));

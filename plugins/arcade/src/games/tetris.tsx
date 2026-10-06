@@ -3,6 +3,7 @@ import type { EngineInterface, Hook, MatchedHook } from 'claude-code'
 
 import type { Tally } from '../../types'
 import type { Milestone } from '../milestones'
+import { keep as keepStore, loadKept } from '../save'
 import { isShown } from '../shown'
 import type { Game } from '../shown'
 
@@ -143,8 +144,7 @@ async function scoreLines($: EngineInterface, lines: number, isBomb: boolean) {
   const before = await read($, tally)
   const level = Math.floor(before.lines / 10)
   const points = isBomb ? 50 * lines * (level + 1) : LINE_SCORE[Math.min(4, lines)]! * (level + 1)
-  const saved = await update($, tally, old => ({ ...old, score: old.score + points, lines: old.lines + lines }))
-  await $.store.set('tetris.tally', saved)
+  const saved = await update($, tally, await keepStore($, 'tetris.tally', await read($, tally), old => ({ ...old, score: old.score + points, lines: old.lines + lines })))
   if (!isBomb && lines >= 4) void notify($, '🧱 TETRIS! Four lines at once')
   if (Math.floor(saved.lines / 10) > level) void notify($, `🧱 Level ${Math.floor(saved.lines / 10)}`)
 }
@@ -152,13 +152,12 @@ async function scoreLines($: EngineInterface, lines: number, isBomb: boolean) {
 async function gameOver($: EngineInterface) {
   sim.wipe = 0
   sim.active = null
-  const saved = await update($, tally, old => ({
+  const saved = await update($, tally, await keepStore($, 'tetris.tally', await read($, tally), old => ({
     score: 0,
     lines: 0,
     best: Math.max(old.best, old.score),
     games: old.games + 1,
-  }))
-  await $.store.set('tetris.tally', saved)
+  })))
   void notify($, `🧱 Game over. Best ${saved.best}`)
 }
 
@@ -307,7 +306,7 @@ export async function celebrateMoments($: EngineInterface, found: Milestone[]) {
 
 // The game's hooks, one per event, which the Arcade's register.tsx chains with the other games'.
 export const start: Hook<'session.start'> = async ($, e, next) => {
-  const saved = (await $.store.get('tetris.tally')) as Tally | undefined
+  const saved = (await loadKept($, 'tetris.tally')) as Tally | undefined
   if (saved) await update($, tally, () => saved)
   await $.command.register({
     name: 'tetris',
@@ -399,6 +398,11 @@ export const render: MatchedHook<'ui.render', { component: 'AbovePrompt' }> = as
       </Box>
     </Box>
   )
+}
+
+// Clears this project's tally; the Arcade asks first (`/tetris reset`, then `/tetris reset yes`).
+export async function reset($: EngineInterface) {
+  await update($, tally, await keepStore($, 'tetris.tally', await read($, tally), () => tally.initial))
 }
 
 export const game: Game = { id: ID, title: 'Tetris' }

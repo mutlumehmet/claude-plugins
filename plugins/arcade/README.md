@@ -228,12 +228,32 @@ All optional. Set them in `/plugin` (the plugin's settings) or in
 | `medium_commands` | A regular expression of shell commands whose success is medium | `terraform apply` |
 | `praise_words` | Extra words that count as praise, on top of the built-in list (thanks, great, perfect and a few in other languages) | `nice one, cheers` |
 
+## Scores per project
+
+Every game keeps its score, and Block Town its town and Tama its pet, per project: the repository
+Claude Code runs in, so your work on one repository builds its own town and plays its own score.
+
+- **The project** is the folder holding `.git` at or above the folder Claude Code runs in. A git
+  worktree counts as its main repository, so all worktrees of a repository share one project.
+  Outside any repository, the folder itself is the project.
+- **Shared by every terminal of that project.** A save adds to what is stored instead of writing over
+  it, so two terminals in one repository both count.
+- **Starting over**: `/<game> reset` (for example `/duck reset`) says what goes and asks; only
+  `/<game> reset yes` within a minute clears that game for this project. `/arcade reset` does every
+  game at once. Other projects keep theirs.
+- **Where it lives**: Claude Code's plugin store on your machine, under each key with `@` and a short
+  hash of the project's path. Nothing is written into the project folder, so a repository gets no
+  new files. A project nobody opened for 90 days is forgotten.
+- **Upgrading from 0.7.0 or earlier**: the scores you had move to the first project you open.
+
 ## What it reads and does
 
 - **Reads**: the name of each tool Claude runs and whether it failed; for shell commands, the command
   line and whether its output says nothing changed; for file writes, the file name and its line
-  count; skill names; the words of your message (only to spot praise); subagent start and finish.
-- **Keeps**: each game's score and state, and which game the last terminal showed, in Claude Code's plugin store on your machine; the mode and pool in your Claude Code settings.
+  count; skill names; the words of your message (only to spot praise); subagent start and finish;
+  at session start, the `.git` entry of the folder Claude Code runs in and of its parents, to find
+  which repository it is (a worktree's `.git` file names its main repository).
+- **Keeps**: each game's score and state per project, and which game the last terminal showed, in Claude Code's plugin store on your machine; the mode and pool in your Claude Code settings. Nothing is written into your projects. See "Scores per project" below.
 - **Draws**: the games it shows in the line above the prompt (a block at the right end, or the octopus's, the duck hunt's and Bug Command's strips across the full width), and an occasional notice.
 - **Hooks**: `skill.prompt` only notes which skill ran, so a finished skill can count as a moment; it passes the skill's prompt on unchanged. `command.run` answers its own commands (`/arcade` and the games' own commands) and no other. `/arcade <game> all`, `/arcade <mode>` and `/arcade pool` write `arcade.mode` and `arcade.pool` through Claude Code's own settings call, the same as changing them in the menu.
 - **Takes input**: only Bug Command, and only once you click its sky: from then until Esc, the keys you press go to the game, not the prompt. Clicks and keys never leave the game.
@@ -271,8 +291,10 @@ module is `src/clients/bug-sky.tsx`, which the same script builds into `hooks/bu
 The sky runs the game loop; the hooks module hands it the session's events as props and keeps the
 score the sky posts back. Edit `src/`, never
 `hooks/`; CI fails when the two differ. A new game is one file in `src/games/`, one entry in
-`GAMES` and one link in each chain in `src/arcade.tsx`, its state keys in `types/index.d.ts`, and a
-test.
+`GAMES` and one link in each chain in `src/arcade.tsx`, its state keys in `types/index.d.ts`, a
+`reset` export wired into `resetGame` in `src/arcade.tsx`, and a test. Everything a game keeps
+between sessions goes through `src/save.ts` (`loadKept` to load, `keep` to save, see "Scores per
+project"); a game never calls `$.store` with a key of its own.
 
 ## Known gaps
 

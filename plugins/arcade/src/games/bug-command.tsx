@@ -4,6 +4,7 @@ import type { EngineInterface, Hook, MatchedHook } from 'claude-code'
 import type { BugsScore as Score, BugsFeed as Feed } from '../../types'
 import type { SkyEvent, SkyGain, SkyProps } from '../clients/bug-sky'
 import type { Milestone } from '../milestones'
+import { keep as keepStore, loadKept } from '../save'
 import { isShown } from '../shown'
 import type { Game } from '../shown'
 
@@ -46,8 +47,7 @@ async function setWorking($: EngineInterface) {
 const statsLine = (s: Score) => `✸ ${s.kills}  ☞ ${s.mine}  ✝ ${s.lost}  ⚒ ${s.tools}`
 
 async function save($: EngineInterface, change: (s: Score) => Score) {
-  const next = await update($, score, change)
-  await $.store.set('bugs.score', next)
+  const next = await update($, score, await keepStore($, 'bugs.score', await read($, score), change))
   return next
 }
 
@@ -68,7 +68,7 @@ export async function celebrateMoments($: EngineInterface, found: Milestone[]) {
 // ---- Hooks, chained by the Arcade's register with the other games' ----
 
 export const start: Hook<'session.start'> = async ($, e, next) => {
-  const saved = (await $.store.get('bugs.score')) as Score | undefined
+  const saved = (await loadKept($, 'bugs.score')) as Score | undefined
   if (saved) await update($, score, () => ({ ...saved, cities: saved.cities > 0 ? saved.cities : CITIES }))
   await $.command.register({
     name: 'bugs',
@@ -121,8 +121,7 @@ export const tool: Hook<'tool.call'> = async ($, e, next) => {
   })
   await setWorking($)
   if (ran.deny !== undefined) return ran
-  const counted = await update($, score, old => ({ ...old, tools: old.tools + 1 }))
-  if (counted.tools % 10 === 0) void $.store.set('bugs.score', counted)
+  const counted = await update($, score, await keepStore($, 'bugs.score', await read($, score), old => ({ ...old, tools: old.tools + 1 })))
   await push($, ran.isError === true ? 'fail' : 'tool')
   return ran
 }
@@ -164,6 +163,12 @@ export const render: MatchedHook<'ui.render', { component: 'AbovePrompt' }> = as
       {below ?? null}
     </Box>
   )
+}
+
+// Clears this project's defence and rebuilds its cities; the Arcade asks first (`/bugs reset`, then `/bugs reset yes`).
+export async function reset($: EngineInterface) {
+  await update($, score, await keepStore($, 'bugs.score', await read($, score), () => score.initial))
+  await update($, feat, () => '')
 }
 
 export const game: Game = { id: ID, title: 'Bug Command' }

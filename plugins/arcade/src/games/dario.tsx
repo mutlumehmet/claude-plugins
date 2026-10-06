@@ -3,6 +3,7 @@ import type { EngineInterface, Hook, MatchedHook } from 'claude-code'
 
 import type { DarioScore as Score } from '../../types'
 import type { Milestone } from '../milestones'
+import { keep as keepStore, loadKept } from '../save'
 import { isShown } from '../shown'
 import type { Game } from '../shown'
 
@@ -422,9 +423,8 @@ async function notify($: EngineInterface, text: string) {
 }
 
 async function save($: EngineInterface, change: (s: Score) => Score) {
-  const next = await update($, score, change)
+  const next = await update($, score, await keepStore($, 'dario.score', await read($, score), change))
   sim.stats = statsLine(next)
-  await $.store.set('dario.score', next)
   return next
 }
 
@@ -464,7 +464,7 @@ export async function celebrateMoments($: EngineInterface, found: Milestone[]) {
 // ---- Hooks, chained by the Arcade's register with the other games' ----
 
 export const start: Hook<'session.start'> = async ($, e, next) => {
-  const saved = (await $.store.get('dario.score')) as Score | undefined
+  const saved = (await loadKept($, 'dario.score')) as Score | undefined
   if (saved) await update($, score, () => saved)
   sim.stats = statsLine(saved ?? (await read($, score)))
   await $.command.register({
@@ -473,9 +473,7 @@ export const start: Hook<'session.start'> = async ($, e, next) => {
   })
   $.clock.every(FPS_MS, () => {
     const requestId = sim.requestId
-    if (requestId === null || sim.W === 0) return
-    sim.course += speed()
-    const isAsleep = step()
+    // Saved before the guard below, so what a hidden game earned (a tool's knock) still counts.
     // Coins, stomps, knocks and clears go to the score; every hundred coins is a 1UP.
     if (sim.gain.coins + sim.gain.stomps + sim.gain.hits + sim.gain.clears > 0) {
       const gain = sim.gain
@@ -493,6 +491,9 @@ export const start: Hook<'session.start'> = async ($, e, next) => {
         }
       })
     }
+    if (requestId === null || sim.W === 0) return
+    sim.course += speed()
+    const isAsleep = step()
     if (sim.isBlitting) return
     sim.isBlitting = true
     void $.ui.blit({ requestId, key: RASTER, cells: frame(isAsleep, sim.stats), columns: sim.W })
@@ -555,9 +556,8 @@ export const tool: Hook<'tool.call'> = async ($, e, next) => {
     sim.lastActivity = sim.t
   })
   if (ran.deny !== undefined) return ran
-  const counted = await update($, score, old => ({ ...old, tools: old.tools + 1 }))
+  const counted = await update($, score, await keepStore($, 'dario.score', await read($, score), old => ({ ...old, tools: old.tools + 1 })))
   sim.stats = statsLine(counted)
-  if (counted.tools % 10 === 0) void $.store.set('dario.score', counted)
   // A finished tool is a ? block on its way; with two already waiting, the coin comes at once.
   if (ran.isError === true) addBug(false, true)
   else if (sim.things.filter(t => t.kind === 'block' && !t.used).length < 2) addBlock(true)
@@ -583,6 +583,13 @@ export const render: MatchedHook<'ui.render', { component: 'AbovePrompt' }> = as
       {below ?? null}
     </Box>
   )
+}
+
+// Clears this project's course; the Arcade asks first (`/dario reset`, then `/dario reset yes`).
+export async function reset($: EngineInterface) {
+  const next = await update($, score, await keepStore($, 'dario.score', await read($, score), () => score.initial))
+  sim.stats = statsLine(next)
+  await update($, feat, () => '')
 }
 
 export const game: Game = { id: ID, title: 'Dario' }

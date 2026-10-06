@@ -110,19 +110,23 @@ test('a save merges with what another terminal saved, and a reset there wins', {
   await begin($, on, true)
   await $.tool.call({ tool: 'Read', file_path: '/repo/a.ts' } as never)
   await clock.advance(2100)
+  // The keys carry the project: "town.map@<project>".
+  const mapKey = Object.keys(store).find(k => k.startsWith('town.map@'))!
+  const scoreKey = mapKey.replace('town.map', 'town.score')
+  expect(mapKey).toBeDefined()
   // Another terminal saves a finished well further along the band.
-  const map = store['town.map'] as { plots: { kind: string; x: number }[]; next: number; epoch?: number }
-  store['town.map'] = ({ ...map, plots: [...map.plots, { kind: 'well', x: 60, progress: 19, wasDone: true }] })
+  const map = store[mapKey] as { plots: { kind: string; x: number }[]; next: number; epoch?: number }
+  store[mapKey] = ({ ...map, plots: [...map.plots, { kind: 'well', x: 60, progress: 19, wasDone: true }] })
   await $.tool.call({ tool: 'Read', file_path: '/repo/b.ts' } as never)
   await clock.advance(2100)
-  const merged = store['town.map'] as { plots: { kind: string; x: number; progress: number }[] }
+  const merged = store[mapKey] as { plots: { kind: string; x: number; progress: number }[] }
   expect(merged.plots.map(p => p.kind)).toContain('well')
   expect(merged.plots.find(p => p.kind === 'house')?.progress).toBe(4)
   // Another terminal resets the town: this one gives its copy up instead of writing it back.
-  store['town.map'] = { plots: [], next: 0, epoch: Date.now() + 1e9 }
-  store['town.score'] = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0, tools: 0 }
+  store[mapKey] = { plots: [], next: 0, epoch: Date.now() + 1e9 }
+  store[scoreKey] = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0, tools: 0 }
   await $.tool.call({ tool: 'Read', file_path: '/repo/c.ts' } as never)
   await clock.advance(2100)
-  expect((store['town.map'] as { plots: unknown[] }).plots).toHaveLength(0)
+  expect((store[mapKey] as { plots: unknown[] }).plots).toHaveLength(0)
   expect(await stats($)).toMatch(/^Camp  ▦ 0/)
 })

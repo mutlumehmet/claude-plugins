@@ -5,6 +5,7 @@ import type { OctoMood as Mood, OctoScore as Score } from '../../types'
 import { BABY, FLAG, OCTO_HEIGHT, OCTO_WIDTH, PLANE, octopus } from './octo-sprite'
 import type { Legs } from './octo-sprite'
 import type { Milestone } from '../milestones'
+import { keep as keepStore, loadKept } from '../save'
 import { isShown } from '../shown'
 import type { Game } from '../shown'
 
@@ -585,9 +586,8 @@ function base64(bytes: Uint8Array): string {
 let lastStats = statsLine({ xp: 0, toppled: 0, planes: 0, tools: 0 })
 
 async function save($: EngineInterface, change: (s: Score) => Score) {
-  const next = await update($, score, change)
+  const next = await update($, score, await keepStore($, 'octopus.score', await read($, score), change))
   lastStats = statsLine(next)
-  await $.store.set('octopus.score', next)
   return next
 }
 
@@ -632,7 +632,7 @@ export async function celebrateMoments($: EngineInterface, found: Milestone[]) {
 
 // The game's hooks, one per event, which the Arcade's register.tsx chains with the other games'.
 export const start: Hook<'session.start'> = async ($, e, next) => {
-  const saved = (await $.store.get('octopus.score')) as Score | undefined
+  const saved = (await loadKept($, 'octopus.score')) as Score | undefined
   if (saved) {
     await update($, score, () => saved)
     lastStats = statsLine(saved)
@@ -650,14 +650,15 @@ export const start: Hook<'session.start'> = async ($, e, next) => {
       void update($, mood, () => m)
     }
     const requestId = sim.requestId
-    if (requestId === null || sim.W === 0) return
-    step(a)
+    // Saved before the guard below, so what a hidden game earned (a tool's knock) still counts.
     // Buildings toppled and planes downed go to the score.
     if (sim.gain.toppled > 0 || sim.gain.planes > 0) {
       const gain = sim.gain
       sim.gain = { toppled: 0, planes: 0 }
       void save($, old => ({ ...old, toppled: old.toppled + gain.toppled, planes: old.planes + gain.planes }))
     }
+    if (requestId === null || sim.W === 0) return
+    step(a)
     if (sim.isBlitting) return
     sim.isBlitting = true
     void $.ui.blit({ requestId, key: RASTER, cells: frame(a, lastStats), columns: sim.W })
@@ -754,9 +755,8 @@ export const tool: Hook<'tool.call'> = async ($, e, next) => {
     sim.lastActivity = sim.t
   })
   if (ran.deny !== undefined) return ran
-  const counted = await update($, score, old => ({ ...old, tools: old.tools + 1 }))
+  const counted = await update($, score, await keepStore($, 'octopus.score', await read($, score), old => ({ ...old, tools: old.tools + 1 })))
   lastStats = statsLine(counted)
-  if (counted.tools % 10 === 0) void $.store.set('octopus.score', counted)
   if (ran.isError === true) sim.sadUntil = sim.t + 30
   return ran
 }
@@ -781,6 +781,13 @@ export const render: MatchedHook<'ui.render', { component: 'AbovePrompt' }> = as
       {below ?? null}
     </Box>
   )
+}
+
+// Clears this project's rampage; the Arcade asks first (`/octopus reset`, then `/octopus reset yes`).
+export async function reset($: EngineInterface) {
+  const next = await update($, score, await keepStore($, 'octopus.score', await read($, score), () => score.initial))
+  lastStats = statsLine(next)
+  await update($, feat, () => '')
 }
 
 export const game: Game = { id: ID, title: 'Octo Invader' }

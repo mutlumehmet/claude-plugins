@@ -3,6 +3,7 @@ import type { EngineInterface, Hook, MatchedHook } from 'claude-code'
 
 import type { TownScore as Score, TownPlot as Plot } from '../../types'
 import type { Milestone } from '../milestones'
+import { loadKept, scoped } from '../save'
 import { isShown } from '../shown'
 import type { Game } from '../shown'
 
@@ -157,7 +158,6 @@ const sim = {
   toolGain: 0,
   // When the town was last reset; a session that loaded an older town gives its copy up.
   epoch: 0,
-  resetAskedAt: -Infinity,
 }
 
 const rand = (a: number, b: number) => a + Math.random() * (b - a)
@@ -576,16 +576,16 @@ function mergeTowns(stored: Plot[], mine: Plot[]): Plot[] {
 // Writes what changed: the score as the stored one plus this session's gains, and the town merged
 // with the stored one. Runs on its own timer, so a town that is not shown keeps its work too.
 async function flush($: EngineInterface) {
-  const map = (await $.store.get('town.map')) as Saved | undefined
+  const map = (await $.store.get(scoped('town.map'))) as Saved | undefined
   if (map && (map.epoch ?? 0) > sim.epoch) {
     // Reset in another terminal: this copy is from before it, so it gives way.
     sim.epoch = map.epoch ?? 0
-    sim.plots = Array.isArray(map.plots) ? map.plots : []
+    sim.plots = Array.isArray(map.plots) ? copyPlots(map.plots) : []
     sim.next = map.next ?? 0
     sim.gain = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0 }
     sim.toolGain = 0
     sim.isDirty = false
-    const fresh = ((await $.store.get('town.score')) as Score | undefined) ?? ZERO
+    const fresh = ((await $.store.get(scoped('town.score'))) as Score | undefined) ?? ZERO
     await update($, score, () => fresh)
     sim.stats = statsLine(fresh)
     sim.tools = fresh.tools
@@ -596,7 +596,7 @@ async function flush($: EngineInterface) {
     sim.gain = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0 }
     const tools = sim.toolGain
     sim.toolGain = 0
-    const old = ((await $.store.get('town.score')) as Score | undefined) ?? ZERO
+    const old = ((await $.store.get(scoped('town.score'))) as Score | undefined) ?? ZERO
     const next: Score = {
       blocks: old.blocks + g.blocks,
       houses: old.houses + g.houses,
@@ -605,7 +605,7 @@ async function flush($: EngineInterface) {
       creepers: old.creepers + g.creepers,
       tools: old.tools + tools,
     }
-    await $.store.set('town.score', next)
+    await $.store.set(scoped('town.score'), next)
     await update($, score, () => next)
     sim.stats = statsLine(next)
     sim.tools = next.tools
@@ -616,15 +616,15 @@ async function flush($: EngineInterface) {
   }
   if (sim.isDirty) {
     sim.isDirty = false
-    sim.plots = mergeTowns(map && Array.isArray(map.plots) ? map.plots : [], sim.plots)
+    sim.plots = copyPlots(mergeTowns(map && Array.isArray(map.plots) ? map.plots : [], sim.plots))
     sim.next = Math.max(sim.next, map?.next ?? 0)
     const saved: Saved = { plots: sim.plots, next: sim.next, epoch: sim.epoch, width: sim.W }
-    await $.store.set('town.map', saved)
+    await $.store.set(scoped('town.map'), saved)
   }
 }
 
-// `/town reset` asks first; `/town reset yes` within a minute clears the town and its score.
-async function reset($: EngineInterface) {
+// Clears this project's town and its score; the Arcade asks first (`/town reset`, then `/town reset yes`).
+export async function reset($: EngineInterface) {
   sim.epoch = await $.clock.now()
   sim.plots = []
   sim.next = 0
@@ -635,8 +635,8 @@ async function reset($: EngineInterface) {
   sim.isDirty = false
   sim.tools = 0
   const saved: Saved = { plots: [], next: 0, epoch: sim.epoch, width: sim.W }
-  await $.store.set('town.map', saved)
-  await $.store.set('town.score', ZERO)
+  await $.store.set(scoped('town.map'), saved)
+  await $.store.set(scoped('town.score'), ZERO)
   await update($, score, () => ZERO)
   await update($, feat, () => '')
   sim.stats = statsLine(ZERO)
@@ -674,17 +674,20 @@ export async function celebrateMoments($: EngineInterface, found: Milestone[]) {
   }
 }
 
+// Plots from the store come back frozen; the town changes its own copies.
+const copyPlots = (plots: readonly Plot[]): Plot[] => plots.map(p => ({ ...p }))
+
 // ---- Hooks, chained by the Arcade's register with the other games' ----
 
 export const start: Hook<'session.start'> = async ($, e, next) => {
-  const saved = (await $.store.get('town.score')) as Score | undefined
+  const saved = (await loadKept($, 'town.score')) as Score | undefined
   if (saved) await update($, score, () => saved)
   const s = saved ?? (await read($, score))
   sim.stats = statsLine(s)
   sim.tools = s.tools
-  const map = (await $.store.get('town.map')) as Saved | undefined
+  const map = (await loadKept($, 'town.map')) as Saved | undefined
   if (map && Array.isArray(map.plots)) {
-    sim.plots = map.plots
+    sim.plots = copyPlots(map.plots)
     sim.next = map.next ?? 0
     sim.epoch = map.epoch ?? 0
   }
@@ -715,17 +718,6 @@ export const start: Hook<'session.start'> = async ($, e, next) => {
 
 export const command: MatchedHook<'command.run', { command: 'town' }> = async ($, e) => {
   const arg = (e.args ?? '').trim()
-  if (arg === 'reset') {
-    sim.resetAskedAt = await $.clock.now()
-    return { text: 'This clears the town and its score: every building, tree and castle, and the counts. Type "/town reset yes" within a minute to do it; anything else keeps the town.' }
-  }
-  if (arg === 'reset yes') {
-    if ((await $.clock.now()) - sim.resetAskedAt > 60_000) return { text: 'Nothing cleared. Type "/town reset" first, then "/town reset yes" within a minute.' }
-    sim.resetAskedAt = -Infinity
-    await reset($)
-    return { text: 'The town is cleared: back to an empty camp. Other terminals showing it start over within a few seconds.' }
-  }
-  sim.resetAskedAt = -Infinity
   if (arg === 'build') {
     work('main', 6, false)
     return { text: 'Practice: six blocks go up, nothing counts.' }

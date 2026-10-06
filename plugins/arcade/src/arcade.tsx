@@ -10,6 +10,7 @@ import {
   render as dragonRender,
   celebrateMoments as dragonCelebrate,
   game as dragonGame,
+  reset as dragonReset,
 } from './games/dragon-lair'
 import {
   start as duckStart,
@@ -20,6 +21,7 @@ import {
   render as duckRender,
   celebrateMoments as duckCelebrate,
   game as duckGame,
+  reset as duckReset,
 } from './games/duck-hunt'
 import {
   start as jackpotStart,
@@ -30,6 +32,7 @@ import {
   render as jackpotRender,
   celebrateMoments as jackpotCelebrate,
   game as jackpotGame,
+  reset as jackpotReset,
 } from './games/jackpot'
 import {
   start as octopusStart,
@@ -40,6 +43,7 @@ import {
   render as octopusRender,
   celebrateMoments as octopusCelebrate,
   game as octopusGame,
+  reset as octopusReset,
 } from './games/octo-invader'
 import {
   start as outlawStart,
@@ -50,6 +54,7 @@ import {
   render as outlawRender,
   celebrateMoments as outlawCelebrate,
   game as outlawGame,
+  reset as outlawReset,
 } from './games/outlaw'
 import {
   start as tamaStart,
@@ -60,6 +65,7 @@ import {
   render as tamaRender,
   celebrateMoments as tamaCelebrate,
   game as tamaGame,
+  reset as tamaReset,
 } from './games/tama'
 import {
   start as tetrisStart,
@@ -70,6 +76,7 @@ import {
   render as tetrisRender,
   celebrateMoments as tetrisCelebrate,
   game as tetrisGame,
+  reset as tetrisReset,
 } from './games/tetris'
 import {
   start as bugsStart,
@@ -81,6 +88,7 @@ import {
   render as bugsRender,
   celebrateMoments as bugsCelebrate,
   game as bugsGame,
+  reset as bugsReset,
 } from './games/bug-command'
 import {
   start as darioStart,
@@ -91,6 +99,7 @@ import {
   render as darioRender,
   celebrateMoments as darioCelebrate,
   game as darioGame,
+  reset as darioReset,
 } from './games/dario'
 import {
   start as townStart,
@@ -101,9 +110,11 @@ import {
   render as townRender,
   celebrateMoments as townCelebrate,
   game as townGame,
+  reset as townReset,
 } from './games/block-town'
 import { configureMilestones, promptMilestones, skillSeen, streakMilestones, subagentMilestones, toolMilestones, turnMilestones } from './milestones'
 import type { Milestone } from './milestones'
+import { projectName, useProject } from './save'
 import { shown } from './shown'
 
 // Every game in the Arcade, in the order the menus list them. A new game is one file in
@@ -169,7 +180,8 @@ async function status($: EngineInterface, mode: Mode, pool: string[]) {
     '"/arcade <game>" swaps this terminal\'s game, "/arcade <game> all" pins it for every terminal, ' +
     '"/arcade random|rotate|all|off" sets how new terminals pick, ' +
     '"/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal\'s game. ' +
-    '"/arcade hide" clears this terminal only.'
+    '"/arcade hide" clears this terminal only. ' +
+    `Scores, the town and the pet are kept per project (this one: ${projectName()}); "/<game> reset" or "/arcade reset" starts this project over.`
   )
 }
 
@@ -215,6 +227,49 @@ async function celebrate($: EngineInterface, found: Milestone[]) {
   await townCelebrate($, found)
 }
 
+// Resets ask first: "/<game> reset" says what goes, and only "/<game> reset yes" within a minute
+// clears it, for this project only. "/arcade reset" does every game at once.
+const RESET_WINDOW_MS = 60_000
+const asked = new Map<string, number>()
+
+async function resetGame($: EngineInterface, id: string) {
+  if (id === 'dragon') return dragonReset($)
+  if (id === 'jackpot') return jackpotReset($)
+  if (id === 'outlaw') return outlawReset($)
+  if (id === 'tama') return tamaReset($)
+  if (id === 'tetris') return tetrisReset($)
+  if (id === 'octopus') return octopusReset($)
+  if (id === 'duck') return duckReset($)
+  if (id === 'bugs') return bugsReset($)
+  if (id === 'dario') return darioReset($)
+  if (id === 'town') return townReset($)
+}
+
+// Answers "reset" and "reset yes" for one game ("arcade" for all of them); anything else is not ours.
+async function askReset($: EngineInterface, id: string, args: string | undefined) {
+  const arg = (args ?? '').trim().toLowerCase()
+  if (arg !== 'reset' && arg !== 'reset yes') {
+    asked.delete(id)
+    return undefined
+  }
+  const what = id === 'arcade' ? 'every Arcade game' : title(id)
+  const now = await $.clock.now()
+  if (arg === 'reset') {
+    asked.set(id, now)
+    return {
+      text:
+        `This clears ${what} for the project ${projectName()}: its score${id === 'town' || id === 'arcade' ? ', its town' : ''}${id === 'tama' || id === 'arcade' ? ', its pet' : ''}. ` +
+        `Other projects keep theirs. Type "/${id} reset yes" within a minute to do it; anything else keeps it.`,
+    }
+  }
+  if (now - (asked.get(id) ?? -Infinity) > RESET_WINDOW_MS) {
+    return { text: `Nothing cleared. Type "/${id} reset" first, then "/${id} reset yes" within a minute.` }
+  }
+  asked.delete(id)
+  for (const g of id === 'arcade' ? GAMES.map(x => x.id) : [id]) await resetGame($, g)
+  return { text: `${what === title(id) ? what : 'Every Arcade game'} cleared for ${projectName()}. Other terminals of this project start from it on their next save.` }
+}
+
 // A plugin hooks each event once, so register chains the games' hooks for it: each game's next
 // is the following game's hook and the last one's is the engine, the order separate plugins would run in.
 export const register: Register = (on, options: PluginOptions) => {
@@ -222,6 +277,8 @@ export const register: Register = (on, options: PluginOptions) => {
   const setting = { mode: modeOf(options.mode), pool: poolOf(options.pool) }
 
   on('session.start', async ($, e, next) => {
+    // Every game keeps its values per project, so the project comes first.
+    await useProject($, String(e.cwd ?? ''))
     await $.command.register({
       name: 'arcade',
       description: 'Which Arcade games show: "/arcade <game>" for this terminal, "/arcade <game> all" pins one everywhere, "/arcade random|rotate|all|off", "/arcade pool <games>", "/arcade next" or "/arcade hide" for this terminal.',
@@ -243,6 +300,9 @@ export const register: Register = (on, options: PluginOptions) => {
     const [first = '', ...rest] = words.map(w => w.toLowerCase())
 
     if (first === '') return { text: await status($, setting.mode, setting.pool) }
+
+    const reset = await askReset($, 'arcade', e.args)
+    if (reset) return reset
 
     if (first === 'hide') {
       await update($, shown, () => [])
@@ -300,16 +360,16 @@ export const register: Register = (on, options: PluginOptions) => {
   })
 
   // The games' own commands.
-  on('command.run', { command: 'dragon' }, ($, e, next) => dragonCommand($, e, next))
-  on('command.run', { command: 'jackpot' }, ($, e, next) => jackpotCommand($, e, next))
-  on('command.run', { command: 'outlaw' }, ($, e, next) => outlawCommand($, e, next))
-  on('command.run', { command: 'tama' }, ($, e, next) => tamaCommand($, e, next))
-  on('command.run', { command: 'tetris' }, ($, e, next) => tetrisCommand($, e, next))
-  on('command.run', { command: 'octopus' }, ($, e, next) => octopusCommand($, e, next))
-  on('command.run', { command: 'duck' }, ($, e, next) => duckCommand($, e, next))
-  on('command.run', { command: 'bugs' }, ($, e, next) => bugsCommand($, e, next))
-  on('command.run', { command: 'dario' }, ($, e, next) => darioCommand($, e, next))
-  on('command.run', { command: 'town' }, ($, e, next) => townCommand($, e, next))
+  on('command.run', { command: 'dragon' }, async ($, e, next) => (await askReset($, 'dragon', e.args)) ?? dragonCommand($, e, next))
+  on('command.run', { command: 'jackpot' }, async ($, e, next) => (await askReset($, 'jackpot', e.args)) ?? jackpotCommand($, e, next))
+  on('command.run', { command: 'outlaw' }, async ($, e, next) => (await askReset($, 'outlaw', e.args)) ?? outlawCommand($, e, next))
+  on('command.run', { command: 'tama' }, async ($, e, next) => (await askReset($, 'tama', e.args)) ?? tamaCommand($, e, next))
+  on('command.run', { command: 'tetris' }, async ($, e, next) => (await askReset($, 'tetris', e.args)) ?? tetrisCommand($, e, next))
+  on('command.run', { command: 'octopus' }, async ($, e, next) => (await askReset($, 'octopus', e.args)) ?? octopusCommand($, e, next))
+  on('command.run', { command: 'duck' }, async ($, e, next) => (await askReset($, 'duck', e.args)) ?? duckCommand($, e, next))
+  on('command.run', { command: 'bugs' }, async ($, e, next) => (await askReset($, 'bugs', e.args)) ?? bugsCommand($, e, next))
+  on('command.run', { command: 'dario' }, async ($, e, next) => (await askReset($, 'dario', e.args)) ?? darioCommand($, e, next))
+  on('command.run', { command: 'town' }, async ($, e, next) => (await askReset($, 'town', e.args)) ?? townCommand($, e, next))
 
   // What a game's Client posts from the band (only Bug Command draws one).
   on('ui.message', ($, e, next) => bugsMessage($, e, next))

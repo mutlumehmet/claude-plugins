@@ -5,6 +5,7 @@ import type { DragonMood as Mood, Hoard } from '../../types'
 import { DRAGON_WIDTH, EYE, MOUTH, NOSTRIL, PIXEL_ROWS, draw, drawBaby } from './dragon-sprite'
 import type { Pose } from './dragon-sprite'
 import type { Milestone } from '../milestones'
+import { keep as keepStore, loadKept } from '../save'
 import { isShown } from '../shown'
 import type { Game } from '../shown'
 
@@ -407,10 +408,9 @@ async function celebrate($: EngineInterface, label: string, gold: number, show: 
   sim.show = { kind: show, until: sim.t + SHOW_FRAMES[show] }
   sim.lastActivity = sim.t
   const before = levelOf((await read($, hoard)).gold)
-  const next = await update($, hoard, old => ({ ...old, gold: old.gold + gold, feats: old.feats + 1 }))
+  const next = await update($, hoard, await keepStore($, 'dragon.hoard', await read($, hoard), old => ({ ...old, gold: old.gold + gold, feats: old.feats + 1 })))
   const after = levelOf(next.gold)
   await update($, feat, () => `${label}: +${gold} gold`)
-  await $.store.set('dragon.hoard', next)
   if (after > before) {
     sim.level = after
     sim.levelUntil = sim.show.until + 45
@@ -437,7 +437,7 @@ export async function celebrateMoments($: EngineInterface, found: Milestone[]) {
 
 // The game's hooks, one per event, which the Arcade's register.tsx chains with the other games'.
 export const start: Hook<'session.start'> = async ($, e, next) => {
-  const saved = (await $.store.get('dragon.hoard')) as Hoard | undefined
+  const saved = (await loadKept($, 'dragon.hoard')) as Hoard | undefined
   if (saved) await update($, hoard, () => saved)
   await $.command.register({
     name: 'dragon',
@@ -489,8 +489,7 @@ export const start: Hook<'session.start'> = async ($, e, next) => {
           if (a?.status === 'completed' || a?.status === 'idle' || isGone) {
             b.state = 'home'
             b.since = sim.t
-            const fed = await update($, hoard, old => ({ ...old, gold: old.gold + 2 }))
-            await $.store.set('dragon.hoard', fed)
+            const fed = await update($, hoard, await keepStore($, 'dragon.hoard', await read($, hoard), old => ({ ...old, gold: old.gold + 2 })))
           } else if (a?.status === 'failed' || a?.status === 'killed') {
             b.state = 'fall'
             b.since = sim.t
@@ -556,8 +555,7 @@ export const tool: Hook<'tool.call'> = async ($, e, next) => {
   })
   if (ran.deny !== undefined) return ran
 
-  const snack = await update($, hoard, old => ({ ...old, meals: old.meals + 1 }))
-  if (snack.meals % 10 === 0) void $.store.set('dragon.hoard', snack)
+  const snack = await update($, hoard, await keepStore($, 'dragon.hoard', await read($, hoard), old => ({ ...old, meals: old.meals + 1 })))
 
   if (ran.isError === true) {
     sim.sadUntil = sim.t + 30
@@ -593,6 +591,13 @@ export const render: MatchedHook<'ui.render', { component: 'AbovePrompt' }> = as
       </Box>
     </Box>
   )
+}
+
+// Clears this project's hoard; the Arcade asks first (`/dragon reset`, then `/dragon reset yes`).
+export async function reset($: EngineInterface) {
+  await update($, hoard, await keepStore($, 'dragon.hoard', await read($, hoard), () => hoard.initial))
+  await update($, feat, () => '')
+  sim.level = 1
 }
 
 export const game: Game = { id: ID, title: 'Dragon Lair' }

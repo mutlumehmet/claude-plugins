@@ -3,6 +3,7 @@ import type { EngineInterface, Hook, MatchedHook } from 'claude-code'
 
 import type { Pet, Stage } from '../../types'
 import type { Milestone } from '../milestones'
+import { keep as keepStore, loadKept } from '../save'
 import { isShown } from '../shown'
 import type { Game } from '../shown'
 
@@ -121,9 +122,8 @@ const isNight = (now: number) => {
 async function change($: EngineInterface, fn: (p: Pet) => Pet) {
   const now = await $.clock.now()
   sim.now = now
-  const changed = await update($, pet, p => fn(age(p, now)))
+  const changed = await update($, pet, await keepStore($, 'tama.pet', await read($, pet), p => fn(age(p, now))))
   sim.pet = changed
-  await $.store.set('tama.pet', changed)
   return changed
 }
 
@@ -272,10 +272,9 @@ export async function celebrateMoments($: EngineInterface, found: Milestone[]) {
 // The game's hooks, one per event, which the Arcade's register.tsx chains with the other games'.
 export const start: Hook<'session.start'> = async ($, e, next) => {
   sim.now = await $.clock.now()
-  const saved = (await $.store.get('tama.pet')) as Pet | undefined
+  const saved = (await loadKept($, 'tama.pet')) as Pet | undefined
   const start = saved ?? fresh(sim.now, 1)
-  sim.pet = await update($, pet, () => age(start, sim.now))
-  await $.store.set('tama.pet', sim.pet)
+  sim.pet = await update($, pet, await keepStore($, 'tama.pet', await read($, pet), () => age(start, sim.now)))
   await $.command.register({
     name: 'tama',
     description: 'The Tamagotchi above the prompt: how it is doing. "/tama feed|play|clean" to care for it by hand.',
@@ -423,6 +422,12 @@ export const render: MatchedHook<'ui.render', { component: 'AbovePrompt' }> = as
       </Box>
     </Box>
   )
+}
+
+// A new egg for this project; the Arcade asks first (`/tama reset`, then `/tama reset yes`).
+export async function reset($: EngineInterface) {
+  sim.now = await $.clock.now()
+  sim.pet = await update($, pet, await keepStore($, 'tama.pet', await read($, pet), () => fresh(sim.now, 1)))
 }
 
 export const game: Game = { id: ID, title: 'Tama' }
