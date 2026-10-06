@@ -143,6 +143,16 @@ Six cities and three silos along the bottom of the line above the prompt, the fu
 fall on the cities; Claude's work fires the counter missiles, and you can fire too. The one Arcade
 game you can play along with while you wait.
 
+![Bug Command in a terminal: a failed test drops a fast bug and you click the sky to shoot it down, a bug gets through and a city falls, the tests going green fire a salvo that rebuilds it, and a commit is a sure hit](../../docs/images/bug-command-terminal.gif)
+
+The strip on its own, as the mod draws it:
+
+![The Bug Command strip: six cities and three silos the width of the terminal, red bug trails, blue counter missiles, blasts, and the mouse pointer firing](../../docs/images/bug-command.gif)
+
+Both GIFs are drawn by the Arcade's own code from a scripted session (a read, a failing test, an
+edit, passing tests, a commit), with the mouse clicks played into the sky's own pointer handler;
+the window around the strip is a mock up of a terminal.
+
 - **While Claude works** a bug falls now and then, a red trail from the top towards a city. **A failed tool** drops a fast one (`INCOMING`).
 - **Every finished tool call** fires a shot from the nearest silo at the lowest bug; most of them hit. A blast takes out every bug inside it, and each bug it takes out blasts too.
 - **Moments**: a small one is a shot (or a flare in an empty sky), a medium one a sure hit, a big one a salvo at every bug in the sky that also rebuilds a fallen city (`BONUS CITY`).
