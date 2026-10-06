@@ -1,6 +1,6 @@
 // Built by scripts/build.sh from src/ with esbuild@0.25.10. Do not edit: edit src/ and rebuild.
 // src/arcade.tsx
-import { atom as atom10, read as read10, update as update9 } from "claude-code";
+import { atom as atom11, read as read11, update as update10 } from "claude-code";
 
 // src/games/dragon-lair.tsx
 import { atom as atom2, read as read2, update } from "claude-code";
@@ -61,8 +61,8 @@ const MOUTH = { x: 26, y: BASE + 2 };
 const NOSTRIL = { x: 25, y: BASE + 2 };
 const EYE = { x: 19, y: BASE + 2 };
 function draw(ink, columns, pose2, dx = 0, dy = 0) {
-  const put3 = (part, frame8) => {
-    const rows = part.frames[frame8] ?? Object.values(part.frames)[0] ?? [];
+  const put4 = (part, frame9) => {
+    const rows = part.frames[frame9] ?? Object.values(part.frames)[0] ?? [];
     rows.forEach((row, y) => {
       for (let x = 0; x < row.length; x++) {
         if (row[x] !== "#") continue;
@@ -72,18 +72,18 @@ function draw(ink, columns, pose2, dx = 0, dy = 0) {
       }
     });
   };
-  put3(TAIL, pose2.tail);
-  put3(BODY, pose2.body);
-  put3(LEGS, pose2.legs);
-  put3(WING, pose2.wing);
-  put3(HEAD, pose2.head);
+  put4(TAIL, pose2.tail);
+  put4(BODY, pose2.body);
+  put4(LEGS, pose2.legs);
+  put4(WING, pose2.wing);
+  put4(HEAD, pose2.head);
 }
 const BABY = {
   up: [".#....", "#.#...", ".###.#", "..####", "..#..."],
   down: ["......", "....#.", ".####.", "#.###.", "..#..."]
 };
-function drawBaby(ink, columns, x, y, frame8) {
-  BABY[frame8].forEach((row, dy) => {
+function drawBaby(ink, columns, x, y, frame9) {
+  BABY[frame9].forEach((row, dy) => {
     for (let dx = 0; dx < row.length; dx++) {
       if (row[dx] !== "#") continue;
       const px = Math.round(x) + dx;
@@ -115,12 +115,12 @@ async function notify($, text) {
   if (!!await isShown($, ID)) $.ui.toast(text);
 }
 const SHOW_FRAMES = { puff: 20, breath: 32, blaze: 48, roar: 72 };
-function workOf(tool9) {
-  if (tool9 === "Read") return "read";
-  if (tool9 === "Grep" || tool9 === "Glob" || tool9 === "LSP") return "search";
-  if (tool9 === "Edit" || tool9 === "Write" || tool9 === "NotebookEdit") return "edit";
-  if (tool9 === "WebFetch" || tool9 === "WebSearch" || tool9.startsWith("mcp__")) return "web";
-  if (tool9 === "Agent" || tool9 === "Task") return "agent";
+function workOf(tool10) {
+  if (tool10 === "Read") return "read";
+  if (tool10 === "Grep" || tool10 === "Glob" || tool10 === "LSP") return "search";
+  if (tool10 === "Edit" || tool10 === "Write" || tool10 === "NotebookEdit") return "edit";
+  if (tool10 === "WebFetch" || tool10 === "WebSearch" || tool10.startsWith("mcp__")) return "web";
+  if (tool10 === "Agent" || tool10 === "Task") return "agent";
   return "bash";
 }
 const SLOTS = [
@@ -355,10 +355,10 @@ function drawBabies(ink, W5) {
       continue;
     }
     const isBusy = sim.t - b.lastTool < 15;
-    const frame8 = cycle(["up", "down"], isBusy ? 2 : 4);
+    const frame9 = cycle(["up", "down"], isBusy ? 2 : 4);
     if (b.state === "home") {
       const k = Math.min(1, age2 / 14);
-      drawBaby(ink, W5, at.x + (HOME.x - at.x) * k, at.y + (HOME.y - at.y) * k, frame8);
+      drawBaby(ink, W5, at.x + (HOME.x - at.x) * k, at.y + (HOME.y - at.y) * k, frame9);
       continue;
     }
     if (b.state === "fall") {
@@ -366,7 +366,7 @@ function drawBabies(ink, W5) {
       continue;
     }
     const bob = cycle(at.y === 0 ? [0, 0, 1, 1] : [0, 0, -1, -1], isBusy ? 2 : 5);
-    drawBaby(ink, W5, at.x, at.y + bob, frame8);
+    drawBaby(ink, W5, at.x, at.y + bob, frame9);
   }
   if (hidden > 0) glyph(W5 - 2, 8, `+${Math.min(9, hidden)}`.slice(-1), 2);
 }
@@ -739,8 +739,8 @@ function step2() {
   }
   const isAsleep = !sim2.isTurn && sim2.working === 0 && sim2.t - sim2.lastActivity > SLEEP_AFTER;
   if (!isAsleep && !sim2.catch && sim2.laughUntil < sim2.t) {
-    const speed = sim2.working > 0 ? 0.5 : sim2.isTurn ? 0.3 : 0.1;
-    sim2.dogX += sim2.dogFace * speed;
+    const speed2 = sim2.working > 0 ? 0.5 : sim2.isTurn ? 0.3 : 0.1;
+    sim2.dogX += sim2.dogFace * speed2;
     if (sim2.dogX < 0 || sim2.dogX > sim2.W - 10) sim2.dogFace = -sim2.dogFace;
   }
   if ((sim2.isTurn || sim2.working > 0) && !show && sim2.t >= sim2.nextDuck && !sim2.ducks.some((d) => d.state === "fly")) {
@@ -1222,8 +1222,8 @@ function frame3() {
   for (let y = TOP + 1; y < H - 1; y++) ring.push([W - 1, y]);
   for (let x = W - 1; x >= 0; x--) ring.push([x, H - 1]);
   for (let y = H - 2; y > TOP; y--) ring.push([0, y]);
-  const speed = isSpinning ? 1 : 4;
-  const phase = Math.floor(sim3.t / speed);
+  const speed2 = isSpinning ? 1 : 4;
+  const phase = Math.floor(sim3.t / speed2);
   ring.forEach(([x, y], i) => {
     let isOn = (i + phase) % 4 === 0;
     if (isWinning) isOn = sim3.win === "pair" ? Math.floor(sim3.t / 3) % 2 === 0 : (i + sim3.t) % 2 === 0;
@@ -1257,9 +1257,9 @@ function frame3() {
   for (const c of sim3.coins) set(c.x, c.y, (c.age + Math.round(c.x)) % 3 === 0 ? 16777215 : 16765773);
   if (isWinning) {
     const text = isJackpot ? sim3.payout > 0 ? cycle2(["JACKPOT!", `+${sim3.payout}`], 8) : "JACKPOT!" : sim3.payout > 0 ? `+${sim3.payout}` : "";
-    const start9 = Math.floor((W - text.length) / 2);
+    const start10 = Math.floor((W - text.length) / 2);
     const fg = isJackpot ? hueColour(sim3.t * 40 % 360) : 16765773;
-    text.split("").forEach((ch, i) => over2.set(start9 + i, { ch, fg }));
+    text.split("").forEach((ch, i) => over2.set(start10 + i, { ch, fg }));
   } else if (sim3.queue.some((s) => s.isGolden) || sim3.spin?.isGolden) {
     "GOLDEN".split("").forEach((ch, i) => over2.set(11 + i, { ch, fg: cycle2([16765773, 16773800], 4) }));
   }
@@ -1515,12 +1515,12 @@ async function notify4($, text) {
   if (!!await isShown($, ID4)) $.ui.toast(text);
 }
 const SHOW_FRAMES3 = { ink: 24, plane: 260, rampage: 110, conquer: 150 };
-function workOf2(tool9) {
-  if (tool9 === "Read") return "read";
-  if (tool9 === "Grep" || tool9 === "Glob" || tool9 === "LSP") return "search";
-  if (tool9 === "Edit" || tool9 === "Write" || tool9 === "NotebookEdit") return "edit";
-  if (tool9 === "WebFetch" || tool9 === "WebSearch" || tool9.startsWith("mcp__")) return "web";
-  if (tool9 === "Agent" || tool9 === "Task") return "agent";
+function workOf2(tool10) {
+  if (tool10 === "Read") return "read";
+  if (tool10 === "Grep" || tool10 === "Glob" || tool10 === "LSP") return "search";
+  if (tool10 === "Edit" || tool10 === "Write" || tool10 === "NotebookEdit") return "edit";
+  if (tool10 === "WebFetch" || tool10 === "WebSearch" || tool10.startsWith("mcp__")) return "web";
+  if (tool10 === "Agent" || tool10 === "Task") return "agent";
   return "bash";
 }
 const sim4 = {
@@ -1622,21 +1622,21 @@ function moodOf2(a) {
   if (a === "sad" || a === "sleep" || a === "idle") return a;
   return "work";
 }
-function moveTo(tx, ty, speed) {
+function moveTo(tx, ty, speed2) {
   tx = clamp2(tx, 0, sim4.W - OCTO_WIDTH);
   const dx = tx - sim4.ox;
   const dy = ty - sim4.oy;
   sim4.isMoving = Math.abs(dx) > 0.5;
   if (sim4.isMoving) {
     sim4.face = dx > 0 ? 1 : -1;
-    sim4.ox += Math.sign(dx) * Math.min(speed, Math.abs(dx));
+    sim4.ox += Math.sign(dx) * Math.min(speed2, Math.abs(dx));
   }
   if (Math.abs(dy) > 0.1) sim4.oy += Math.sign(dy) * Math.min(0.5, Math.abs(dy));
   return !sim4.isMoving && Math.abs(dy) <= 0.1;
 }
-function wander(speed, ty) {
+function wander(speed2, ty) {
   if (every2(150)) sim4.wanderX = rand4(0, sim4.W - OCTO_WIDTH);
-  moveTo(sim4.wanderX, ty, speed);
+  moveTo(sim4.wanderX, ty, speed2);
 }
 function nearest() {
   let best = -1;
@@ -1652,19 +1652,19 @@ function nearest() {
   });
   return best;
 }
-function smash(rate, speed, isBig) {
+function smash(rate, speed2, isBig) {
   let b = sim4.city[sim4.target];
   if (!b || !isStanding(b)) {
     sim4.target = nearest();
     b = sim4.city[sim4.target];
   }
   if (!b) {
-    wander(speed, GROUND_Y);
+    wander(speed2, GROUND_Y);
     return;
   }
   const isRight = b.x + b.w / 2 > sim4.ox + OCTO_WIDTH / 2;
   const tx = isRight ? b.x - OCTO_WIDTH + 3 : b.x + b.w - 3;
-  const isThere = moveTo(tx, GROUND_Y, speed);
+  const isThere = moveTo(tx, GROUND_Y, speed2);
   if (!isThere) return;
   sim4.face = isRight ? 1 : -1;
   sim4.isSmashing = true;
@@ -1837,7 +1837,7 @@ function stepBabies2() {
 function drawBabies2(buf) {
   sim4.babies.slice(0, 6).forEach((b, i) => {
     const isBusy = sim4.t - b.lastTool < 15;
-    const frame8 = BABY2[Math.floor(sim4.t / (isBusy ? 2 : 5)) % 2];
+    const frame9 = BABY2[Math.floor(sim4.t / (isBusy ? 2 : 5)) % 2];
     let x = sim4.ox + (sim4.face > 0 ? -7 * (i + 1) : OCTO_WIDTH + 2 + 7 * i);
     let y = Math.min(PH2 - 4, sim4.oy + 4 + i % 2 * 3 + cycle3([0, 1], isBusy ? 3 : 6));
     if (b.state === "home") {
@@ -1846,7 +1846,7 @@ function drawBabies2(buf) {
       y += (sim4.oy + 4 - y) * k;
     }
     if (b.state === "fall") y += b.y;
-    mask2(buf, frame8, x, y, BABY_INK, sim4.face < 0);
+    mask2(buf, frame9, x, y, BABY_INK, sim4.face < 0);
   });
 }
 function put2(buf, x, y, color) {
@@ -2602,7 +2602,7 @@ function frame6() {
   };
   const stamp = (rows2, x, y) => rows2.forEach((row, dy) => [...row].forEach((c, dx) => c === "#" && set(x + dx, y + dy)));
   const over2 = /* @__PURE__ */ new Map();
-  const glyph4 = (x, cell, ch) => {
+  const glyph5 = (x, cell, ch) => {
     const xi = Math.round(x);
     if (xi > 0 && xi < W3 - 1 && cell >= 0 && cell < ROWS6) over2.set(cell * W3 + xi, ch);
   };
@@ -2634,12 +2634,12 @@ function frame6() {
   }
   for (let i = 0; i < Math.min(3, p.poops); i++) {
     stamp(POOP, 1 + i * 4 - 0, floor - POOP.length);
-    if (sim6.t % 12 < 8) glyph4(2 + i * 4, 2, "~");
+    if (sim6.t % 12 < 8) glyph5(2 + i * 4, 2, "~");
   }
   for (const q of sim6.particles) {
     if (q.age < 0) continue;
     if (q.art === "heart") stamp(HEART, q.x, q.y);
-    else glyph4(q.x, Math.floor(q.y / 2), q.ch ?? "*");
+    else glyph5(q.x, Math.floor(q.y / 2), q.ch ?? "*");
   }
   const words = new Uint32Array(W3 * ROWS6 * 3);
   for (let cy = 0; cy < ROWS6; cy++) {
@@ -2687,8 +2687,8 @@ async function celebrateMoments6($, found) {
 const start6 = async ($, e, next) => {
   sim6.now = await $.clock.now();
   const saved = await $.store.get("tama.pet");
-  const start9 = saved ?? fresh(sim6.now, 1);
-  sim6.pet = await update6($, pet, () => age(start9, sim6.now));
+  const start10 = saved ?? fresh(sim6.now, 1);
+  sim6.pet = await update6($, pet, () => age(start10, sim6.now));
   await $.store.set("tama.pet", sim6.pet);
   await $.command.register({
     name: "tama",
@@ -2906,8 +2906,8 @@ function choose(shape) {
       const bump = heights.slice(1).reduce((s, height, i) => s + Math.abs(height - heights[i]), 0);
       const value = -0.51 * heights.reduce((s, height) => s + height, 0) + 0.76 * lines - 0.36 * holes - 0.18 * bump;
       if (!best || value > best.value) {
-        const start9 = Math.floor((G - widthOf(cells)) / 2);
-        best = { piece: { cells, col: start9, targetCol: col, row: -2, targetRow: row }, value };
+        const start10 = Math.floor((G - widthOf(cells)) / 2);
+        best = { piece: { cells, col: start10, targetCol: col, row: -2, targetRow: row }, value };
       }
     }
   }
@@ -3247,6 +3247,503 @@ const render8 = async ($, e, next) => {
 };
 const game8 = { id: ID8, title: "Bug Command" };
 
+// src/games/dario.tsx
+import { read as read10, update as update9, atom as atom10 } from "claude-code";
+const ID9 = "dario";
+const RASTER8 = "course";
+const ROWS9 = 8;
+const PH3 = ROWS9 * 2;
+const FPS_MS8 = 66;
+const MIN_COLUMNS4 = 24;
+const MAX_COLUMNS4 = 512;
+const SLEEP_AFTER2 = 2 * 60 * 1e3 / FPS_MS8;
+const INK7 = 16777216;
+const NONE7 = 16777216;
+const EMPTY3 = 4294967295;
+const GREY3 = 9079434;
+const GOLD = 16766011;
+const RED2 = 15017249;
+const GROUND2 = PH3 - 2;
+const FEET = GROUND2 - 1;
+const HERO_H = 7;
+const HERO_W = 6;
+const JUMP_V = -1.25;
+const GRAVITY = 0.15;
+const AIR_SPEED = 1.4;
+const PALETTE2 = {
+  R: RED2,
+  // cap and shirt
+  S: 16560240,
+  // skin
+  B: 2111724,
+  // overalls
+  K: 8007173,
+  // hair and shoes
+  N: 10506797,
+  // the bug
+  W: 16579836,
+  // eyes, clouds
+  Y: 16300032,
+  // a ? block
+  D: 8007173,
+  // the mark on a ? block
+  E: 10242586,
+  // a used block
+  G: 43008,
+  // pipe
+  L: 7328623,
+  // pipe highlight
+  C: GOLD,
+  // coin
+  P: 11579568,
+  // flag pole
+  F: 4170573
+  // flag, bush
+};
+const HERO_RUN = [
+  [".RRR..", "RRRRRR", ".KSKS.", ".SSSS.", "RBBBR.", ".BBBB.", ".K..K."],
+  [".RRR..", "RRRRRR", ".KSKS.", ".SSSS.", "RBBBR.", ".BBBB.", "K....K"]
+];
+const HERO_STAND = [".RRR..", "RRRRRR", ".KSKS.", ".SSSS.", "RBBBR.", ".BBBB.", ".KK.KK"];
+const HERO_JUMP = [".RRR.S", "RRRRRR", ".KSKS.", ".SSSS.", "RBBBB.", ".BBBB.", "K...K."];
+const HERO_SIT = ["......", "......", ".RRR..", "RRRRRR", ".KSKS.", "RBBBB.", "KBBBBK"];
+const BUG_WALK = [
+  [".NNN.", "NWNWN", "NNNNN", "K...K"],
+  [".NNN.", "NWNWN", "NNNNN", ".K.K."]
+];
+const BUG_FLAT = ["NNNNN", "K...K"];
+const BLOCK = ["YYYY", "YDDY", "YYDY", "YYYY"];
+const BLOCK_USED = ["EEEE", "EEEE", "EEEE", "EEEE"];
+const PIPE = ["LGGGGG", "LGGGGG", ".LGGG.", ".LGGG."];
+const CLOUD = ["..WWW...", ".WWWWWW.", "WWWWWWWW"];
+const BUSH = ["..FF..", ".FFFF.", "FFFFFF"];
+const COIN = [".C.", "CCC", ".C."];
+const sim9 = {
+  t: 0,
+  W: 0,
+  requestId: null,
+  isBlitting: false,
+  isTurn: false,
+  working: 0,
+  lastActivity: 0,
+  hero: { x: 10, y: 0, vy: 0, isAir: false },
+  // The flag sequence: Dario slides down the pole while the course stands still.
+  flagUntil: -1,
+  hurtUntil: -1,
+  things: [],
+  scenery: [],
+  particles: [],
+  banner: null,
+  nextPipe: 90,
+  // How far the course has run, for the mortar lines.
+  course: 0,
+  nextScenery: 0,
+  gain: { coins: 0, stomps: 0, hits: 0, clears: 0 },
+  stats: ""
+};
+const rand5 = (a, b) => a + Math.random() * (b - a);
+const pick5 = (list2) => list2[Math.floor(Math.random() * list2.length)];
+const clamp4 = (v, a, b) => Math.max(a, Math.min(b, v));
+const stageOf = (clears) => `${Math.floor(clears / 4) + 1}-${clears % 4 + 1}`;
+function fit2(W5) {
+  if (W5 === sim9.W) return;
+  sim9.W = W5;
+  sim9.hero.x = clamp4(Math.floor(W5 * 0.22), 4, 40);
+  sim9.things = sim9.things.filter((t) => t.x < W5 + 8);
+}
+function banner3(text, color, frames) {
+  sim9.banner = { text, color, until: sim9.t + frames };
+}
+const glyph4 = (x, y, ch, life, color) => sim9.particles.push({ x, y, vx: 0, vy: -0.15, age: 0, life, color, ch });
+function sparkle(x, y, colors, n = 8) {
+  for (let i = 0; i < n; i++) {
+    sim9.particles.push({ x, y, vx: rand5(-0.7, 0.7), vy: rand5(-0.8, 0.2), age: 0, life: Math.floor(rand5(10, 20)), color: pick5(colors), gravity: 0.05 });
+  }
+}
+function entry(gap = 10) {
+  const last2 = sim9.things.reduce((m, t) => Math.max(m, t.x), 0);
+  return Math.max(sim9.W + 2, last2 + gap);
+}
+function addBlock(counts) {
+  sim9.things.push({ kind: "block", x: entry(), y: 1, used: false, bumpAt: -1, counts });
+}
+function addBug(isDoomed, counts) {
+  sim9.things.push({ kind: "bug", x: entry(), flatAt: -1, isDoomed, hasHit: false, counts });
+}
+function addPole(counts, isWorld) {
+  sim9.things.push({ kind: "pole", x: entry(14), flag: 2, done: false, counts, isWorld });
+}
+const onScreen = () => sim9.things.length > 0;
+function jump() {
+  if (sim9.hero.isAir || sim9.flagUntil > sim9.t) return;
+  sim9.hero.isAir = true;
+  sim9.hero.vy = JUMP_V;
+}
+function speed() {
+  if (sim9.flagUntil > sim9.t) return 0;
+  if (sim9.hero.isAir) return AIR_SPEED;
+  if (sim9.working > 0) return 1;
+  if (sim9.isTurn) return 0.6;
+  return onScreen() ? 0.8 : 0;
+}
+function step7() {
+  sim9.t += 1;
+  const isAsleep = !sim9.isTurn && sim9.working === 0 && !onScreen() && sim9.t - sim9.lastActivity > SLEEP_AFTER2;
+  const v = speed();
+  const hx = sim9.hero.x;
+  for (const s of sim9.scenery) s.x -= s.kind === "cloud" ? v * 0.4 : v;
+  sim9.scenery = sim9.scenery.filter((s) => s.x > -10);
+  if (v > 0 && sim9.t >= sim9.nextScenery) {
+    sim9.scenery.push(Math.random() < 0.6 ? { kind: "cloud", x: sim9.W + 2, y: Math.floor(rand5(1, 5)) } : { kind: "bush", x: sim9.W + 2, y: GROUND2 - 3 });
+    sim9.nextScenery = sim9.t + Math.floor(rand5(30, 80));
+  }
+  if (sim9.working > 0 && sim9.t >= sim9.nextPipe) {
+    sim9.things.push({ kind: "pipe", x: entry(16) });
+    sim9.nextPipe = sim9.t + Math.floor(rand5(140, 260));
+  }
+  for (const t of sim9.things) {
+    t.x -= v;
+    if (t.kind === "bug" && t.flatAt < 0) t.x -= 0.3;
+  }
+  if (!sim9.hero.isAir && sim9.flagUntil < sim9.t) {
+    for (const t of sim9.things) {
+      const d = t.x - hx;
+      if (t.kind === "block" && !t.used && d <= 11 && d > -2) jump();
+      if (t.kind === "pipe" && d <= HERO_W + 3 && d > 0) jump();
+      if (t.kind === "bug" && t.isDoomed && t.flatAt < 0 && d <= 16 && d > 0) jump();
+    }
+  }
+  if (sim9.hero.isAir) {
+    sim9.hero.y += sim9.hero.vy;
+    sim9.hero.vy += GRAVITY;
+    if (sim9.hero.y >= 0) {
+      sim9.hero.y = 0;
+      sim9.hero.vy = 0;
+      sim9.hero.isAir = false;
+    }
+  }
+  const top = FEET - HERO_H + 1 + sim9.hero.y;
+  for (const t of sim9.things) {
+    const d = t.x - hx;
+    if (t.kind === "block" && !t.used && Math.abs(d - 1) < 4 && top <= t.y + 4 && sim9.hero.vy <= 0.2) {
+      t.used = true;
+      t.bumpAt = sim9.t;
+      sim9.hero.vy = Math.max(sim9.hero.vy, 0.2);
+      sim9.particles.push({ x: t.x, y: t.y - 3, vx: 0, vy: -0.5, age: 0, life: 12, color: GOLD, sprite: COIN, gravity: 0.06 });
+      if (t.counts) sim9.gain.coins += 1;
+    }
+    if (t.kind === "bug" && t.flatAt < 0 && Math.abs(d) < 5) {
+      if (sim9.hero.isAir && t.isDoomed) {
+        t.flatAt = sim9.t;
+        sim9.hero.vy = -0.9;
+        glyph4(t.x, GROUND2 - 6, "\u2726", 10, GOLD);
+        if (t.counts) sim9.gain.stomps += 1;
+      } else if (!t.isDoomed && !t.hasHit && sim9.hero.y > -4 && Math.abs(d) < 3) {
+        t.hasHit = true;
+        sim9.hurtUntil = sim9.t + 30;
+        banner3("OUCH", RED2, 30);
+        if (t.counts) sim9.gain.hits += 1;
+      }
+    }
+    if (t.kind === "pole" && !t.done && d <= HERO_W && sim9.flagUntil < 0) {
+      sim9.flagUntil = sim9.t + 45;
+      sim9.hero.isAir = false;
+      sim9.hero.vy = 0;
+      t.done = true;
+    }
+  }
+  if (sim9.flagUntil >= 0) {
+    const pole = sim9.things.find((t) => t.kind === "pole" && t.done);
+    const left = sim9.flagUntil - sim9.t;
+    if (pole && left > 15) {
+      sim9.hero.y = -Math.max(0, (left - 15) / 30) * 6;
+      pole.flag = Math.min(GROUND2 - 5, pole.flag + 0.35);
+    }
+    if (left === 15) {
+      sim9.hero.y = 0;
+      banner3(pole?.isWorld ? "WORLD CLEAR!" : "COURSE CLEAR!", GOLD, 60);
+      if (pole?.counts) sim9.gain.clears += 1;
+      if (pole?.isWorld) for (let i = 0; i < 4; i++) sparkle(rand5(4, sim9.W - 4), rand5(1, 6), [GOLD, RED2, 4170573, 5090295], 14);
+    }
+    if (left <= 0) sim9.flagUntil = -1;
+  }
+  sim9.things = sim9.things.filter((t) => t.x > -12 && !(t.kind === "bug" && t.flatAt >= 0 && sim9.t - t.flatAt > 12));
+  for (const p of sim9.particles) {
+    p.age += 1;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += p.gravity ?? 0;
+  }
+  sim9.particles = sim9.particles.filter((p) => p.age < p.life && p.x >= -3 && p.x < sim9.W && p.y >= -3 && p.y < PH3);
+  return isAsleep;
+}
+function put3(buf, x, y, color) {
+  x = Math.round(x);
+  y = Math.round(y);
+  if (x < 0 || x >= sim9.W || y < 0 || y >= PH3) return;
+  buf[y * sim9.W + x] = color;
+}
+function paint(buf, rows, x, y, only) {
+  rows.forEach((row, dy) => {
+    for (let dx = 0; dx < row.length; dx++) {
+      const c = PALETTE2[row[dx]];
+      if (c !== void 0) put3(buf, x + dx, y + dy, only ?? c);
+    }
+  });
+}
+function drawScene2(buf) {
+  for (const s of sim9.scenery) paint(buf, s.kind === "cloud" ? CLOUD : BUSH, s.x, s.y);
+  for (let x = 0; x < sim9.W; x++) {
+    put3(buf, x, GROUND2, 13126668);
+    put3(buf, x, GROUND2 + 1, (x + Math.floor(sim9.course)) % 4 === 0 ? 8007173 : 13126668);
+  }
+}
+function drawThings(buf) {
+  for (const t of sim9.things) {
+    if (t.kind === "block") {
+      const lift2 = t.bumpAt >= 0 && sim9.t - t.bumpAt < 4 ? -1 : 0;
+      paint(buf, t.used ? BLOCK_USED : BLOCK, t.x, t.y + lift2);
+    } else if (t.kind === "pipe") {
+      paint(buf, PIPE, t.x, GROUND2 - PIPE.length);
+    } else if (t.kind === "bug") {
+      if (t.flatAt >= 0) paint(buf, BUG_FLAT, t.x, GROUND2 - 2);
+      else paint(buf, BUG_WALK[Math.floor(sim9.t / 4) % 2], t.x, GROUND2 - 4);
+    } else if (t.kind === "pole") {
+      for (let y = 1; y < GROUND2; y++) put3(buf, t.x + 2, y, PALETTE2.P);
+      put3(buf, t.x + 2, 0, GOLD);
+      paint(buf, ["FF", "FFF", "FF"], t.x - 1, t.flag);
+    }
+  }
+}
+function drawHero(buf, isAsleep) {
+  const x = sim9.hero.x;
+  const y = FEET - HERO_H + 1 + Math.round(sim9.hero.y);
+  if (sim9.hurtUntil > sim9.t && sim9.t % 4 < 2) return;
+  if (isAsleep) return paint(buf, HERO_SIT, x, y);
+  if (sim9.hero.isAir || sim9.flagUntil > sim9.t) return paint(buf, HERO_JUMP, x, y);
+  if (speed() === 0) return paint(buf, HERO_STAND, x, y);
+  paint(buf, HERO_RUN[Math.floor(sim9.t / 3) % 2], x, y);
+}
+const statsLine8 = (s) => `${stageOf(s.clears)}  \u25CE ${s.coins}  \u272A ${s.stomps}  \u2717 ${s.hits}  \u2692 ${s.tools}`;
+function frame8(isAsleep, stats) {
+  const W5 = sim9.W;
+  const buf = new Uint32Array(W5 * PH3).fill(EMPTY3);
+  const over2 = /* @__PURE__ */ new Map();
+  const text = (x, row, s, color) => [...s].forEach((ch, i) => {
+    if (x + i >= 0 && x + i < W5 && row >= 0 && row < ROWS9) over2.set(row * W5 + x + i, { ch, color });
+  });
+  drawScene2(buf);
+  drawThings(buf);
+  drawHero(buf, isAsleep);
+  for (const p of sim9.particles) {
+    if (p.sprite) paint(buf, p.sprite, p.x, p.y);
+    else if (p.ch) text(Math.round(p.x), Math.floor(Math.round(p.y) / 2), p.ch, p.color);
+    else put3(buf, p.x, p.y, p.color);
+  }
+  if (isAsleep) text(sim9.hero.x + HERO_W, Math.floor((FEET - 4) / 2), "z", GREY3);
+  text(W5 - stats.length - 1, 0, stats, GREY3);
+  if (sim9.banner && sim9.t < sim9.banner.until && (sim9.banner.until - sim9.t) % 8 > 1) {
+    text(Math.floor((W5 - sim9.banner.text.length) / 2), 1, sim9.banner.text, sim9.banner.color);
+  }
+  const words = new Uint32Array(W5 * ROWS9 * 3);
+  for (let cy = 0; cy < ROWS9; cy++) {
+    for (let cx = 0; cx < W5; cx++) {
+      const i = (cy * W5 + cx) * 3;
+      const topPx = buf[cy * 2 * W5 + cx];
+      const bottom = buf[(cy * 2 + 1) * W5 + cx];
+      const g = over2.get(cy * W5 + cx);
+      if (g) {
+        words[i] = g.ch.codePointAt(0);
+        words[i + 1] = g.color;
+        words[i + 2] = NONE7;
+      } else if (topPx === EMPTY3 && bottom === EMPTY3) {
+        words[i] = 32;
+        words[i + 1] = INK7;
+        words[i + 2] = NONE7;
+      } else if (topPx === bottom) {
+        words[i] = 9608;
+        words[i + 1] = topPx;
+        words[i + 2] = NONE7;
+      } else if (bottom === EMPTY3) {
+        words[i] = 9600;
+        words[i + 1] = topPx;
+        words[i + 2] = NONE7;
+      } else if (topPx === EMPTY3) {
+        words[i] = 9604;
+        words[i + 1] = bottom;
+        words[i + 2] = NONE7;
+      } else {
+        words[i] = 9600;
+        words[i + 1] = topPx;
+        words[i + 2] = bottom;
+      }
+    }
+  }
+  return base648(new Uint8Array(words.buffer));
+}
+const B648 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+function base648(bytes) {
+  let out = "";
+  let i = 0;
+  for (; i + 2 < bytes.length; i += 3) {
+    const n = bytes[i] << 16 | bytes[i + 1] << 8 | bytes[i + 2];
+    out += B648[n >> 18 & 63] + B648[n >> 12 & 63] + B648[n >> 6 & 63] + B648[n & 63];
+  }
+  const rest = bytes.length - i;
+  if (rest === 1) {
+    const n = bytes[i] << 16;
+    out += B648[n >> 18 & 63] + B648[n >> 12 & 63] + "==";
+  } else if (rest === 2) {
+    const n = bytes[i] << 16 | bytes[i + 1] << 8;
+    out += B648[n >> 18 & 63] + B648[n >> 12 & 63] + B648[n >> 6 & 63] + "=";
+  }
+  return out;
+}
+const score6 = atom10({ plugin: "arcade", key: "darioScore" }, { coins: 0, stomps: 0, hits: 0, clears: 0, tools: 0 });
+const feat5 = atom10({ plugin: "arcade", key: "darioFeat" }, "");
+async function notify9($, text) {
+  if (await isShown($, ID9)) $.ui.toast(text);
+}
+async function save4($, change2) {
+  const next = await update9($, score6, change2);
+  sim9.stats = statsLine8(next);
+  await $.store.set("dario.score", next);
+  return next;
+}
+async function celebrate5($, label, show, isPractice = false) {
+  sim9.lastActivity = sim9.t;
+  const counts = !isPractice;
+  if (show === "hop") {
+    jump();
+    sparkle(sim9.hero.x + 3, FEET - HERO_H - 1, [GOLD, 16579836], 6);
+    return;
+  }
+  if (show === "stomp") {
+    const bug = sim9.things.find((t) => t.kind === "bug" && t.flatAt < 0 && t.x > sim9.hero.x);
+    if (bug) {
+      bug.isDoomed = true;
+      bug.counts = bug.counts || counts;
+    } else addBug(true, counts);
+  } else addPole(counts, show === "world");
+  if (isPractice) return;
+  const what = { hop: "", stomp: "a bug stomped", clear: "a course clear", world: "a world clear" };
+  await update9($, feat5, () => `${label}: ${what[show]}`);
+  const say2 = { hop: "", stomp: "Stomp", clear: "Course clear", world: "World clear" };
+  void notify9($, `\u{1F344} ${label}! ${say2[show]}!`);
+}
+const WORLD = /* @__PURE__ */ new Set(["merge", "release", "deploy", "streak", "record", "squad"]);
+async function celebrateMoments9($, found) {
+  for (const m of found) {
+    if (m.tier === "small") await celebrate5($, m.label, "hop");
+    else if (m.tier === "medium") await celebrate5($, m.label, "stomp");
+    else await celebrate5($, m.label, WORLD.has(m.kind) ? "world" : "clear");
+  }
+}
+const start9 = async ($, e, next) => {
+  const saved = await $.store.get("dario.score");
+  if (saved) await update9($, score6, () => saved);
+  sim9.stats = statsLine8(saved ?? await read10($, score6));
+  await $.command.register({
+    name: "dario",
+    description: 'Dario above the prompt: the score. "/dario coin|stomp|clear|world|ouch" to show off.'
+  });
+  $.clock.every(FPS_MS8, () => {
+    const requestId = sim9.requestId;
+    if (requestId === null || sim9.W === 0) return;
+    sim9.course += speed();
+    const isAsleep = step7();
+    if (sim9.gain.coins + sim9.gain.stomps + sim9.gain.hits + sim9.gain.clears > 0) {
+      const gain = sim9.gain;
+      sim9.gain = { coins: 0, stomps: 0, hits: 0, clears: 0 };
+      void save4($, (old) => ({
+        ...old,
+        coins: old.coins + gain.coins,
+        stomps: old.stomps + gain.stomps,
+        hits: old.hits + gain.hits,
+        clears: old.clears + gain.clears
+      })).then((s) => {
+        if (gain.coins > 0 && Math.floor(s.coins / 100) > Math.floor((s.coins - gain.coins) / 100)) {
+          banner3("1UP", 4170573, 50);
+          void notify9($, `\u{1F344} 1UP: ${s.coins} coins.`);
+        }
+      });
+    }
+    if (sim9.isBlitting) return;
+    sim9.isBlitting = true;
+    void $.ui.blit({ requestId, key: RASTER8, cells: frame8(isAsleep, sim9.stats), columns: sim9.W }).then((r) => {
+      if (r.deny !== void 0) sim9.requestId = null;
+    }).finally(() => {
+      sim9.isBlitting = false;
+    });
+  });
+  return next(e);
+};
+const command9 = async ($, e) => {
+  const arg = (e.args ?? "").trim();
+  if (arg === "coin") {
+    addBlock(false);
+    sim9.lastActivity = sim9.t;
+    return { text: "Practice: a ? block, nothing counts." };
+  }
+  if (arg === "ouch") {
+    addBug(false, false);
+    sim9.lastActivity = sim9.t;
+    return { text: "Practice: a bug walks in, nothing counts." };
+  }
+  const practice = { stomp: "stomp", clear: "clear", world: "world" };
+  const show = practice[arg];
+  if (show) {
+    await celebrate5($, "Practice", show, true);
+    return { text: "Practice: nothing counts." };
+  }
+  const last2 = await read10($, feat5);
+  return {
+    text: `${statsLine8(await read10($, score6))}${last2 ? `
+Last win: ${last2}` : ""}
+Dario runs while Claude works. Every tool call brings a ? block and a coin, a failed tool sends a bug that knocks into Dario, a medium moment (a commit, a skill, a sent message) stomps a bug, a big one (a finished task list, tests back to green) is a course clear at the flag pole, and a merge, release or deploy a world clear with fireworks. The first number is the world and course; \u25CE coins (every hundred is a 1UP), \u272A bugs stomped, \u2717 knocks, \u2692 tool calls.`
+  };
+};
+const prompt9 = async ($, e, next) => {
+  sim9.isTurn = true;
+  sim9.lastActivity = sim9.t;
+  return next(e);
+};
+const turn9 = async ($, e, next) => {
+  if (e.agentId === void 0) sim9.isTurn = false;
+  sim9.lastActivity = sim9.t;
+  return next(e);
+};
+const tool9 = async ($, e, next) => {
+  if (e.agentId !== void 0) return next(e);
+  sim9.working += 1;
+  sim9.lastActivity = sim9.t;
+  const ran = await next(e).finally(() => {
+    sim9.working = Math.max(0, sim9.working - 1);
+    sim9.lastActivity = sim9.t;
+  });
+  if (ran.deny !== void 0) return ran;
+  const counted = await update9($, score6, (old) => ({ ...old, tools: old.tools + 1 }));
+  sim9.stats = statsLine8(counted);
+  if (counted.tools % 10 === 0) void $.store.set("dario.score", counted);
+  if (ran.isError === true) addBug(false, true);
+  else if (sim9.things.filter((t) => t.kind === "block" && !t.used).length < 2) addBlock(true);
+  else sim9.gain.coins += 1;
+  return ran;
+};
+const render9 = async ($, e, next) => {
+  const below = await next(e);
+  if (e.surface !== "terminal" || e.props.hasSurvey || !await isShown($, ID9)) {
+    sim9.requestId = null;
+    return below;
+  }
+  const { Box, Raster } = $.ui.resolve(e);
+  fit2(clamp4(e.props.bodyColumns, MIN_COLUMNS4, MAX_COLUMNS4));
+  sim9.requestId = e.requestId;
+  sim9.stats = statsLine8(await read10($, score6));
+  return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Raster, { key: RASTER8, columns: sim9.W, rows: ROWS9, cells: frame8(false, sim9.stats) }), below ?? null);
+};
+const game9 = { id: ID9, title: "Dario" };
+
 // src/milestones.ts
 const MARATHON_MS = 10 * 60 * 1e3;
 const MARATHON_TOOLS = 30;
@@ -3268,7 +3765,7 @@ const COMMANDS = [
   { test: /\bgit\b[^|;&]*\bpush\b/, tier: "medium", kind: "push", label: "Push" }
 ];
 const TESTS = /\b(npm|pnpm|yarn|bun)\s+(run\s+)?test\b|\bvitest\b|\bjest\b|\bpytest\b|\bgo\s+test\b|\bcargo\s+test\b|\bplugin\s+test\b|\brspec\b|\bphpunit\b/;
-const EMPTY3 = /nothing to commit|no changes added|Everything up-to-date/;
+const EMPTY4 = /nothing to commit|no changes added|Everything up-to-date/;
 const DELIVERABLE = /\.(pdf|docx?|xlsx?|pptx?|key|pages|numbers|csv|png|jpe?g|svg|gif|mp4|mp3|wav|epub)$/i;
 const OUTWARD = /^mcp__.+__.*(send|create|post|publish|schedule|upload|reply|forward|invite|share|comment)/i;
 const PRAISE = [
@@ -3312,7 +3809,7 @@ const config = {
   mediumCommands: null,
   praise: PRAISE
 };
-const turn9 = { startedAt: 0, tools: 0, errors: 0, subagents: 0, skills: [] };
+const turn10 = { startedAt: 0, tools: 0, errors: 0, subagents: 0, skills: [] };
 const session = { tools: 0, tasksMade: 0, tasksDone: 0, testsFailed: false, todosDone: false };
 function configureMilestones(options) {
   config.bigSkills = list(options.big_skills);
@@ -3333,60 +3830,60 @@ function streakMilestones(stored, now) {
   };
 }
 function promptMilestones(text, now) {
-  turn9.startedAt = now;
-  turn9.tools = 0;
-  turn9.errors = 0;
-  turn9.subagents = 0;
-  turn9.skills = [];
+  turn10.startedAt = now;
+  turn10.tools = 0;
+  turn10.errors = 0;
+  turn10.subagents = 0;
+  turn10.skills = [];
   const said = ` ${text.toLowerCase()} `;
   const isPraise = config.praise.some((word2) => new RegExp(`(^|[^\\p{L}])${word2}([^\\p{L}]|$)`, "u").test(said));
   return isPraise ? [{ tier: "medium", kind: "praise", label: "You said something nice" }] : [];
 }
 function skillSeen(skill) {
-  turn9.skills.push(skill);
+  turn10.skills.push(skill);
 }
 function subagentMilestones() {
-  turn9.subagents += 1;
+  turn10.subagents += 1;
   const found = [{ tier: "medium", kind: "subagent", label: "A subagent finished" }];
-  if (turn9.subagents === SQUAD) found.push({ tier: "big", kind: "squad", label: `${SQUAD} subagents done` });
+  if (turn10.subagents === SQUAD) found.push({ tier: "big", kind: "squad", label: `${SQUAD} subagents done` });
   return found;
 }
 function turnMilestones(now) {
   const found = [];
-  for (const skill of new Set(turn9.skills)) {
+  for (const skill of new Set(turn10.skills)) {
     const name = skill.toLowerCase().replace(/^.*:/, "");
     const full = skill.toLowerCase();
     if ([name, full].some((n) => config.quietSkills.includes(n))) continue;
     const isBig = [name, full].some((n) => config.bigSkills.includes(n));
     found.push({ tier: isBig ? "big" : "medium", kind: "skill", label: `Skill: ${name}` });
   }
-  const isMarathon = turn9.startedAt > 0 && now - turn9.startedAt > MARATHON_MS && turn9.tools >= MARATHON_TOOLS && turn9.errors === 0;
+  const isMarathon = turn10.startedAt > 0 && now - turn10.startedAt > MARATHON_MS && turn10.tools >= MARATHON_TOOLS && turn10.errors === 0;
   found.push(
     isMarathon ? { tier: "big", kind: "marathon", label: "A marathon turn, no errors" } : { tier: "small", kind: "turn", label: "Turn done" }
   );
-  turn9.skills = [];
+  turn10.skills = [];
   return found;
 }
 function toolMilestones(e, ran) {
-  const tool9 = String(e.tool);
+  const tool10 = String(e.tool);
   const input = e;
-  turn9.tools += 1;
+  turn10.tools += 1;
   session.tools += 1;
   const found = [];
   if (RECORDS.includes(session.tools)) found.push({ tier: "big", kind: "record", label: `${session.tools} tool calls` });
-  else if (turn9.tools % 10 === 0) found.push({ tier: "small", kind: "tools", label: `${turn9.tools} tools this turn` });
+  else if (turn10.tools % 10 === 0) found.push({ tier: "small", kind: "tools", label: `${turn10.tools} tools this turn` });
   if (ran.isError === true) {
-    turn9.errors += 1;
-    if (tool9 === "Bash" && TESTS.test(String(input.command ?? ""))) session.testsFailed = true;
+    turn10.errors += 1;
+    if (tool10 === "Bash" && TESTS.test(String(input.command ?? ""))) session.testsFailed = true;
     return found;
   }
-  if (tool9 === "Bash") {
-    const command9 = String(input.command ?? "");
-    if (EMPTY3.test(ran.text ?? "")) return found;
-    if (config.bigCommands?.test(command9)) return [...found, { tier: "big", kind: "command", label: "Big command done" }];
-    const known = COMMANDS.find((c) => c.test.test(command9));
+  if (tool10 === "Bash") {
+    const command10 = String(input.command ?? "");
+    if (EMPTY4.test(ran.text ?? "")) return found;
+    if (config.bigCommands?.test(command10)) return [...found, { tier: "big", kind: "command", label: "Big command done" }];
+    const known = COMMANDS.find((c) => c.test.test(command10));
     if (known) return [...found, { tier: known.tier, kind: known.kind, label: known.label }];
-    if (TESTS.test(command9)) {
+    if (TESTS.test(command10)) {
       const wasRed = session.testsFailed;
       session.testsFailed = false;
       return [
@@ -3394,35 +3891,35 @@ function toolMilestones(e, ran) {
         wasRed ? { tier: "big", kind: "green", label: "Tests back to green" } : { tier: "medium", kind: "tests", label: "Tests passed" }
       ];
     }
-    if (config.mediumCommands?.test(command9)) found.push({ tier: "medium", kind: "command", label: "Command done" });
+    if (config.mediumCommands?.test(command10)) found.push({ tier: "medium", kind: "command", label: "Command done" });
     return found;
   }
-  if (tool9 === "Write" || tool9 === "Edit" || tool9 === "NotebookEdit") {
+  if (tool10 === "Write" || tool10 === "Edit" || tool10 === "NotebookEdit") {
     const path = String(input.file_path ?? input.notebook_path ?? "");
     const name = path.split("/").pop() ?? path;
     const lines = String(input.content ?? "").split("\n").length;
-    if (tool9 === "Write" && DELIVERABLE.test(path)) found.push({ tier: "big", kind: "deliverable", label: `Made ${name}` });
-    else if (tool9 === "Write" && lines > LONG_FILE_LINES) found.push({ tier: "medium", kind: "long", label: `Wrote ${name}` });
+    if (tool10 === "Write" && DELIVERABLE.test(path)) found.push({ tier: "big", kind: "deliverable", label: `Made ${name}` });
+    else if (tool10 === "Write" && lines > LONG_FILE_LINES) found.push({ tier: "medium", kind: "long", label: `Wrote ${name}` });
     else found.push({ tier: "small", kind: "file", label: `Saved ${name}` });
     return found;
   }
-  if (tool9 === "Artifact") {
+  if (tool10 === "Artifact") {
     const action = String(input.action ?? "publish");
     if (action === "publish" && input.asset !== true && (input.file_path || input.type_url)) {
       found.push({ tier: "big", kind: "page", label: "Published a page" });
     }
     return found;
   }
-  if (tool9 === "ExitPlanMode") return [...found, { tier: "medium", kind: "plan", label: "Plan approved" }];
-  if (tool9 === "TodoWrite") {
+  if (tool10 === "ExitPlanMode") return [...found, { tier: "medium", kind: "plan", label: "Plan approved" }];
+  if (tool10 === "TodoWrite") {
     const todos = Array.isArray(input.todos) ? input.todos : [];
     const isDone = todos.length >= 3 && todos.every((t) => t.status === "completed");
     if (isDone && !session.todosDone) found.push({ tier: "big", kind: "todos", label: `All ${todos.length} tasks done` });
     session.todosDone = isDone;
     return found;
   }
-  if (tool9 === "TaskCreate") session.tasksMade += 1;
-  if (tool9 === "TaskUpdate" && input.status === "completed") {
+  if (tool10 === "TaskCreate") session.tasksMade += 1;
+  if (tool10 === "TaskUpdate" && input.status === "completed") {
     session.tasksDone += 1;
     if (session.tasksMade >= 3 && session.tasksDone >= session.tasksMade) {
       found.push({ tier: "big", kind: "todos", label: `All ${session.tasksMade} tasks done` });
@@ -3431,18 +3928,18 @@ function toolMilestones(e, ran) {
     }
     return found;
   }
-  if (OUTWARD.test(tool9)) {
-    const verb = tool9.match(/(send|create|post|publish|schedule|upload|reply|forward|invite|share|comment)/i)?.[1] ?? "send";
+  if (OUTWARD.test(tool10)) {
+    const verb = tool10.match(/(send|create|post|publish|schedule|upload|reply|forward|invite|share|comment)/i)?.[1] ?? "send";
     found.push({ tier: "medium", kind: "send", label: `${verb[0].toUpperCase()}${verb.slice(1).toLowerCase()} done` });
   }
   return found;
 }
 
 // src/arcade.tsx
-const GAMES = [game, game3, game5, game6, game7, game4, game2, game8];
+const GAMES = [game, game3, game5, game6, game7, game4, game2, game8, game9];
 const MODES = ["random", "rotate", "fixed", "all", "off"];
-const ALIASES = { "dragon-lair": "dragon", octo: "octopus", "octo-invader": "octopus", "duck-hunt": "duck", duckhunt: "duck", ducks: "duck", "bug-command": "bugs", bugcommand: "bugs", bug: "bugs", missile: "bugs", "missile-command": "bugs" };
-const pickedFor = atom10({ plugin: "arcade", key: "pickedFor" }, "");
+const ALIASES = { "dragon-lair": "dragon", octo: "octopus", "octo-invader": "octopus", "duck-hunt": "duck", duckhunt: "duck", ducks: "duck", "bug-command": "bugs", bugcommand: "bugs", bug: "bugs", missile: "bugs", "missile-command": "bugs", mario: "dario", runner: "dario", "block-runner": "dario" };
+const pickedFor = atom11({ plugin: "arcade", key: "pickedFor" }, "");
 function gameId(word2) {
   const id = ALIASES[word2.toLowerCase()] ?? word2.toLowerCase();
   return GAMES.some((g) => g.id === id) ? id : void 0;
@@ -3454,7 +3951,7 @@ function poolOf(value) {
   const ids = String(value ?? "").split(/[\s,]+/).map((w) => w ? gameId(w) : void 0).filter((id) => id !== void 0);
   return ids.length > 0 ? [...new Set(ids)] : GAMES.map((g) => g.id);
 }
-async function pick5($, mode, pool) {
+async function pick6($, mode, pool) {
   if (mode === "off") return [];
   if (mode === "all") return pool;
   if (mode === "fixed") return pool.slice(0, 1);
@@ -3465,14 +3962,14 @@ async function pick5($, mode, pool) {
   return [next];
 }
 async function apply($, mode, pool) {
-  const ids = await pick5($, mode, pool);
-  await update9($, shown, () => ids);
-  await update9($, pickedFor, () => `${mode}|${pool.join(",")}`);
+  const ids = await pick6($, mode, pool);
+  await update10($, shown, () => ids);
+  await update10($, pickedFor, () => `${mode}|${pool.join(",")}`);
   return ids;
 }
 const title = (id) => GAMES.find((g) => g.id === id)?.title ?? id;
 async function status($, mode, pool) {
-  const on = await read10($, shown);
+  const on = await read11($, shown);
   const rows = GAMES.map((g) => `${on.includes(g.id) ? "\u25CF" : "\u25CB"} ${g.title} (${g.id})${pool.includes(g.id) ? "" : ", not in the pool"}`);
   const setting = mode === "fixed" ? `fixed on ${title(pool[0] ?? "")}` : mode === "off" ? "off" : `${mode}, from ${pool.map(title).join(", ")}`;
   return `Arcade on this account: ${setting}.
@@ -3481,7 +3978,7 @@ ${rows.join("\n")}
 "/arcade <game>" swaps this terminal's game, "/arcade <game> all" pins it for every terminal, "/arcade random|rotate|all|off" sets how new terminals pick, "/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal's game. "/arcade hide" clears this terminal only.`;
 }
 const over = (options) => `${String(options.mode ?? "")}|${String(options.pool ?? "")}`;
-async function save4($, options, mode, pool) {
+async function save5($, options, mode, pool) {
   try {
     const keys = new Set((await $.config.list()).map((row) => row.key));
     if (keys.has("arcade.mode") && keys.has("arcade.pool")) {
@@ -3497,7 +3994,7 @@ async function save4($, options, mode, pool) {
   const saved = { mode, pool: pool.join(","), over: over(options) };
   await $.store.set("setting", saved);
 }
-async function celebrate5($, found) {
+async function celebrate6($, found) {
   if (found.length === 0) return;
   await celebrateMoments($, found);
   await celebrateMoments3($, found);
@@ -3507,6 +4004,7 @@ async function celebrate5($, found) {
   await celebrateMoments4($, found);
   await celebrateMoments2($, found);
   await celebrateMoments8($, found);
+  await celebrateMoments9($, found);
 }
 export const register = (on, options) => {
   configureMilestones(options);
@@ -3518,11 +4016,11 @@ export const register = (on, options) => {
     });
     const saved = await $.store.get("setting");
     if (saved?.over === over(options)) Object.assign(setting, { mode: modeOf(saved.mode), pool: poolOf(saved.pool) });
-    if (await read10($, pickedFor) !== `${setting.mode}|${setting.pool.join(",")}`) await apply($, setting.mode, setting.pool);
-    const ran = await start($, e, ((e1) => start3($, e1, ((e2) => start5($, e2, ((e3) => start6($, e3, ((e4) => start7($, e4, ((e5) => start4($, e5, ((e6) => start2($, e6, ((e7) => start8($, e7, next)))))))))))))));
+    if (await read11($, pickedFor) !== `${setting.mode}|${setting.pool.join(",")}`) await apply($, setting.mode, setting.pool);
+    const ran = await start($, e, ((e1) => start3($, e1, ((e2) => start5($, e2, ((e3) => start6($, e3, ((e4) => start7($, e4, ((e5) => start4($, e5, ((e6) => start2($, e6, ((e7) => start8($, e7, ((e8) => start9($, e8, next)))))))))))))))));
     const streak = streakMilestones(await $.store.get("days"), await $.clock.now());
     await $.store.set("days", streak.days);
-    await celebrate5($, streak.found);
+    await celebrate6($, streak.found);
     return ran;
   });
   on("command.run", { command: "arcade" }, async ($, e) => {
@@ -3530,14 +4028,14 @@ export const register = (on, options) => {
     const [first = "", ...rest] = words.map((w) => w.toLowerCase());
     if (first === "") return { text: await status($, setting.mode, setting.pool) };
     if (first === "hide") {
-      await update9($, shown, () => []);
+      await update10($, shown, () => []);
       return { text: 'No game in this terminal. "/arcade next" brings one back; new terminals still follow the setting.' };
     }
     if (first === "next") {
-      const now = await read10($, shown);
+      const now = await read11($, shown);
       const at = setting.pool.indexOf(now[now.length - 1] ?? "");
       const id2 = setting.pool[(at + 1) % setting.pool.length] ?? "";
-      await update9($, shown, () => [id2]);
+      await update10($, shown, () => [id2]);
       return { text: `${title(id2)} in this terminal. New terminals still follow the setting.` };
     }
     if (first === "pool") {
@@ -3546,7 +4044,7 @@ export const register = (on, options) => {
         return { text: `Name the games for the pool: ${GAMES.map((g) => g.id).join(", ")}.` };
       }
       const pool2 = poolOf(ids.join(","));
-      await save4($, options, setting.mode, pool2);
+      await save5($, options, setting.mode, pool2);
       setting.pool = pool2;
       await apply($, setting.mode, pool2);
       return { text: await status($, setting.mode, pool2) };
@@ -3557,12 +4055,12 @@ export const register = (on, options) => {
       return { text: `No game or mode called "${first}". Games: ${GAMES.map((g) => g.id).join(", ")}. Modes: ${MODES.join(", ")}.` };
     }
     if (id !== void 0 && rest[0] !== "all") {
-      await update9($, shown, () => [id]);
+      await update10($, shown, () => [id]);
       return { text: `${title(id)} in this terminal. "/arcade ${id} all" pins it for every terminal.` };
     }
     const pool = id === void 0 ? setting.pool : [id, ...setting.pool.filter((x) => x !== id)];
     const next = id === void 0 ? mode : "fixed";
-    await save4($, options, next, pool);
+    await save5($, options, next, pool);
     Object.assign(setting, { mode: next, pool });
     await apply($, next, pool);
     return { text: await status($, next, pool) };
@@ -3573,7 +4071,7 @@ export const register = (on, options) => {
   });
   on("classic.SubagentStop", async ($, e, next) => {
     const ran = await next(e);
-    await celebrate5($, subagentMilestones());
+    await celebrate6($, subagentMilestones());
     return ran;
   });
   on("command.run", { command: "dragon" }, ($, e, next) => command($, e, next));
@@ -3584,21 +4082,22 @@ export const register = (on, options) => {
   on("command.run", { command: "octopus" }, ($, e, next) => command4($, e, next));
   on("command.run", { command: "duck" }, ($, e, next) => command2($, e, next));
   on("command.run", { command: "bugs" }, ($, e, next) => command8($, e, next));
+  on("command.run", { command: "dario" }, ($, e, next) => command9($, e, next));
   on("ui.message", ($, e, next) => message($, e, next));
   on("prompt.submit", async ($, e, next) => {
-    const ran = await prompt($, e, ((e1) => prompt3($, e1, ((e2) => prompt5($, e2, ((e3) => prompt6($, e3, ((e4) => prompt7($, e4, ((e5) => prompt4($, e5, ((e6) => prompt2($, e6, ((e7) => prompt8($, e7, next)))))))))))))));
-    await celebrate5($, promptMilestones(String(e.text ?? ""), await $.clock.now()));
+    const ran = await prompt($, e, ((e1) => prompt3($, e1, ((e2) => prompt5($, e2, ((e3) => prompt6($, e3, ((e4) => prompt7($, e4, ((e5) => prompt4($, e5, ((e6) => prompt2($, e6, ((e7) => prompt8($, e7, ((e8) => prompt9($, e8, next)))))))))))))))));
+    await celebrate6($, promptMilestones(String(e.text ?? ""), await $.clock.now()));
     return ran;
   });
   on("turn.complete", async ($, e, next) => {
-    const ran = await turn($, e, ((e1) => turn3($, e1, ((e2) => turn5($, e2, ((e3) => turn6($, e3, ((e4) => turn7($, e4, ((e5) => turn4($, e5, ((e6) => turn2($, e6, ((e7) => turn8($, e7, next)))))))))))))));
-    if (e.agentId === void 0 && !e.isAborted) await celebrate5($, turnMilestones(await $.clock.now()));
+    const ran = await turn($, e, ((e1) => turn3($, e1, ((e2) => turn5($, e2, ((e3) => turn6($, e3, ((e4) => turn7($, e4, ((e5) => turn4($, e5, ((e6) => turn2($, e6, ((e7) => turn8($, e7, ((e8) => turn9($, e8, next)))))))))))))))));
+    if (e.agentId === void 0 && !e.isAborted) await celebrate6($, turnMilestones(await $.clock.now()));
     return ran;
   });
   on("tool.call", async ($, e, next) => {
-    const ran = await tool($, e, ((e1) => tool3($, e1, ((e2) => tool5($, e2, ((e3) => tool6($, e3, ((e4) => tool7($, e4, ((e5) => tool4($, e5, ((e6) => tool2($, e6, ((e7) => tool8($, e7, next)))))))))))))));
-    if (e.agentId === void 0 && ran.deny === void 0) await celebrate5($, toolMilestones(e, ran));
+    const ran = await tool($, e, ((e1) => tool3($, e1, ((e2) => tool5($, e2, ((e3) => tool6($, e3, ((e4) => tool7($, e4, ((e5) => tool4($, e5, ((e6) => tool2($, e6, ((e7) => tool8($, e7, ((e8) => tool9($, e8, next)))))))))))))))));
+    if (e.agentId === void 0 && ran.deny === void 0) await celebrate6($, toolMilestones(e, ran));
     return ran;
   });
-  on("ui.render", { component: "AbovePrompt" }, ($, e, next) => render($, e, ((e1) => render3($, e1, ((e2) => render5($, e2, ((e3) => render6($, e3, ((e4) => render7($, e4, ((e5) => render4($, e5, ((e6) => render2($, e6, ((e7) => render8($, e7, next))))))))))))))));
+  on("ui.render", { component: "AbovePrompt" }, ($, e, next) => render($, e, ((e1) => render3($, e1, ((e2) => render5($, e2, ((e3) => render6($, e3, ((e4) => render7($, e4, ((e5) => render4($, e5, ((e6) => render2($, e6, ((e7) => render8($, e7, ((e8) => render9($, e8, next))))))))))))))))));
 };

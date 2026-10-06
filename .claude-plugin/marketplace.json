@@ -43,7 +43,7 @@
     {
       "name": "arcade",
       "source": "./plugins/arcade",
-      "description": "The Claude Code Arcade: eight pixel games above the prompt, played by your work (a dragon, a slot machine, an Outlaw duel, a Tamagotchi, Tetris, an invading octopus, a duck hunt, and Bug Command, which you can play along with). Pin one, rotate them, or get a random one in every terminal."
+      "description": "The Claude Code Arcade: pixel games above the prompt, played by your work (a dragon, a slot machine, an Outlaw duel, a Tamagotchi, Tetris, an invading octopus, a duck hunt, Dario, and Bug Command, which you can play along with). Pin one, rotate them, or get a random one in every terminal."
     },
     {
       "name": "fork-lineage",

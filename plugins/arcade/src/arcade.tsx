@@ -82,19 +82,29 @@ import {
   celebrateMoments as bugsCelebrate,
   game as bugsGame,
 } from './games/bug-command'
+import {
+  start as darioStart,
+  command as darioCommand,
+  prompt as darioPrompt,
+  turn as darioTurn,
+  tool as darioTool,
+  render as darioRender,
+  celebrateMoments as darioCelebrate,
+  game as darioGame,
+} from './games/dario'
 import { configureMilestones, promptMilestones, skillSeen, streakMilestones, subagentMilestones, toolMilestones, turnMilestones } from './milestones'
 import type { Milestone } from './milestones'
 import { shown } from './shown'
 
 // Every game in the Arcade, in the order the menus list them. A new game is one file in
 // games/, one entry here, and one link in each chain below.
-export const GAMES = [dragonGame, jackpotGame, outlawGame, tamaGame, tetrisGame, octopusGame, duckGame, bugsGame]
+export const GAMES = [dragonGame, jackpotGame, outlawGame, tamaGame, tetrisGame, octopusGame, duckGame, bugsGame, darioGame]
 
 export const MODES = ['random', 'rotate', 'fixed', 'all', 'off'] as const
 type Mode = (typeof MODES)[number]
 
 // Other names a person may type for a game.
-const ALIASES: Record<string, string> = { 'dragon-lair': 'dragon', octo: 'octopus', 'octo-invader': 'octopus', 'duck-hunt': 'duck', duckhunt: 'duck', ducks: 'duck', 'bug-command': 'bugs', bugcommand: 'bugs', bug: 'bugs', missile: 'bugs', 'missile-command': 'bugs' }
+const ALIASES: Record<string, string> = { 'dragon-lair': 'dragon', octo: 'octopus', 'octo-invader': 'octopus', 'duck-hunt': 'duck', duckhunt: 'duck', ducks: 'duck', 'bug-command': 'bugs', bugcommand: 'bugs', bug: 'bugs', missile: 'bugs', 'missile-command': 'bugs', mario: 'dario', runner: 'dario', 'block-runner': 'dario' }
 
 // The setting this session's games were picked for, so a reload keeps them and a new setting
 // picks again.
@@ -191,6 +201,7 @@ async function celebrate($: EngineInterface, found: Milestone[]) {
   await octopusCelebrate($, found)
   await duckCelebrate($, found)
   await bugsCelebrate($, found)
+  await darioCelebrate($, found)
 }
 
 // A plugin hooks each event once, so register chains the games' hooks for it: each game's next
@@ -208,7 +219,7 @@ export const register: Register = (on, options: PluginOptions) => {
     if (saved?.over === over(options)) Object.assign(setting, { mode: modeOf(saved.mode), pool: poolOf(saved.pool) })
     if ((await read($, pickedFor)) !== `${setting.mode}|${setting.pool.join(',')}`) await apply($, setting.mode, setting.pool)
 
-    const ran = await dragonStart($, e, ((e1: typeof e) => jackpotStart($, e1, ((e2: typeof e) => outlawStart($, e2, ((e3: typeof e) => tamaStart($, e3, ((e4: typeof e) => tetrisStart($, e4, ((e5: typeof e) => octopusStart($, e5, ((e6: typeof e) => duckStart($, e6, ((e7: typeof e) => bugsStart($, e7, next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)
+    const ran = await dragonStart($, e, ((e1: typeof e) => jackpotStart($, e1, ((e2: typeof e) => outlawStart($, e2, ((e3: typeof e) => tamaStart($, e3, ((e4: typeof e) => tetrisStart($, e4, ((e5: typeof e) => octopusStart($, e5, ((e6: typeof e) => duckStart($, e6, ((e7: typeof e) => bugsStart($, e7, ((e8: typeof e) => darioStart($, e8, next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)
     // Days in a row: counted once a day, at the session's start.
     const streak = streakMilestones((await $.store.get('days')) as { last: string; streak: number } | undefined, await $.clock.now())
     await $.store.set('days', streak.days)
@@ -286,28 +297,29 @@ export const register: Register = (on, options: PluginOptions) => {
   on('command.run', { command: 'octopus' }, ($, e, next) => octopusCommand($, e, next))
   on('command.run', { command: 'duck' }, ($, e, next) => duckCommand($, e, next))
   on('command.run', { command: 'bugs' }, ($, e, next) => bugsCommand($, e, next))
+  on('command.run', { command: 'dario' }, ($, e, next) => darioCommand($, e, next))
 
   // What a game's Client posts from the band (only Bug Command draws one).
   on('ui.message', ($, e, next) => bugsMessage($, e, next))
 
   on('prompt.submit', async ($, e, next) => {
-    const ran = await dragonPrompt($, e, ((e1: typeof e) => jackpotPrompt($, e1, ((e2: typeof e) => outlawPrompt($, e2, ((e3: typeof e) => tamaPrompt($, e3, ((e4: typeof e) => tetrisPrompt($, e4, ((e5: typeof e) => octopusPrompt($, e5, ((e6: typeof e) => duckPrompt($, e6, ((e7: typeof e) => bugsPrompt($, e7, next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)
+    const ran = await dragonPrompt($, e, ((e1: typeof e) => jackpotPrompt($, e1, ((e2: typeof e) => outlawPrompt($, e2, ((e3: typeof e) => tamaPrompt($, e3, ((e4: typeof e) => tetrisPrompt($, e4, ((e5: typeof e) => octopusPrompt($, e5, ((e6: typeof e) => duckPrompt($, e6, ((e7: typeof e) => bugsPrompt($, e7, ((e8: typeof e) => darioPrompt($, e8, next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)
     await celebrate($, promptMilestones(String(e.text ?? ''), await $.clock.now()))
     return ran
   })
 
   on('turn.complete', async ($, e, next) => {
-    const ran = await dragonTurn($, e, ((e1: typeof e) => jackpotTurn($, e1, ((e2: typeof e) => outlawTurn($, e2, ((e3: typeof e) => tamaTurn($, e3, ((e4: typeof e) => tetrisTurn($, e4, ((e5: typeof e) => octopusTurn($, e5, ((e6: typeof e) => duckTurn($, e6, ((e7: typeof e) => bugsTurn($, e7, next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)
+    const ran = await dragonTurn($, e, ((e1: typeof e) => jackpotTurn($, e1, ((e2: typeof e) => outlawTurn($, e2, ((e3: typeof e) => tamaTurn($, e3, ((e4: typeof e) => tetrisTurn($, e4, ((e5: typeof e) => octopusTurn($, e5, ((e6: typeof e) => duckTurn($, e6, ((e7: typeof e) => bugsTurn($, e7, ((e8: typeof e) => darioTurn($, e8, next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)
     if (e.agentId === undefined && !e.isAborted) await celebrate($, turnMilestones(await $.clock.now()))
     return ran
   })
 
   on('tool.call', async ($, e, next) => {
-    const ran = await dragonTool($, e, ((e1: typeof e) => jackpotTool($, e1, ((e2: typeof e) => outlawTool($, e2, ((e3: typeof e) => tamaTool($, e3, ((e4: typeof e) => tetrisTool($, e4, ((e5: typeof e) => octopusTool($, e5, ((e6: typeof e) => duckTool($, e6, ((e7: typeof e) => bugsTool($, e7, next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)
+    const ran = await dragonTool($, e, ((e1: typeof e) => jackpotTool($, e1, ((e2: typeof e) => outlawTool($, e2, ((e3: typeof e) => tamaTool($, e3, ((e4: typeof e) => tetrisTool($, e4, ((e5: typeof e) => octopusTool($, e5, ((e6: typeof e) => duckTool($, e6, ((e7: typeof e) => bugsTool($, e7, ((e8: typeof e) => darioTool($, e8, next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)
     if (e.agentId === undefined && ran.deny === undefined) await celebrate($, toolMilestones(e, ran))
     return ran
   })
 
   // The games draw at the right of the band, beside whatever else is there.
-  on('ui.render', { component: 'AbovePrompt' }, ($, e, next) => dragonRender($, e, ((e1: typeof e) => jackpotRender($, e1, ((e2: typeof e) => outlawRender($, e2, ((e3: typeof e) => tamaRender($, e3, ((e4: typeof e) => tetrisRender($, e4, ((e5: typeof e) => octopusRender($, e5, ((e6: typeof e) => duckRender($, e6, ((e7: typeof e) => bugsRender($, e7, next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next))
+  on('ui.render', { component: 'AbovePrompt' }, ($, e, next) => dragonRender($, e, ((e1: typeof e) => jackpotRender($, e1, ((e2: typeof e) => outlawRender($, e2, ((e3: typeof e) => tamaRender($, e3, ((e4: typeof e) => tetrisRender($, e4, ((e5: typeof e) => octopusRender($, e5, ((e6: typeof e) => duckRender($, e6, ((e7: typeof e) => bugsRender($, e7, ((e8: typeof e) => darioRender($, e8, next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next))
 }

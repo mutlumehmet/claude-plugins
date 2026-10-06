@@ -48,6 +48,8 @@ export type OctoMood = 'idle' | 'work' | 'sad' | 'sleep' | 'rampage'
 // duck-hunt
 export type DuckScore = { hits: number; escaped: number; tools: number }
 // bug-command
+// dario
+export type DarioScore = { coins: number; stomps: number; hits: number; clears: number; tools: number }
 export type BugsScore = { kills: number; mine: number; lost: number; ends: number; cities: number; tools: number }
 export type BugsFeed = {
   events: { id: number; kind: 'tool' | 'fail' | 'small' | 'medium' | 'big'; practice: boolean }[]
@@ -78,6 +80,8 @@ declare module 'claude-code' {
       bugsScore: BugsScore
       bugsFeed: BugsFeed
       bugsFeat: string
+      darioScore: DarioScore
+      darioFeat: string
     }
   }
 }

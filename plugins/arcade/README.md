@@ -1,6 +1,6 @@
 # arcade
 
-The Claude Code Arcade: eight pixel games in the line above the prompt, played by your work. Pin the
+The Claude Code Arcade: pixel games in the line above the prompt, played by your work. Pin the
 one you like, rotate through them, or get a random one in every new terminal. Part of
 [claude-plugins](../../README.md).
 
@@ -15,12 +15,13 @@ one you like, rotate through them, or get a random one in every new terminal. Pa
 | Tetris | `/tetris` | Tetris where Claude's tools drop the pieces |
 | Octo Invader | `/octopus` | A pixel octopus that smashes a city the full width of the line while Claude edits |
 | Duck Hunt | `/duck` | A dog and a marsh the full width of the line: your moments shoot the ducks down, failed tools let them fly away |
+| Dario | `/dario` | A side scroller the full width of the line: tool calls bring ? blocks and coins, a failed tool sends a bug, moments stomp bugs and clear the course at the flag pole |
 | Bug Command | `/bugs` | Bugs fall on six cities the full width of the line; Claude's tools shoot them down, and you can click the sky to fire too |
 
 ## Choosing the games
 
 Each new terminal shows the games the `mode` and `pool` settings pick. By default it is one game at
-random from all eight.
+random from all of them.
 
 | Command | What it does |
 |---|---|
@@ -137,6 +138,18 @@ edit, passing tests, a commit, a merge); the window around the strip is a mock u
 - **The score** sits at the right end of the strip: `R 2  ▼ 14  ↗ 3  ⚒ 140` (round, ducks down, ducks that got away, tool calls). It is kept between sessions.
 - **`/duck`** shows the score; `/duck shot`, `hunt`, `double`, `perfect` and `flyaway` are practice that counts nothing.
 
+### Dario (`dario`)
+
+A side scrolling course the full width of the line above the prompt, with a ground of bricks,
+clouds, bushes and pipes. Dario runs while Claude works; you only watch.
+
+- **While Claude works** the course scrolls by, fastest while a tool runs, and Dario jumps the pipes on its way. **Two minutes of quiet** and he sits down for a nap.
+- **Every finished tool call** brings a ? block: Dario jumps, bumps it and a coin flies out. With two blocks already waiting, the coin comes straight away.
+- **A failed tool** sends a bug walking in, and it knocks into Dario (`OUCH`).
+- **Moments**: a small one is a hop and a sparkle, a medium one a bug stomped flat, a big one a flag pole: Dario slides down it for a `COURSE CLEAR!` and the next course. A merge, release, deploy, streak or record is a `WORLD CLEAR!` with fireworks.
+- **The score** sits at the right end of the strip: `1-3  ◎ 34  ✪ 5  ✗ 2  ⚒ 140` (world and course, coins, bugs stomped, knocks, tool calls). Every hundred coins is a `1UP`. It is kept between sessions.
+- **`/dario`** shows the score; `/dario coin`, `ouch`, `stomp`, `clear` and `world` are practice that counts nothing.
+
 ### Bug Command (`bugs`)
 
 Six cities and three silos along the bottom of the line above the prompt, the full width of it. Bugs
@@ -182,7 +195,7 @@ All optional. Set them in `/plugin` (the plugin's settings) or in
 | Setting | What it is for | Example |
 |---|---|---|
 | `mode` | How each new terminal picks: `random` (one game from the pool, the default), `rotate` (the next one in turn), `fixed` (always the first in the pool), `all` (every game in the pool), `off` | `fixed` |
-| `pool` | Comma separated games to pick from; empty means all eight | `dragon, tetris` |
+| `pool` | Comma separated games to pick from; empty means all of them | `dragon, tetris` |
 | `big_skills` | Skills whose run is a big moment (every other skill is medium) | `release-notes, publish-report` |
 | `quiet_skills` | Skills that celebrate nothing | `commit` |
 | `big_commands` | A regular expression of shell commands whose success is big | `make ship` |
@@ -196,7 +209,7 @@ All optional. Set them in `/plugin` (the plugin's settings) or in
   count; skill names; the words of your message (only to spot praise); subagent start and finish.
 - **Keeps**: each game's score and state, and which game the last terminal showed, in Claude Code's plugin store on your machine; the mode and pool in your Claude Code settings.
 - **Draws**: the games it shows in the line above the prompt (a block at the right end, or the octopus's, the duck hunt's and Bug Command's strips across the full width), and an occasional notice.
-- **Hooks**: `skill.prompt` only notes which skill ran, so a finished skill can count as a moment; it passes the skill's prompt on unchanged. `command.run` answers its own commands (`/arcade` and the eight game commands) and no other. `/arcade <game> all`, `/arcade <mode>` and `/arcade pool` write `arcade.mode` and `arcade.pool` through Claude Code's own settings call, the same as changing them in the menu.
+- **Hooks**: `skill.prompt` only notes which skill ran, so a finished skill can count as a moment; it passes the skill's prompt on unchanged. `command.run` answers its own commands (`/arcade` and the games' own commands) and no other. `/arcade <game> all`, `/arcade <mode>` and `/arcade pool` write `arcade.mode` and `arcade.pool` through Claude Code's own settings call, the same as changing them in the menu.
 - **Takes input**: only Bug Command, and only once you click its sky: from then until Esc, the keys you press go to the game, not the prompt. Clicks and keys never leave the game.
 - **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
 - **Never**: changes, blocks or delays a tool call or a message; sends anything anywhere (no network
@@ -252,6 +265,8 @@ test.
 - **Octo Invader**: The octopus is drawn with half blocks; a terminal with tall line spacing shows thin gaps between rows.
 - **Duck Hunt**: The strip takes eight rows, like the octopus's; with both showing the line above the prompt is sixteen rows tall.
 - **Duck Hunt**: The ducks fly where they like; the crosshair finds them, it is not aimed by you.
+- **Dario**: The strip takes eight rows, like the octopus's and the duck hunt's.
+- **Dario**: Things queue at the right edge, so after a burst of tool calls a flag pole can take a few seconds to reach Dario.
 - **Bug Command**: The sky is drawn as runs of coloured text rather than the raster the other strips use, so a busy sky redraws more than they do; a still sky does not redraw at all.
 - **Bug Command**: Only a terminal draws it; the Desktop Code tab, which draws the other games, does not show it yet.
 - **Bug Command**: A click hands the keyboard to the sky until Esc; typing into the prompt needs Esc first.
