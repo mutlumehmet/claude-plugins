@@ -237,7 +237,9 @@ Claude Code runs in, so your work on one repository builds its own town and play
   worktree counts as its main repository, so all worktrees of a repository share one project.
   Outside any repository, the folder itself is the project.
 - **Shared by every terminal of that project.** A save adds to what is stored instead of writing over
-  it, so two terminals in one repository both count.
+  it, so two terminals in one repository both count. A terminal reads the stored score when it
+  opens and again each time it saves, so another terminal's points show up there with its next
+  point (there is no polling in between, on purpose).
 - **Starting over**: `/<game> reset` (for example `/duck reset`) says what goes and asks; only
   `/<game> reset yes` within a minute clears that game for this project. `/arcade reset` does every
   game at once. Other projects keep theirs.
