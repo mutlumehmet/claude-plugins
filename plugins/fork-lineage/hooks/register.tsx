@@ -37,6 +37,8 @@ type Row = {
   ownPrompts: number
   lastOwnPromptAt: string | null
   firstOwnPrompt?: string | null
+  ownPromptList?: string[]
+  ownPromptsOmitted?: number
   state: string | null
   handedBackAt: string | null
   notNeededAt: string | null
@@ -293,9 +295,23 @@ async function report($: EngineInterface) {
 }
 
 // The fork's transcript opens with the parent's conversation (and often the parent's
-// name), so the model is told outright which side it is on before the contract prompt
+// name), so the model is told outright which side it is on before the contract prompt.
+// The fork's own prompts go in as a list: after compaction the summary mixes the two
+// sides and the first own prompt no longer appears word for word, so the model would
+// otherwise guess the boundary (seen both ways: fork work left out, parent work claimed)
 function briefing(me: Row, parent: Row): string {
-  const own = me.firstOwnPrompt ? ' This fork\'s own work starts at the prompt "' + me.firstOwnPrompt + '"; everything before it was the parent\'s.' : ''
+  const list = me.ownPromptList ?? []
+  let own = ''
+  if (list.length) {
+    const more = me.ownPromptsOmitted ? '\n(and ' + me.ownPromptsOmitted + ' later prompts)' : ''
+    own =
+      ' These are the prompts the user typed in this fork, in order; everything before the first of them was the parent\'s:\n' +
+      list.map((t, i) => i + 1 + '. ' + t).join('\n') +
+      more +
+      '\nThis conversation may have been compacted into a summary that mixes the parent\'s history with this fork\'s work. Use this list, not the summary, to decide what belongs to the fork: report the work done in answer to these prompts, all of them from the first, and nothing the parent did before the fork.\n'
+  } else if (me.firstOwnPrompt) {
+    own = ' This fork\'s own work starts at the prompt "' + me.firstOwnPrompt + '"; everything before it was the parent\'s.'
+  }
   return (
     'You are the fork "' + (me.title ?? me.id) + '" (session ' + me.id + '), forked from the parent session "' +
     (parent.title ?? parent.id) + '" (session ' + parent.id + ').' + own + ' Report only what happened in this fork, and reply with the report alone.'

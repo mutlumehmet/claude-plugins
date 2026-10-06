@@ -46,7 +46,10 @@ breaks anything.
    right.
 2. **The report.** A tool-less call over the fork's own transcript, told first which side it is on
    (the copied history starts with the parent's conversation and name, which once made the model
-   report as the parent).
+   report as the parent), and given the list of prompts typed in the fork. The list matters once a
+   long fork has been compacted: the summary mixes the parent's history with the fork's work, and
+   without the list the model guessed the boundary both ways, leaving fork work out and claiming
+   the parent's.
 3. **Delivery.** Live: addressed to the parent's session id. Closed: a small file in the parent's
    inbox, picked up by this mod when the parent comes back.
 

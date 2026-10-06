@@ -70,6 +70,11 @@ def holds(path, uuid):
         return needle in fh.read()
 
 
+# Bounds on the own-prompt list sent to the report briefing
+PROMPT_LIMIT = 150
+PROMPT_CHARS = 200
+
+
 def scan(path):
     """Message uuids in order, prompts the user typed, forkedFrom, title."""
     uuids, stamps, prompts, forked, custom, ai, first_text = [], [], [], None, None, None, None
@@ -192,6 +197,14 @@ def show(config_dir, forks_dir, sid):
 
     rows = {k: row(v) for k, v in info.items()}
     me = rows[sid]
+    # The fork's own prompts, for the report briefing: once a long fork is compacted, its
+    # summary mixes the parent's history with the fork's work and the first own prompt no
+    # longer appears word for word, so the model needs the list itself to tell them apart
+    s = info[sid]
+    held = set(info[s["parent"]]["uuids"]) if s["parent"] else set()
+    mine = [p[2] for p in s["prompts"] if p[0] not in held]
+    me["ownPromptList"] = [" ".join(t.split())[:PROMPT_CHARS] for t in mine[:PROMPT_LIMIT]]
+    me["ownPromptsOmitted"] = max(0, len(mine) - PROMPT_LIMIT)
     return {
         "self": me,
         "parent": rows.get(me["parentId"]),

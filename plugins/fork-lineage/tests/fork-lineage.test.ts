@@ -41,6 +41,23 @@ test('a fork with prompts of its own shows its parent and the report button', as
   expect(await ui.find({ type: 'Button', label: '↑ report to parent' } as any)).toBeDefined()
 })
 
+test('the report briefing lists the fork\'s own prompts, so a compacted fork keeps its boundary', async ($, on) => {
+  const listed = { ...FORK, ownPromptList: ['write the payment tests', 'fix the refund case'], ownPromptsOmitted: 0 }
+  helper(on, FORK.id, { show: { self: listed, parent: PARENT, children: [], family: [PARENT, listed] }, waiting: { waiting: [] } })
+  const prompts: string[] = []
+  on('model.fork', ($: any, e: any) => {
+    prompts.push(e.prompt)
+    return { value: { isAnswered: true, text: '- decided X' } } as any
+  })
+  await $.session.start({ surface: 'terminal', isInteractive: true, cwd: '/home/m/Projects/x' })
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  await ui.press({ key: 'report' })
+  expect(prompts.length).toBe(1)
+  expect(prompts[0]).toContain('1. write the payment tests')
+  expect(prompts[0]).toContain('2. fix the refund case')
+  expect(prompts[0]).toContain('compacted')
+})
+
 test('a reported fork with nothing new shows reported, no button', async ($, on) => {
   const done = { ...FORK, state: 'handed_back', handedBackAt: '2026-10-05T11:00:00Z' }
   helper(on, FORK.id, { show: { self: done, parent: PARENT, children: [], family: [PARENT, done] }, waiting: { waiting: [] } })
