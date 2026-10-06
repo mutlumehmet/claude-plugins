@@ -131,3 +131,14 @@ test('an unknown word lists the games and the modes', { options: { mode: 'fixed'
   await begin($, on)
   expect((await $.command.run({ command: 'arcade', args: 'pacman' } as never)).text).toMatch(/Games: dragon, jackpot.*Modes: random/)
 })
+
+test('every game lists its moves to preview under its help', async ($, on) => {
+  mock.store(on)
+  await begin($, on)
+  for (const [game, move] of [['dragon', 'roar'], ['duck', 'flyaway'], ['bugs', 'incoming'], ['dario', 'world'], ['town', 'creeper'], ['tetris', 'drop']]) {
+    const text = (await $.command.run({ command: game, args: '' } as never)).text ?? ''
+    expect(text).toMatch(/Preview a move/)
+    expect(text).toContain(`/${game} ${move}`)
+    expect(text).toContain(`/${game} reset`)
+  }
+})

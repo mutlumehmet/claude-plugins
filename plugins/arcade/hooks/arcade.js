@@ -4797,6 +4797,29 @@ async function celebrate7($, found) {
   await celebrateMoments9($, found);
   await celebrateMoments10($, found);
 }
+const PREVIEWS = {
+  dragon: [["puff", "a puff of smoke (small moment)"], ["fire", "a breath of fire (medium)"], ["blaze", "a blaze (big)"], ["roar", "a roar (merge, release, deploy)"]],
+  jackpot: [["spin", "a practice pull"], ["golden", "a golden spin (medium or big moment)"], ["demo", "a jackpot"]],
+  outlaw: [["draw", "a practice duel, one shot each"]],
+  tama: [["feed", "feed it (hand care, counts toward its day)"], ["play", "play with it"], ["clean", "clean up after it"]],
+  tetris: [["drop", "three pieces drop"], ["clear", "a row cleared"]],
+  octopus: [["ink", "a squirt of ink (small)"], ["plane", "a plane pulled down (medium)"], ["rampage", "a rampage (big)"], ["conquer", "the city taken (merge, release, deploy)"]],
+  duck: [["shot", "a shot (small)"], ["hunt", "a duck down (medium)"], ["double", "a double (big)"], ["perfect", "a perfect round (merge, release, deploy)"], ["flyaway", "a duck gets away (failed tool)"]],
+  bugs: [["flare", "a flare (small)"], ["shot", "a sure hit (medium)"], ["salvo", "a salvo that clears the sky (big)"], ["incoming", "a fast bug to shoot down yourself (failed tool)"]],
+  dario: [["coin", "a ? block and a coin (tool call)"], ["ouch", "a bug knocks into Dario (failed tool)"], ["stomp", "a bug stomped (medium)"], ["clear", "the flag pole, course clear (big)"], ["world", "world clear with fireworks (merge, release, deploy)"]],
+  town: [["build", "six blocks go up (tool calls)"], ["tree", "a tree planted (small)"], ["finish", "the building going up is finished (medium)"], ["castle", "a third of the castle (big)"], ["creeper", "a creeper blows a hole (failed tool)"]]
+};
+function withPreview(id, args, ran) {
+  if ((args ?? "").trim() !== "" || typeof ran.text !== "string") return ran;
+  const moves = (PREVIEWS[id] ?? []).map(([arg, what]) => `  /${id} ${arg}  ${what}`);
+  const list2 = moves.length > 0 ? `
+
+Preview a move (practice, nothing counts):
+${moves.join("\n")}` : "";
+  return { ...ran, text: `${ran.text}${list2}
+
+/${id} reset starts this game over for this project (it asks first).` };
+}
 const RESET_WINDOW_MS = 6e4;
 const asked = /* @__PURE__ */ new Map();
 async function resetGame($, id) {
@@ -4903,16 +4926,16 @@ export const register = (on, options) => {
     await celebrate7($, subagentMilestones());
     return ran;
   });
-  on("command.run", { command: "dragon" }, async ($, e, next) => await askReset($, "dragon", e.args) ?? command($, e, next));
-  on("command.run", { command: "jackpot" }, async ($, e, next) => await askReset($, "jackpot", e.args) ?? command3($, e, next));
-  on("command.run", { command: "outlaw" }, async ($, e, next) => await askReset($, "outlaw", e.args) ?? command5($, e, next));
-  on("command.run", { command: "tama" }, async ($, e, next) => await askReset($, "tama", e.args) ?? command6($, e, next));
-  on("command.run", { command: "tetris" }, async ($, e, next) => await askReset($, "tetris", e.args) ?? command7($, e, next));
-  on("command.run", { command: "octopus" }, async ($, e, next) => await askReset($, "octopus", e.args) ?? command4($, e, next));
-  on("command.run", { command: "duck" }, async ($, e, next) => await askReset($, "duck", e.args) ?? command2($, e, next));
-  on("command.run", { command: "bugs" }, async ($, e, next) => await askReset($, "bugs", e.args) ?? command8($, e, next));
-  on("command.run", { command: "dario" }, async ($, e, next) => await askReset($, "dario", e.args) ?? command9($, e, next));
-  on("command.run", { command: "town" }, async ($, e, next) => await askReset($, "town", e.args) ?? command10($, e, next));
+  on("command.run", { command: "dragon" }, async ($, e, next) => await askReset($, "dragon", e.args) ?? withPreview("dragon", e.args, await command($, e, next)));
+  on("command.run", { command: "jackpot" }, async ($, e, next) => await askReset($, "jackpot", e.args) ?? withPreview("jackpot", e.args, await command3($, e, next)));
+  on("command.run", { command: "outlaw" }, async ($, e, next) => await askReset($, "outlaw", e.args) ?? withPreview("outlaw", e.args, await command5($, e, next)));
+  on("command.run", { command: "tama" }, async ($, e, next) => await askReset($, "tama", e.args) ?? withPreview("tama", e.args, await command6($, e, next)));
+  on("command.run", { command: "tetris" }, async ($, e, next) => await askReset($, "tetris", e.args) ?? withPreview("tetris", e.args, await command7($, e, next)));
+  on("command.run", { command: "octopus" }, async ($, e, next) => await askReset($, "octopus", e.args) ?? withPreview("octopus", e.args, await command4($, e, next)));
+  on("command.run", { command: "duck" }, async ($, e, next) => await askReset($, "duck", e.args) ?? withPreview("duck", e.args, await command2($, e, next)));
+  on("command.run", { command: "bugs" }, async ($, e, next) => await askReset($, "bugs", e.args) ?? withPreview("bugs", e.args, await command8($, e, next)));
+  on("command.run", { command: "dario" }, async ($, e, next) => await askReset($, "dario", e.args) ?? withPreview("dario", e.args, await command9($, e, next)));
+  on("command.run", { command: "town" }, async ($, e, next) => await askReset($, "town", e.args) ?? withPreview("town", e.args, await command10($, e, next)));
   on("ui.message", ($, e, next) => message($, e, next));
   on("prompt.submit", async ($, e, next) => {
     const ran = await prompt($, e, ((e1) => prompt3($, e1, ((e2) => prompt5($, e2, ((e3) => prompt6($, e3, ((e4) => prompt7($, e4, ((e5) => prompt4($, e5, ((e6) => prompt2($, e6, ((e7) => prompt8($, e7, ((e8) => prompt9($, e8, ((e9) => prompt10($, e9, next)))))))))))))))))));

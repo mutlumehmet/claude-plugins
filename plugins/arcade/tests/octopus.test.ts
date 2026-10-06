@@ -66,7 +66,7 @@ test('a commit is a medium moment, nothing to commit is none', ONLY, async ($, o
   }))
   await begin($, on)
   await $.tool.call({ tool: 'Bash', command: 'git commit -m "x"' })
-  expect(await stats($)).toMatch(/Lv 1  ⌂ 0  ✈ 0  ⚒ 1$/)
+  expect(await stats($)).toMatch(/Lv 1  ⌂ 0  ✈ 0  ⚒ 1$/m)
   out = '[main abc1234] x\n 1 file changed'
   await $.tool.call({ tool: 'Bash', command: 'git commit -m "y"' })
   expect(await stats($)).toMatch(/⚒ 2\nLast win: .*\+5 xp/)
