@@ -4101,10 +4101,20 @@ function syncMobs() {
     const mine = have.filter((m) => m.kind === kind);
     const needed = want.filter((k) => k === kind).length;
     for (let i = mine.length; i < needed; i++) {
-      sim10.mobs.push({ kind, x: -6, face: 1, goal: rand6(2, Math.max(4, buildable() - 6)), restUntil: 0, isLeaving: false });
+      sim10.mobs.push({ kind, x: -6, face: 1, goal: grazeSpot(rand6(2, Math.max(4, buildable() - 6)), MOBS[kind].body[0].length), restUntil: 0, isLeaving: false });
     }
     for (const m of mine.slice(needed)) m.isLeaving = true;
   }
+}
+function grazeSpot(x, w) {
+  const hi = Math.max(2, buildable() - w);
+  const isOpen = (at) => sim10.plots.every((p) => p.kind === "farm" || p.kind === "tree" || at + w < p.x - 1 || at > p.x + widthOf2(p.kind));
+  for (let i = 0; i < 12; i++) {
+    const at = clamp5(Math.round(x + rand6(-20, 20)), 1, hi);
+    if (isOpen(at)) return at;
+  }
+  for (let at = 1; at <= hi; at++) if (isOpen(at)) return at;
+  return clamp5(Math.round(x + rand6(-14, 14)), 1, hi);
 }
 function animalsLine() {
   const kinds = ["sheep", "pig", "chicken", "cow"];
@@ -4128,7 +4138,7 @@ function stepMobs(isAsleep) {
       m.x += m.face * MOBS[m.kind].speed * (m.isLeaving ? 3 : 1);
     } else if (sim10.t >= m.restUntil) {
       m.restUntil = sim10.t + Math.floor(rand6(40, 160));
-      m.goal = clamp5(m.x + rand6(-14, 14), 1, Math.max(2, buildable() - 6));
+      m.goal = grazeSpot(m.x, MOBS[m.kind].body[0].length);
     }
   }
   sim10.mobs = sim10.mobs.filter((m) => !(m.isLeaving && m.x < -7));
@@ -4397,8 +4407,8 @@ function frame9(isAsleep, stats) {
     if (x + i >= 0 && x + i < W5 && row >= 0 && row < ROWS10) over2.set(row * W5 + x + i, { ch, color });
   });
   drawGround(buf);
-  for (const m of sim10.mobs) drawMob(buf, m, isAsleep);
   for (const p of sim10.plots) drawPlot(buf, p);
+  for (const m of sim10.mobs) drawMob(buf, m, isAsleep);
   if (!isAsleep) for (const v of sim10.villagers) drawVillager(buf, v);
   for (const c of sim10.creepers) drawCreeper(buf, c);
   for (const p of sim10.particles) {

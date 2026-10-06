@@ -210,10 +210,24 @@ function syncMobs() {
     const mine = have.filter(m => m.kind === kind)
     const needed = want.filter(k => k === kind).length
     for (let i = mine.length; i < needed; i++) {
-      sim.mobs.push({ kind, x: -6, face: 1, goal: rand(2, Math.max(4, buildable() - 6)), restUntil: 0, isLeaving: false })
+      sim.mobs.push({ kind, x: -6, face: 1, goal: grazeSpot(rand(2, Math.max(4, buildable() - 6)), MOBS[kind].body[0]!.length), restUntil: 0, isLeaving: false })
     }
     for (const m of mine.slice(needed)) m.isLeaving = true
   }
+}
+
+// A spot of open grass near `x` for an animal of width `w`: not in front of a building (a farm's low
+// crops are fine to stand in), else anywhere if the town has no open grass left.
+function grazeSpot(x: number, w: number) {
+  const hi = Math.max(2, buildable() - w)
+  const isOpen = (at: number) =>
+    sim.plots.every(p => p.kind === 'farm' || p.kind === 'tree' || at + w < p.x - 1 || at > p.x + widthOf(p.kind))
+  for (let i = 0; i < 12; i++) {
+    const at = clamp(Math.round(x + rand(-20, 20)), 1, hi)
+    if (isOpen(at)) return at
+  }
+  for (let at = 1; at <= hi; at++) if (isOpen(at)) return at
+  return clamp(Math.round(x + rand(-14, 14)), 1, hi)
 }
 
 // "Animals: 2 sheep, 1 pig" for /town; the ones walking off are not counted.
@@ -245,7 +259,7 @@ function stepMobs(isAsleep: boolean) {
     } else if (sim.t >= m.restUntil) {
       // Graze here a while, then pick the next spot nearby.
       m.restUntil = sim.t + Math.floor(rand(40, 160))
-      m.goal = clamp(m.x + rand(-14, 14), 1, Math.max(2, buildable() - 6))
+      m.goal = grazeSpot(m.x, MOBS[m.kind].body[0]!.length)
     }
   }
   sim.mobs = sim.mobs.filter(m => !(m.isLeaving && m.x < -7))
@@ -559,9 +573,10 @@ function frame(isAsleep: boolean, stats: string): string {
     })
 
   drawGround(buf)
-  // The animals go behind the buildings, so one passing a house walks behind it.
-  for (const m of sim.mobs) drawMob(buf, m, isAsleep)
   for (const p of sim.plots) drawPlot(buf, p)
+  // The animals stay in front of the buildings; they graze on open grass (grazeSpot), so they walk
+  // past a house but do not stand in front of it.
+  for (const m of sim.mobs) drawMob(buf, m, isAsleep)
   if (!isAsleep) for (const v of sim.villagers) drawVillager(buf, v)
   for (const c of sim.creepers) drawCreeper(buf, c)
   for (const p of sim.particles) {
