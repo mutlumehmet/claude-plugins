@@ -93,90 +93,6 @@ function drawBaby(ink, columns, x, y, frame10) {
   });
 }
 
-// src/save.ts
-const FORGET_AFTER_MS = 90 * 24 * 60 * 60 * 1e3;
-const PROJECTS = "arcade.projects";
-const here = { project: "", path: "", home: "" };
-function hash(text) {
-  let h = 2166136261;
-  for (let i = 0; i < text.length; i++) {
-    h ^= text.charCodeAt(i);
-    h = Math.imul(h, 16777619) >>> 0;
-  }
-  return h.toString(36);
-}
-const scoped = (key) => here.project ? `${key}@${here.project}` : key;
-const projectName = () => here.path.split("/").filter(Boolean).pop() ?? here.path;
-async function rootOf($, cwd) {
-  let dir = cwd.replace(/\/+$/, "") || "/";
-  for (let i = 0; i < 64; i++) {
-    const git = `${dir === "/" ? "" : dir}/.git`;
-    let isThere = false;
-    try {
-      isThere = await $.fs.exists(git);
-    } catch {
-      return cwd;
-    }
-    if (isThere) {
-      try {
-        const line = (await $.fs.read(git)).match(/^gitdir:\s*(.+)$/m)?.[1]?.trim() ?? "";
-        const at = line.indexOf("/.git/worktrees/");
-        if (at > 0) return line.slice(0, at);
-      } catch {
-      }
-      return dir;
-    }
-    if (dir === "/") break;
-    dir = dir.slice(0, dir.lastIndexOf("/")) || "/";
-  }
-  return cwd;
-}
-async function useProject($, cwd) {
-  here.path = await rootOf($, cwd);
-  here.project = hash(here.path);
-  let home;
-  try {
-    home = await $.env.get("HOME");
-  } catch {
-    home = void 0;
-  }
-  here.home = home ? hash(await rootOf($, home)) : here.project;
-  try {
-    const now = await $.clock.now();
-    const seen = { ...await $.store.get(PROJECTS) ?? {} };
-    seen[here.project] = { path: here.path, at: now };
-    const stale = Object.keys(seen).filter((p) => now - seen[p].at > FORGET_AFTER_MS);
-    if (stale.length > 0) {
-      for (const key of await $.store.keys()) if (stale.some((p) => key.endsWith(`@${p}`))) await $.store.delete(key);
-      for (const p of stale) delete seen[p];
-    }
-    await $.store.set(PROJECTS, seen);
-  } catch {
-  }
-}
-async function loadKept($, key) {
-  const value = await $.store.get(scoped(key));
-  if (value !== void 0 || scoped(key) === key) return value;
-  const old = await $.store.get(key);
-  if (old === void 0) return void 0;
-  const homeKey = `${key}@${here.home || here.project}`;
-  if (await $.store.get(homeKey) === void 0) await $.store.set(homeKey, old);
-  await $.store.delete(key);
-  return homeKey === scoped(key) ? old : void 0;
-}
-const queues = /* @__PURE__ */ new Map();
-function keep($, key, current, change2) {
-  const k = scoped(key);
-  const run = (queues.get(k) ?? Promise.resolve()).catch(() => void 0).then(async () => {
-    const stored = await $.store.get(k);
-    const next = change2(stored ?? current);
-    await $.store.set(k, next);
-    return () => next;
-  });
-  queues.set(k, run);
-  return run;
-}
-
 // src/shown.ts
 import { atom, read } from "claude-code";
 const shown = atom({ plugin: "arcade", key: "shown" }, []);
@@ -507,7 +423,7 @@ async function celebrate($, label, gold, show, isQuiet = false) {
   sim.show = { kind: show, until: sim.t + SHOW_FRAMES[show] };
   sim.lastActivity = sim.t;
   const before = levelOf((await read2($, hoard)).gold);
-  const next = await update($, hoard, await keep($, "dragon.hoard", await read2($, hoard), (old) => ({ ...old, gold: old.gold + gold, feats: old.feats + 1 })));
+  const next = await update($, hoard, (old) => ({ ...old, gold: old.gold + gold, feats: old.feats + 1 }));
   const after = levelOf(next.gold);
   await update($, feat, () => `${label}: +${gold} gold`);
   if (after > before) {
@@ -529,8 +445,6 @@ async function celebrateMoments($, found) {
   for (const m of found) await onMilestone($, m.tier, m.kind, m.label);
 }
 const start = async ($, e, next) => {
-  const saved = await loadKept($, "dragon.hoard");
-  if (saved) await update($, hoard, () => saved);
   await $.command.register({
     name: "dragon",
     description: 'The dragon above the prompt: its hoard. "/dragon puff|fire|blaze|roar" to show off.'
@@ -576,7 +490,7 @@ const start = async ($, e, next) => {
           if (a?.status === "completed" || a?.status === "idle" || isGone) {
             b.state = "home";
             b.since = sim.t;
-            const fed = await update($, hoard, await keep($, "dragon.hoard", await read2($, hoard), (old) => ({ ...old, gold: old.gold + 2 })));
+            const fed = await update($, hoard, (old) => ({ ...old, gold: old.gold + 2 }));
           } else if (a?.status === "failed" || a?.status === "killed") {
             b.state = "fall";
             b.since = sim.t;
@@ -629,7 +543,7 @@ const tool = async ($, e, next) => {
     sim.lastActivity = sim.t;
   });
   if (ran.deny !== void 0) return ran;
-  const snack = await update($, hoard, await keep($, "dragon.hoard", await read2($, hoard), (old) => ({ ...old, meals: old.meals + 1 })));
+  const snack = await update($, hoard, (old) => ({ ...old, meals: old.meals + 1 }));
   if (ran.isError === true) {
     sim.sadUntil = sim.t + 30;
     return ran;
@@ -659,7 +573,7 @@ const render = async ($, e, next) => {
     </Box>;
 };
 async function reset($) {
-  await update($, hoard, await keep($, "dragon.hoard", await read2($, hoard), () => hoard.initial));
+  await update($, hoard, () => hoard.initial);
   await update($, feat, () => "");
   sim.level = 1;
 }
@@ -992,7 +906,7 @@ function base642(bytes) {
   return out;
 }
 async function save($, change2) {
-  const next = await update2($, score, await keep($, "duck.score", await read3($, score), change2));
+  const next = await update2($, score, change2);
   sim2.stats = statsLine2(next);
   return next;
 }
@@ -1024,10 +938,9 @@ async function celebrateMoments2($, found) {
   for (const m of found) await onMilestone2($, m.tier, m.kind, m.label);
 }
 const start2 = async ($, e, next) => {
-  const saved = await loadKept($, "duck.score");
-  if (saved) await update2($, score, () => saved);
-  sim2.stats = statsLine2(saved ?? await read3($, score));
-  sim2.round = roundOf((saved ?? await read3($, score)).hits);
+  const s = await read3($, score);
+  sim2.stats = statsLine2(s);
+  sim2.round = roundOf(s.hits);
   await $.command.register({
     name: "duck",
     description: 'The duck hunt above the prompt: the score. "/duck shot|hunt|double|perfect|flyaway" to show off.'
@@ -1037,12 +950,12 @@ const start2 = async ($, e, next) => {
     if (sim2.gain.hits > 0 || sim2.gain.escaped > 0) {
       const gain = sim2.gain;
       sim2.gain = { hits: 0, escaped: 0 };
-      void save($, (old) => ({ ...old, hits: old.hits + gain.hits, escaped: old.escaped + gain.escaped })).then((s) => {
-        const round = roundOf(s.hits);
+      void save($, (old) => ({ ...old, hits: old.hits + gain.hits, escaped: old.escaped + gain.escaped })).then((s2) => {
+        const round = roundOf(s2.hits);
         if (round > sim2.round) {
           sim2.round = round;
           banner(`ROUND ${round}`, BEAK, 60);
-          void notify2($, `\u{1F986} Round ${round}: ${s.hits} ducks down.`);
+          void notify2($, `\u{1F986} Round ${round}: ${s2.hits} ducks down.`);
         }
       });
     }
@@ -1096,7 +1009,7 @@ const tool2 = async ($, e, next) => {
     sim2.lastActivity = sim2.t;
   });
   if (ran.deny !== void 0) return ran;
-  const counted = await update2($, score, await keep($, "duck.score", await read3($, score), (old) => ({ ...old, tools: old.tools + 1 })));
+  const counted = await update2($, score, (old) => ({ ...old, tools: old.tools + 1 }));
   sim2.stats = statsLine2(counted);
   if (ran.isError === true) flyAway(false);
   return ran;
@@ -1117,7 +1030,7 @@ const render2 = async ($, e, next) => {
     </Box>;
 };
 async function reset2($) {
-  const next = await update2($, score, await keep($, "duck.score", await read3($, score), () => score.initial));
+  const next = await update2($, score, () => score.initial);
   sim2.stats = statsLine2(next);
   sim2.round = 1;
   await update2($, feat2, () => "");
@@ -1267,13 +1180,13 @@ async function finishSpin($) {
     }
   }
   if (spin.isPractice) return;
-  const next = await update3($, bank, await keep($, "jackpot.bank", await read4($, bank), (old) => ({
+  const next = await update3($, bank, (old) => ({
     ...old,
     chips: old.chips + payout,
     spins: old.spins + 1,
     jackpots: old.jackpots + (win === "jackpot" ? 1 : 0),
     best: Math.max(old.best, payout)
-  })));
+  }));
   const names = sim3.result.join(" ");
   await update3($, last, () => payout > 0 ? `${names}: +${payout}` : names);
   if (win === "jackpot") void notify3($, `\u{1F3B0} JACKPOT! 7 7 7 pays ${payout} chips`);
@@ -1446,8 +1359,6 @@ async function celebrateMoments3($, found) {
   for (const m of found) await onMilestone3($, m.tier, m.kind, m.label);
 }
 const start3 = async ($, e, next) => {
-  const saved = await loadKept($, "jackpot.bank");
-  if (saved) await update3($, bank, () => ({ ...saved, streak: saved.streak ?? 0 }));
   await $.command.register({
     name: "jackpot",
     description: 'The slot machine above the prompt: your chips. "/jackpot spin|golden|demo" to try it.'
@@ -1496,7 +1407,7 @@ const turn3 = async ($, e, next) => {
   if (e.agentId !== void 0 || e.isAborted) return ran;
   const hadError = sim3.hadError;
   sim3.hadError = false;
-  const b = await update3($, bank, await keep($, "jackpot.bank", await read4($, bank), (old) => ({ ...old, streak: hadError ? 0 : old.streak + 1 })));
+  const b = await update3($, bank, (old) => ({ ...old, streak: hadError ? 0 : old.streak + 1 }));
   pull($, { isGolden: false, isPractice: false });
   return ran;
 };
@@ -1524,7 +1435,7 @@ const render3 = async ($, e, next) => {
     </Box>;
 };
 async function reset3($) {
-  await update3($, bank, await keep($, "jackpot.bank", await read4($, bank), () => bank.initial));
+  await update3($, bank, () => bank.initial);
   await update3($, golden, () => 0);
   await update3($, last, () => "");
 }
@@ -2089,7 +2000,7 @@ function base644(bytes) {
 }
 let lastStats = statsLine4({ xp: 0, toppled: 0, planes: 0, tools: 0 });
 async function save2($, change2) {
-  const next = await update4($, score3, await keep($, "octopus.score", await read5($, score3), change2));
+  const next = await update4($, score3, change2);
   lastStats = statsLine4(next);
   return next;
 }
@@ -2127,11 +2038,7 @@ async function celebrateMoments4($, found) {
   for (const m of found) await onMilestone4($, m.tier, m.kind, m.label);
 }
 const start4 = async ($, e, next) => {
-  const saved = await loadKept($, "octopus.score");
-  if (saved) {
-    await update4($, score3, () => saved);
-    lastStats = statsLine4(saved);
-  }
+  lastStats = statsLine4(await read5($, score3));
   await $.command.register({
     name: "octopus",
     description: 'The octopus above the prompt: its score. "/octopus ink|plane|rampage|conquer" to show off.'
@@ -2233,7 +2140,7 @@ const tool4 = async ($, e, next) => {
     sim4.lastActivity = sim4.t;
   });
   if (ran.deny !== void 0) return ran;
-  const counted = await update4($, score3, await keep($, "octopus.score", await read5($, score3), (old) => ({ ...old, tools: old.tools + 1 })));
+  const counted = await update4($, score3, (old) => ({ ...old, tools: old.tools + 1 }));
   lastStats = statsLine4(counted);
   if (ran.isError === true) sim4.sadUntil = sim4.t + 30;
   return ran;
@@ -2255,7 +2162,7 @@ const render4 = async ($, e, next) => {
     </Box>;
 };
 async function reset4($) {
-  const next = await update4($, score3, await keep($, "octopus.score", await read5($, score3), () => score3.initial));
+  const next = await update4($, score3, () => score3.initial);
   lastStats = statsLine4(next);
   await update4($, feat3, () => "");
 }
@@ -2349,7 +2256,7 @@ async function land($, duel, isHit) {
   sim5.men[target2].fallUntil = sim5.t + 36;
   say(xOf(target2) + 2, 0, duel.by === "you" ? "GOT HIM" : "OUCH", 20);
   if (sim5.practice) return;
-  const next = await update5($, score4, await keep($, "outlaw.score", await read6($, score4), (old) => {
+  const next = await update5($, score4, (old) => {
     const streak = duel.by === "you" ? old.streak + 1 : 0;
     return {
       you: old.you + (duel.by === "you" ? 1 : 0),
@@ -2357,7 +2264,7 @@ async function land($, duel, isHit) {
       streak,
       best: Math.max(old.best, streak)
     };
-  }));
+  });
 }
 function step4($) {
   sim5.t += 1;
@@ -2498,8 +2405,6 @@ async function celebrateMoments5($, found) {
   for (const m of found) await onMilestone5($, m.tier, m.kind, m.label);
 }
 const start5 = async ($, e, next) => {
-  const saved = await loadKept($, "outlaw.score");
-  if (saved) await update5($, score4, () => saved);
   await $.command.register({
     name: "outlaw",
     description: 'The duel above the prompt: the score. "/outlaw draw" for a practice duel.'
@@ -2571,7 +2476,7 @@ const render5 = async ($, e, next) => {
     </Box>;
 };
 async function reset5($) {
-  await update5($, score4, await keep($, "outlaw.score", await read6($, score4), () => score4.initial));
+  await update5($, score4, () => score4.initial);
 }
 const game5 = { id: ID5, title: "Outlaw" };
 
@@ -2694,7 +2599,7 @@ const isNight = (now) => {
 async function change($, fn) {
   const now = await $.clock.now();
   sim6.now = now;
-  const changed = await update6($, pet, await keep($, "tama.pet", await read7($, pet), (p) => fn(age(p, now))));
+  const changed = await update6($, pet, (p) => fn(age(p, now)));
   sim6.pet = changed;
   return changed;
 }
@@ -2819,9 +2724,7 @@ async function celebrateMoments6($, found) {
 }
 const start6 = async ($, e, next) => {
   sim6.now = await $.clock.now();
-  const saved = await loadKept($, "tama.pet");
-  const start11 = saved ?? fresh(sim6.now, 1);
-  sim6.pet = await update6($, pet, await keep($, "tama.pet", await read7($, pet), () => age(start11, sim6.now)));
+  sim6.pet = await update6($, pet, (p) => p.born === 0 ? fresh(sim6.now, 1) : age(p, sim6.now));
   await $.command.register({
     name: "tama",
     description: 'The Tamagotchi above the prompt: how it is doing. "/tama feed|play|clean" to care for it by hand.'
@@ -2948,7 +2851,7 @@ const render6 = async ($, e, next) => {
 };
 async function reset6($) {
   sim6.now = await $.clock.now();
-  sim6.pet = await update6($, pet, await keep($, "tama.pet", await read7($, pet), () => fresh(sim6.now, 1)));
+  sim6.pet = await update6($, pet, () => fresh(sim6.now, 1));
 }
 const game6 = { id: ID6, title: "Tama" };
 
@@ -3069,19 +2972,19 @@ async function scoreLines($, lines, isBomb) {
   const before = await read8($, tally);
   const level = Math.floor(before.lines / 10);
   const points = isBomb ? 50 * lines * (level + 1) : LINE_SCORE[Math.min(4, lines)] * (level + 1);
-  const saved = await update7($, tally, await keep($, "tetris.tally", await read8($, tally), (old) => ({ ...old, score: old.score + points, lines: old.lines + lines })));
+  const saved = await update7($, tally, (old) => ({ ...old, score: old.score + points, lines: old.lines + lines }));
   if (!isBomb && lines >= 4) void notify7($, "\u{1F9F1} TETRIS! Four lines at once");
   if (Math.floor(saved.lines / 10) > level) void notify7($, `\u{1F9F1} Level ${Math.floor(saved.lines / 10)}`);
 }
 async function gameOver($) {
   sim7.wipe = 0;
   sim7.active = null;
-  const saved = await update7($, tally, await keep($, "tetris.tally", await read8($, tally), (old) => ({
+  const saved = await update7($, tally, (old) => ({
     score: 0,
     lines: 0,
     best: Math.max(old.best, old.score),
     games: old.games + 1
-  })));
+  }));
   void notify7($, `\u{1F9F1} Game over. Best ${saved.best}`);
 }
 async function onMilestone7($, tier, _kind, label) {
@@ -3207,8 +3110,6 @@ async function celebrateMoments7($, found) {
   for (const m of found) await onMilestone7($, m.tier, m.kind, m.label);
 }
 const start7 = async ($, e, next) => {
-  const saved = await loadKept($, "tetris.tally");
-  if (saved) await update7($, tally, () => saved);
   await $.command.register({
     name: "tetris",
     description: 'The Tetris above the prompt: the score. "/tetris drop" adds pieces, "/tetris clear" clears a row.'
@@ -3279,7 +3180,7 @@ const render7 = async ($, e, next) => {
     </Box>;
 };
 async function reset7($) {
-  await update7($, tally, await keep($, "tetris.tally", await read8($, tally), () => tally.initial));
+  await update7($, tally, () => tally.initial);
 }
 const game7 = { id: ID7, title: "Tetris" };
 
@@ -3309,7 +3210,7 @@ async function setWorking($) {
 }
 const statsLine7 = (s) => `\u2738 ${s.kills}  \u261E ${s.mine}  \u271D ${s.lost}  \u2692 ${s.tools}`;
 async function save3($, change2) {
-  const next = await update8($, score5, await keep($, "bugs.score", await read9($, score5), change2));
+  const next = await update8($, score5, change2);
   return next;
 }
 async function celebrate4($, label, kind, isPractice = false) {
@@ -3323,8 +3224,6 @@ async function celebrateMoments8($, found) {
   for (const m of found) await celebrate4($, m.label, m.tier);
 }
 const start8 = async ($, e, next) => {
-  const saved = await loadKept($, "bugs.score");
-  if (saved) await update8($, score5, () => ({ ...saved, cities: saved.cities > 0 ? saved.cities : CITIES }));
   await $.command.register({
     name: "bugs",
     description: 'Bug Command above the prompt: the score. Click the sky to fire. "/bugs shot|salvo|incoming" to show off.'
@@ -3368,7 +3267,7 @@ const tool8 = async ($, e, next) => {
   });
   await setWorking($);
   if (ran.deny !== void 0) return ran;
-  const counted = await update8($, score5, await keep($, "bugs.score", await read9($, score5), (old) => ({ ...old, tools: old.tools + 1 })));
+  const counted = await update8($, score5, (old) => ({ ...old, tools: old.tools + 1 }));
   await push($, ran.isError === true ? "fail" : "tool");
   return ran;
 };
@@ -3404,7 +3303,7 @@ const render8 = async ($, e, next) => {
     </Box>;
 };
 async function reset8($) {
-  await update8($, score5, await keep($, "bugs.score", await read9($, score5), () => score5.initial));
+  await update8($, score5, () => score5.initial);
   await update8($, feat4, () => "");
 }
 const game8 = { id: ID8, title: "Bug Command" };
@@ -3767,7 +3666,7 @@ async function notify9($, text) {
   if (await isShown($, ID9)) $.ui.toast(text);
 }
 async function save4($, change2) {
-  const next = await update9($, score6, await keep($, "dario.score", await read10($, score6), change2));
+  const next = await update9($, score6, change2);
   sim9.stats = statsLine8(next);
   return next;
 }
@@ -3801,9 +3700,7 @@ async function celebrateMoments9($, found) {
   }
 }
 const start9 = async ($, e, next) => {
-  const saved = await loadKept($, "dario.score");
-  if (saved) await update9($, score6, () => saved);
-  sim9.stats = statsLine8(saved ?? await read10($, score6));
+  sim9.stats = statsLine8(await read10($, score6));
   await $.command.register({
     name: "dario",
     description: 'Dario above the prompt: the score. "/dario coin|stomp|clear|world|ouch" to show off.'
@@ -3883,7 +3780,7 @@ const tool9 = async ($, e, next) => {
     sim9.lastActivity = sim9.t;
   });
   if (ran.deny !== void 0) return ran;
-  const counted = await update9($, score6, await keep($, "dario.score", await read10($, score6), (old) => ({ ...old, tools: old.tools + 1 })));
+  const counted = await update9($, score6, (old) => ({ ...old, tools: old.tools + 1 }));
   sim9.stats = statsLine8(counted);
   if (ran.isError === true) addBug(false, true);
   else if (sim9.things.filter((t) => t.kind === "block" && !t.used).length < 2) addBlock(true);
@@ -3906,7 +3803,7 @@ const render9 = async ($, e, next) => {
     </Box>;
 };
 async function reset9($) {
-  const next = await update9($, score6, await keep($, "dario.score", await read10($, score6), () => score6.initial));
+  const next = await update9($, score6, () => score6.initial);
   sim9.stats = statsLine8(next);
   await update9($, feat5, () => "");
 }
@@ -4046,13 +3943,8 @@ const sim10 = {
   mobs: [],
   banner: null,
   gain: { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0 },
-  isDirty: false,
   stats: "",
-  tools: 0,
-  // Tool calls not yet added to the stored score.
-  toolGain: 0,
-  // When the town was last reset; a session that loaded an older town gives its copy up.
-  epoch: 0
+  tools: 0
 };
 const rand6 = (a, b) => a + Math.random() * (b - a);
 const pick6 = (list2) => list2[Math.floor(Math.random() * list2.length)];
@@ -4200,7 +4092,6 @@ function site() {
   }
   oldest.progress = 0;
   oldest.wasDone = false;
-  oldest.v = (oldest.v ?? 0) + 1;
   sim10.plots = [...sim10.plots.filter((p) => p !== oldest), oldest];
   return oldest;
 }
@@ -4237,20 +4128,17 @@ function work(who, n, counts = true) {
     sim10.particles.push({ x: p.x + b.dx, y: BASE2 + b.dy, vx: 0, vy: -0.2, age: 0, life: 4, color: 16579836 });
     if (isDone(p)) finish(p);
   }
-  sim10.isDirty = true;
 }
 function plantTree(counts = true) {
   const trees = sim10.plots.filter((p) => p.kind === "tree").length;
   const x = trees < Math.max(2, Math.floor(buildable() / 18)) ? freeSpan(5, true) : null;
   if (x === null) {
     for (const p of sim10.plots) if (p.kind === "tree") p.plantedAt = (p.plantedAt ?? 0) - 4;
-    sim10.isDirty = true;
     return;
   }
   sim10.plots.push({ kind: "tree", x, progress: 0, wasDone: true, plantedAt: sim10.tools });
   if (counts) sim10.gain.trees += 1;
   sim10.particles.push({ x: x + 2, y: BASE2 - 2, vx: 0, vy: -0.3, age: 0, life: 8, color: 4170573 });
-  sim10.isDirty = true;
 }
 function raiseCastle(isWhole, counts = true) {
   const x = castleX();
@@ -4278,7 +4166,6 @@ function raiseCastle(isWhole, counts = true) {
     banner4("CASTLE BUILT!", GOLD2, 70);
     for (let i = 0; i < 4; i++) sparkle2(rand6(x, sim10.W - 2), rand6(1, 6), [GOLD2, 15017249, 5090295, 4170573], 12);
   } else banner4("THE CASTLE GROWS", GOLD2, 45);
-  sim10.isDirty = true;
 }
 function creeper(counts = true) {
   const targets = sim10.plots.filter((p) => p.kind !== "tree" && p.progress > 4 && p.x + widthOf2(p.kind) <= sim10.W);
@@ -4295,10 +4182,8 @@ function explode(c) {
     const w = widthOf2(p.kind);
     if (c.x >= p.x - 2 && c.x <= p.x + w + 1) {
       p.progress = Math.max(0, p.progress - Math.ceil(sizeOf(p) * 0.35));
-      p.v = (p.v ?? 0) + 1;
     }
   }
-  sim10.isDirty = true;
 }
 function step8() {
   sim10.t += 1;
@@ -4408,13 +4293,15 @@ function frame9(isAsleep, stats) {
   });
   drawGround(buf);
   for (const p of sim10.plots) drawPlot(buf, p);
-  for (const m of sim10.mobs) drawMob(buf, m, isAsleep);
   if (!isAsleep) for (const v of sim10.villagers) drawVillager(buf, v);
-  for (const c of sim10.creepers) drawCreeper(buf, c);
   for (const p of sim10.particles) {
     if (p.ch) text(Math.round(p.x), Math.floor(Math.round(p.y) / 2), p.ch, p.color);
     else put4(buf, p.x, p.y, p.color);
   }
+  const mobs = new Uint32Array(W5 * PH4).fill(EMPTY4);
+  for (const m of sim10.mobs) drawMob(mobs, m, isAsleep);
+  for (const c of sim10.creepers) drawCreeper(mobs, c);
+  for (let i = 0; i < mobs.length; i++) if (mobs[i] !== EMPTY4) buf[i] = mobs[i];
   if (isAsleep) {
     const home = sim10.plots.find((p) => (p.kind === "house" || p.kind === "bighouse") && isDone(p));
     if (home) text(home.x + widthOf2(home.kind), Math.floor((BASE2 - 8) / 2), "z", GREY4);
@@ -4427,9 +4314,11 @@ function frame9(isAsleep, stats) {
   for (let cy = 0; cy < ROWS10; cy++) {
     for (let cx = 0; cx < W5; cx++) {
       const i = (cy * W5 + cx) * 3;
-      const top = buf[cy * 2 * W5 + cx];
+      const isMobTop = mobs[cy * 2 * W5 + cx] !== EMPTY4;
+      const isMobBottom = mobs[(cy * 2 + 1) * W5 + cx] !== EMPTY4;
+      const top = isMobBottom && !isMobTop ? EMPTY4 : buf[cy * 2 * W5 + cx];
       const bottom = buf[(cy * 2 + 1) * W5 + cx];
-      const g = over2.get(cy * W5 + cx);
+      const g = isMobTop || isMobBottom ? void 0 : over2.get(cy * W5 + cx);
       if (g) {
         words[i] = g.ch.codePointAt(0);
         words[i + 1] = g.color;
@@ -4483,89 +4372,33 @@ async function notify10($, text) {
   if (await isShown($, ID10)) $.ui.toast(text);
 }
 const ZERO = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0, tools: 0 };
-function mergeTowns(stored, mine) {
-  const better = (a, b) => (a.v ?? 0) !== (b.v ?? 0) ? (a.v ?? 0) > (b.v ?? 0) : a.progress >= b.progress;
-  const keyOf2 = (p) => p.kind === "castle" ? "castle" : `${p.x}`;
-  const best = /* @__PURE__ */ new Map();
-  for (const p of [...mine, ...stored]) {
-    const key = keyOf2(p);
-    const had = best.get(key);
-    if (!had) best.set(key, p);
-    else if (had.kind === "tree" && p.kind === "tree") best.set(key, { ...had, plantedAt: Math.min(had.plantedAt ?? 0, p.plantedAt ?? 0) });
-    else if (!better(had, p)) best.set(key, p);
-  }
-  const ranked = [...best.values()].sort((a, b) => better(a, b) ? -1 : 1);
-  const kept = [];
-  for (const p of ranked) {
-    if (p.kind === "castle") {
-      kept.push(p);
-      continue;
-    }
-    const overlaps = kept.some((k) => k.kind !== "castle" && p.x <= k.x + widthOf2(k.kind) && k.x <= p.x + widthOf2(p.kind));
-    if (!overlaps) kept.push(p);
-  }
-  const order = [...best.values()];
-  return order.filter((p) => kept.includes(p));
-}
 async function flush($) {
-  const map = await $.store.get(scoped("town.map"));
-  if (map && (map.epoch ?? 0) > sim10.epoch) {
-    sim10.epoch = map.epoch ?? 0;
-    sim10.plots = Array.isArray(map.plots) ? copyPlots(map.plots) : [];
-    sim10.next = map.next ?? 0;
-    sim10.gain = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0 };
-    sim10.toolGain = 0;
-    sim10.isDirty = false;
-    const fresh2 = await $.store.get(scoped("town.score")) ?? ZERO;
-    await update10($, score7, () => fresh2);
-    sim10.stats = statsLine9(fresh2);
-    sim10.tools = fresh2.tools;
-    return;
-  }
   const g = sim10.gain;
-  if (g.blocks + g.houses + g.trees + g.castles + g.creepers + sim10.toolGain > 0) {
-    sim10.gain = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0 };
-    const tools = sim10.toolGain;
-    sim10.toolGain = 0;
-    const old = await $.store.get(scoped("town.score")) ?? ZERO;
-    const next = {
-      blocks: old.blocks + g.blocks,
-      houses: old.houses + g.houses,
-      trees: old.trees + g.trees,
-      castles: old.castles + g.castles,
-      creepers: old.creepers + g.creepers,
-      tools: old.tools + tools
-    };
-    await $.store.set(scoped("town.score"), next);
-    await update10($, score7, () => next);
-    sim10.stats = statsLine9(next);
-    sim10.tools = next.tools;
-    if (levelOf3(next.blocks) !== levelOf3(old.blocks)) {
-      banner4(levelOf3(next.blocks).toUpperCase(), GOLD2, 60);
-      void notify10($, `\u{1F3F0} Your camp grew into a ${levelOf3(next.blocks).toLowerCase()}: ${next.blocks} blocks.`);
-    }
-  }
-  if (sim10.isDirty) {
-    sim10.isDirty = false;
-    sim10.plots = copyPlots(mergeTowns(map && Array.isArray(map.plots) ? map.plots : [], sim10.plots));
-    sim10.next = Math.max(sim10.next, map?.next ?? 0);
-    const saved = { plots: sim10.plots, next: sim10.next, epoch: sim10.epoch, width: sim10.W };
-    await $.store.set(scoped("town.map"), saved);
+  if (g.blocks + g.houses + g.trees + g.castles + g.creepers === 0) return;
+  sim10.gain = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0 };
+  const old = await read11($, score7);
+  const next = await update10($, score7, (s) => ({
+    ...s,
+    blocks: s.blocks + g.blocks,
+    houses: s.houses + g.houses,
+    trees: s.trees + g.trees,
+    castles: s.castles + g.castles,
+    creepers: s.creepers + g.creepers
+  }));
+  sim10.stats = statsLine9(next);
+  sim10.tools = next.tools;
+  if (levelOf3(next.blocks) !== levelOf3(old.blocks)) {
+    banner4(levelOf3(next.blocks).toUpperCase(), GOLD2, 60);
+    void notify10($, `\u{1F3F0} Your camp grew into a ${levelOf3(next.blocks).toLowerCase()}: ${next.blocks} blocks.`);
   }
 }
 async function reset10($) {
-  sim10.epoch = await $.clock.now();
   sim10.plots = [];
   sim10.next = 0;
   sim10.villagers = [];
   sim10.creepers = [];
   sim10.gain = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0 };
-  sim10.toolGain = 0;
-  sim10.isDirty = false;
   sim10.tools = 0;
-  const saved = { plots: [], next: 0, epoch: sim10.epoch, width: sim10.W };
-  await $.store.set(scoped("town.map"), saved);
-  await $.store.set(scoped("town.score"), ZERO);
   await update10($, score7, () => ZERO);
   await update10($, feat6, () => "");
   sim10.stats = statsLine9(ZERO);
@@ -4580,7 +4413,6 @@ async function celebrate6($, label, show, isPractice = false) {
       if (counts) sim10.gain.blocks += Math.max(0, sizeOf(p) - p.progress);
       finish(p);
     }
-    sim10.isDirty = true;
   } else raiseCastle(show === "whole", counts);
   if (isPractice) return;
   const what = { tree: "", finish: "a building finished", castle: "the castle grows", whole: "a castle raised" };
@@ -4596,20 +4428,11 @@ async function celebrateMoments10($, found) {
     else await celebrate6($, m.label, WHOLE.has(m.kind) ? "whole" : "castle");
   }
 }
-const copyPlots = (plots) => plots.map((p) => ({ ...p }));
 const start10 = async ($, e, next) => {
-  const saved = await loadKept($, "town.score");
-  if (saved) await update10($, score7, () => saved);
-  const s = saved ?? await read11($, score7);
+  const s = await read11($, score7);
   sim10.stats = statsLine9(s);
   sim10.tools = s.tools;
-  const map = await loadKept($, "town.map");
-  if (map && Array.isArray(map.plots)) {
-    sim10.plots = copyPlots(map.plots);
-    sim10.next = map.next ?? 0;
-    sim10.epoch = map.epoch ?? 0;
-  }
-  if (sim10.W === 0) sim10.W = clamp5(map?.width ?? 100, MIN_COLUMNS5, MAX_COLUMNS5);
+  if (sim10.W === 0) sim10.W = clamp5(100, MIN_COLUMNS5, MAX_COLUMNS5);
   await $.command.register({
     name: "town",
     description: 'Block Town above the prompt: the score. "/town build|tree|finish|castle|creeper" to show off, "/town reset" to start over.'
@@ -4651,7 +4474,7 @@ const command10 = async ($, e) => {
     text: `${statsLine9(s)}${last2 ? `
 Last win: ${last2}` : ""}
 ${animalsLine()}
-Your villagers build the town while Claude works: every tool call lays two blocks (an edit or a write three), and each subagent sends a helper of its own. A failed tool brings a creeper that blows a hole in a building, and the villagers build it back. A small moment plants a tree, and trees grow as the work goes on; a medium moment (a commit, a skill, a sent message) finishes the building going up, a big one raises a third of the castle and a merge, release or deploy the rest. The town is kept between sessions and shared by every terminal of this account; once the band is full, the oldest building is torn down and built again. "/town reset" starts over. The first word is the town's size (camp, hamlet, village, town, city); \u25A6 blocks laid, \u2302 houses, \u2663 trees, \u265C castles, \u2692 tool calls.`
+Your villagers build the town while Claude works: every tool call lays two blocks (an edit or a write three), and each subagent sends a helper of its own. A failed tool brings a creeper that blows a hole in a building, and the villagers build it back. A small moment plants a tree, and trees grow as the work goes on; a medium moment (a commit, a skill, a sent message) finishes the building going up, a big one raises a third of the castle and a merge, release or deploy the rest. The town belongs to this terminal and starts empty in every new one; once the band is full, the oldest building is torn down and built again. "/town reset" starts over. The first word is the town's size (camp, hamlet, village, town, city); \u25A6 blocks laid, \u2302 houses, \u2663 trees, \u265C castles, \u2692 tool calls.`
   };
 };
 const prompt10 = async ($, e, next) => {
@@ -4679,7 +4502,6 @@ const tool10 = async ($, e, next) => {
   }
   work(isMain ? "main" : String(e.agentId), e.tool === "Edit" || e.tool === "Write" ? 3 : 2);
   if (isMain) {
-    sim10.toolGain += 1;
     const counted = await update10($, score7, (old) => ({ ...old, tools: old.tools + 1 }));
     sim10.tools = counted.tools;
     sim10.stats = statsLine9(counted);
@@ -4894,6 +4716,29 @@ function toolMilestones(e, ran) {
   return found;
 }
 
+// src/save.ts
+const OLD_KEYS = [
+  "dragon.hoard",
+  "jackpot.bank",
+  "outlaw.score",
+  "tama.pet",
+  "tetris.tally",
+  "octopus.score",
+  "duck.score",
+  "bugs.score",
+  "dario.score",
+  "town.score",
+  "town.map",
+  "arcade.projects"
+];
+const isOld = (key) => OLD_KEYS.some((k) => key === k || key.startsWith(`${k}@`));
+async function forgetSaves($) {
+  try {
+    for (const key of await $.store.keys()) if (isOld(key)) await $.store.delete(key);
+  } catch {
+  }
+}
+
 // src/arcade.tsx
 const GAMES = [game, game3, game5, game6, game7, game4, game2, game8, game9, game10];
 const MODES = ["random", "rotate", "fixed", "all", "off"];
@@ -4934,7 +4779,7 @@ async function status($, mode, pool) {
   return `Arcade on this account: ${setting}.
 This terminal:
 ${rows.join("\n")}
-"/arcade <game>" swaps this terminal's game, "/arcade <game> all" pins it for every terminal, "/arcade random|rotate|all|off" sets how new terminals pick, "/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal's game. "/arcade hide" clears this terminal only. Scores, the town and the pet are kept per project (this one: ${projectName()}); "/<game> reset" or "/arcade reset" starts this project over.`;
+"/arcade <game>" swaps this terminal's game, "/arcade <game> all" pins it for every terminal, "/arcade random|rotate|all|off" sets how new terminals pick, "/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal's game. "/arcade hide" clears this terminal only. Scores, the town and the pet start from zero in every terminal and last until it closes; "/<game> reset" or "/arcade reset" starts this terminal over.`;
 }
 const over = (options) => `${String(options.mode ?? "")}|${String(options.pool ?? "")}`;
 async function save5($, options, mode, pool) {
@@ -4987,7 +4832,7 @@ Preview a move (practice, nothing counts):
 ${moves.join("\n")}` : "";
   return { ...ran, text: `${ran.text}${list2}
 
-/${id} reset starts this game over for this project (it asks first).` };
+/${id} reset starts this game over in this terminal (it asks first).` };
 }
 const RESET_WINDOW_MS = 6e4;
 const asked = /* @__PURE__ */ new Map();
@@ -5014,7 +4859,7 @@ async function askReset($, id, args) {
   if (arg === "reset") {
     asked.set(id, now);
     return {
-      text: `This clears ${what} for the project ${projectName()}: its score${id === "town" || id === "arcade" ? ", its town" : ""}${id === "tama" || id === "arcade" ? ", its pet" : ""}. Other projects keep theirs. Type "/${id} reset yes" within a minute to do it; anything else keeps it.`
+      text: `This clears ${what} in this terminal: its score${id === "town" || id === "arcade" ? ", its town" : ""}${id === "tama" || id === "arcade" ? ", its pet" : ""}. Other terminals keep theirs. Type "/${id} reset yes" within a minute to do it; anything else keeps it.`
     };
   }
   if (now - (asked.get(id) ?? -Infinity) > RESET_WINDOW_MS) {
@@ -5022,13 +4867,13 @@ async function askReset($, id, args) {
   }
   asked.delete(id);
   for (const g of id === "arcade" ? GAMES.map((x) => x.id) : [id]) await resetGame($, g);
-  return { text: `${what === title(id) ? what : "Every Arcade game"} cleared for ${projectName()}. Other terminals of this project start from it on their next save.` };
+  return { text: `${what === title(id) ? what : "Every Arcade game"} cleared in this terminal.` };
 }
 export const register = (on, options) => {
   configureMilestones(options);
   const setting = { mode: modeOf(options.mode), pool: poolOf(options.pool) };
   on("session.start", async ($, e, next) => {
-    await useProject($, String(e.cwd ?? ""));
+    await forgetSaves($);
     await $.command.register({
       name: "arcade",
       description: 'Which Arcade games show: "/arcade <game>" for this terminal, "/arcade <game> all" pins one everywhere, "/arcade random|rotate|all|off", "/arcade pool <games>", "/arcade next" or "/arcade hide" for this terminal.'

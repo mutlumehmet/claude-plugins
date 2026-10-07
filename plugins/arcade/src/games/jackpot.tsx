@@ -5,7 +5,6 @@ import type { Bank } from '../../types'
 import { PALETTE, SYMBOLS, SYMBOL_SIZE } from './jackpot-symbols'
 import type { SymbolId } from './jackpot-symbols'
 import type { Milestone } from '../milestones'
-import { keep as keepStore, loadKept } from '../save'
 import { isShown } from '../shown'
 import type { Game } from '../shown'
 
@@ -150,13 +149,13 @@ async function finishSpin($: EngineInterface) {
     }
   }
   if (spin.isPractice) return
-  const next = await update($, bank, await keepStore($, 'jackpot.bank', await read($, bank), old => ({
+  const next = await update($, bank, old => ({
     ...old,
     chips: old.chips + payout,
     spins: old.spins + 1,
     jackpots: old.jackpots + (win === 'jackpot' ? 1 : 0),
     best: Math.max(old.best, payout),
-  })))
+  }))
   const names = sim.result.join(' ')
   await update($, last, () => (payout > 0 ? `${names}: +${payout}` : names))
   if (win === 'jackpot') void notify($, `🎰 JACKPOT! 7 7 7 pays ${payout} chips`)
@@ -365,8 +364,6 @@ export async function celebrateMoments($: EngineInterface, found: Milestone[]) {
 
 // The game's hooks, one per event, which the Arcade's register.tsx chains with the other games'.
 export const start: Hook<'session.start'> = async ($, e, next) => {
-  const saved = (await loadKept($, 'jackpot.bank')) as Bank | undefined
-  if (saved) await update($, bank, () => ({ ...saved, streak: saved.streak ?? 0 }))
   await $.command.register({
     name: 'jackpot',
     description: 'The slot machine above the prompt: your chips. "/jackpot spin|golden|demo" to try it.',
@@ -431,7 +428,7 @@ export const turn: Hook<'turn.complete'> = async ($, e, next) => {
   if (e.agentId !== undefined || e.isAborted) return ran
   const hadError = sim.hadError
   sim.hadError = false
-  const b = await update($, bank, await keepStore($, 'jackpot.bank', await read($, bank), old => ({ ...old, streak: hadError ? 0 : old.streak + 1 })))
+  const b = await update($, bank, old => ({ ...old, streak: hadError ? 0 : old.streak + 1 }))
   pull($, { isGolden: false, isPractice: false })
 
   return ran
@@ -466,9 +463,9 @@ export const render: MatchedHook<'ui.render', { component: 'AbovePrompt' }> = as
   )
 }
 
-// Clears this project's chips; the Arcade asks first (`/jackpot reset`, then `/jackpot reset yes`).
+// Clears this terminal's chips; the Arcade asks first (`/jackpot reset`, then `/jackpot reset yes`).
 export async function reset($: EngineInterface) {
-  await update($, bank, await keepStore($, 'jackpot.bank', await read($, bank), () => bank.initial))
+  await update($, bank, () => bank.initial)
   await update($, golden, () => 0)
   await update($, last, () => '')
 }

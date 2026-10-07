@@ -77,7 +77,7 @@ test('/arcade knows the town by its other names', { options: { mode: 'all', pool
   expect(text).toMatch(/● Block Town \(town\)/)
 })
 
-test('the town is saved while it is not shown, and a reset needs a second word', { options: { mode: 'fixed', pool: 'duck' } }, async ($, on) => {
+test('the town counts while it is not shown, and a reset needs a second word', { options: { mode: 'fixed', pool: 'duck' } }, async ($, on) => {
   const store: Record<string, unknown> = {}
   mock.store(on, store)
   const clock = mock.clock(on)
@@ -90,45 +90,6 @@ test('the town is saved while it is not shown, and a reset needs a second word',
   expect((await $.command.run({ command: 'town', args: 'reset' } as never)).text).toMatch(/reset yes/)
   expect((await $.command.run({ command: 'town', args: 'reset yes' } as never)).text).toMatch(/cleared/)
   expect(await stats($)).toMatch(/^Camp  ▦ 0  ⌂ 0  ♣ 0  ♜ 0  ⚒ 0/)
-})
-
-test('a save merges with what another terminal saved, and a reset there wins', { options: { mode: 'fixed', pool: 'duck' } }, async ($, on) => {
-  // A store this test can reach into, standing for another terminal of the same account.
-  const store: Record<string, unknown> = {}
-  on('store.get', (_$, e) => ({ value: structuredClone(store[e.key]) }) as never)
-  on('store.set', (_$, e) => {
-    store[e.key] = structuredClone(e.value)
-    return { value: undefined } as never
-  })
-  on('store.delete', (_$, e) => {
-    delete store[e.key]
-    return { value: undefined } as never
-  })
-  on('store.keys', () => ({ value: Object.keys(store) }) as never)
-  const clock = mock.clock(on)
-  on('tool.call', { tool: 'Read' }, () => ({ result: {}, text: 'ok' }) as never)
-  await begin($, on, true)
-  await $.tool.call({ tool: 'Read', file_path: '/repo/a.ts' } as never)
-  await clock.advance(2100)
-  // The keys carry the project: "town.map@<project>".
-  const mapKey = Object.keys(store).find(k => k.startsWith('town.map@'))!
-  const scoreKey = mapKey.replace('town.map', 'town.score')
-  expect(mapKey).toBeDefined()
-  // Another terminal saves a finished well further along the band.
-  const map = store[mapKey] as { plots: { kind: string; x: number }[]; next: number; epoch?: number }
-  store[mapKey] = ({ ...map, plots: [...map.plots, { kind: 'well', x: 60, progress: 19, wasDone: true }] })
-  await $.tool.call({ tool: 'Read', file_path: '/repo/b.ts' } as never)
-  await clock.advance(2100)
-  const merged = store[mapKey] as { plots: { kind: string; x: number; progress: number }[] }
-  expect(merged.plots.map(p => p.kind)).toContain('well')
-  expect(merged.plots.find(p => p.kind === 'house')?.progress).toBe(4)
-  // Another terminal resets the town: this one gives its copy up instead of writing it back.
-  store[mapKey] = { plots: [], next: 0, epoch: Date.now() + 1e9 }
-  store[scoreKey] = { blocks: 0, houses: 0, trees: 0, castles: 0, creepers: 0, tools: 0 }
-  await $.tool.call({ tool: 'Read', file_path: '/repo/c.ts' } as never)
-  await clock.advance(2100)
-  expect((store[mapKey] as { plots: unknown[] }).plots).toHaveLength(0)
-  expect(await stats($)).toMatch(/^Camp  ▦ 0/)
 })
 
 test('a finished farm brings a sheep and a pig, and a house a chicken', ONLY, async ($, on) => {

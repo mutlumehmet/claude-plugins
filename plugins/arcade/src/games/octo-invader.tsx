@@ -5,7 +5,6 @@ import type { OctoMood as Mood, OctoScore as Score } from '../../types'
 import { BABY, FLAG, OCTO_HEIGHT, OCTO_WIDTH, PLANE, octopus } from './octo-sprite'
 import type { Legs } from './octo-sprite'
 import type { Milestone } from '../milestones'
-import { keep as keepStore, loadKept } from '../save'
 import { isShown } from '../shown'
 import type { Game } from '../shown'
 
@@ -586,7 +585,7 @@ function base64(bytes: Uint8Array): string {
 let lastStats = statsLine({ xp: 0, toppled: 0, planes: 0, tools: 0 })
 
 async function save($: EngineInterface, change: (s: Score) => Score) {
-  const next = await update($, score, await keepStore($, 'octopus.score', await read($, score), change))
+  const next = await update($, score, change)
   lastStats = statsLine(next)
   return next
 }
@@ -632,11 +631,7 @@ export async function celebrateMoments($: EngineInterface, found: Milestone[]) {
 
 // The game's hooks, one per event, which the Arcade's register.tsx chains with the other games'.
 export const start: Hook<'session.start'> = async ($, e, next) => {
-  const saved = (await loadKept($, 'octopus.score')) as Score | undefined
-  if (saved) {
-    await update($, score, () => saved)
-    lastStats = statsLine(saved)
-  }
+  lastStats = statsLine(await read($, score))
   await $.command.register({
     name: 'octopus',
     description: 'The octopus above the prompt: its score. "/octopus ink|plane|rampage|conquer" to show off.',
@@ -755,7 +750,7 @@ export const tool: Hook<'tool.call'> = async ($, e, next) => {
     sim.lastActivity = sim.t
   })
   if (ran.deny !== undefined) return ran
-  const counted = await update($, score, await keepStore($, 'octopus.score', await read($, score), old => ({ ...old, tools: old.tools + 1 })))
+  const counted = await update($, score, old => ({ ...old, tools: old.tools + 1 }))
   lastStats = statsLine(counted)
   if (ran.isError === true) sim.sadUntil = sim.t + 30
   return ran
@@ -783,9 +778,9 @@ export const render: MatchedHook<'ui.render', { component: 'AbovePrompt' }> = as
   )
 }
 
-// Clears this project's rampage; the Arcade asks first (`/octopus reset`, then `/octopus reset yes`).
+// Clears this terminal's rampage; the Arcade asks first (`/octopus reset`, then `/octopus reset yes`).
 export async function reset($: EngineInterface) {
-  const next = await update($, score, await keepStore($, 'octopus.score', await read($, score), () => score.initial))
+  const next = await update($, score, () => score.initial)
   lastStats = statsLine(next)
   await update($, feat, () => '')
 }

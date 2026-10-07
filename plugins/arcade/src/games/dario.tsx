@@ -3,7 +3,6 @@ import type { EngineInterface, Hook, MatchedHook } from 'claude-code'
 
 import type { DarioScore as Score } from '../../types'
 import type { Milestone } from '../milestones'
-import { keep as keepStore, loadKept } from '../save'
 import { isShown } from '../shown'
 import type { Game } from '../shown'
 
@@ -423,7 +422,7 @@ async function notify($: EngineInterface, text: string) {
 }
 
 async function save($: EngineInterface, change: (s: Score) => Score) {
-  const next = await update($, score, await keepStore($, 'dario.score', await read($, score), change))
+  const next = await update($, score, change)
   sim.stats = statsLine(next)
   return next
 }
@@ -464,9 +463,7 @@ export async function celebrateMoments($: EngineInterface, found: Milestone[]) {
 // ---- Hooks, chained by the Arcade's register with the other games' ----
 
 export const start: Hook<'session.start'> = async ($, e, next) => {
-  const saved = (await loadKept($, 'dario.score')) as Score | undefined
-  if (saved) await update($, score, () => saved)
-  sim.stats = statsLine(saved ?? (await read($, score)))
+  sim.stats = statsLine(await read($, score))
   await $.command.register({
     name: 'dario',
     description: 'Dario above the prompt: the score. "/dario coin|stomp|clear|world|ouch" to show off.',
@@ -556,7 +553,7 @@ export const tool: Hook<'tool.call'> = async ($, e, next) => {
     sim.lastActivity = sim.t
   })
   if (ran.deny !== undefined) return ran
-  const counted = await update($, score, await keepStore($, 'dario.score', await read($, score), old => ({ ...old, tools: old.tools + 1 })))
+  const counted = await update($, score, old => ({ ...old, tools: old.tools + 1 }))
   sim.stats = statsLine(counted)
   // A finished tool is a ? block on its way; with two already waiting, the coin comes at once.
   if (ran.isError === true) addBug(false, true)
@@ -585,9 +582,9 @@ export const render: MatchedHook<'ui.render', { component: 'AbovePrompt' }> = as
   )
 }
 
-// Clears this project's course; the Arcade asks first (`/dario reset`, then `/dario reset yes`).
+// Clears this terminal's course; the Arcade asks first (`/dario reset`, then `/dario reset yes`).
 export async function reset($: EngineInterface) {
-  const next = await update($, score, await keepStore($, 'dario.score', await read($, score), () => score.initial))
+  const next = await update($, score, () => score.initial)
   sim.stats = statsLine(next)
   await update($, feat, () => '')
 }

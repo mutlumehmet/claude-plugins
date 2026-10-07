@@ -55,17 +55,16 @@ when a task calls for them) or one mod (a hooks module that runs inside Claude C
   `plugins/arcade/src/` and `plugins/arcade/scripts/build.sh` joins them into `hooks/arcade.jsx`
   (esbuild, pinned). Edit `src/`, rebuild, commit both; CI fails when they differ. A new game goes
   into the Arcade, never into a plugin of its own (see the Arcade README, "How it is built").
-- **Arcade games keep everything per project, and every game can be reset.** Decided 6 October
-  2026. Anything a game keeps between sessions goes through `plugins/arcade/src/save.ts`: `loadKept`
-  at session start, `keep` for every save, written as a change of the old value (`old => ({ ...old,
-  hits: old.hits + 1 })`), never a copy, so terminals of one project add up. The project is the
-  repository (worktrees share their main repository's), nothing is written into the project, and
-  the atom is updated at the call site (`update($, score, await keepStore(...))`): the engine's scan
-  refuses a module that passes an atom to a helper. Every game exports `reset`, wired into
-  `resetGame` in `src/arcade.tsx`, which asks first (`/<game> reset`, then `/<game> reset yes`
-  within a minute). A game with a world that two terminals could each change (Block Town's town)
-  merges on save. Saving must not depend on the game being shown. No top-level `let` in `src/`:
-  the build turns top-level `var` into `const`.
+- **Arcade games keep nothing between sessions, and every game can be reset.** Decided 7 October
+  2026, replacing the per project saves of 0.8.0 (6 October 2026): every terminal starts each game,
+  the town and the pet from zero, and they last until it closes. A game keeps its state in atoms
+  only and never calls `$.store`; `plugins/arcade/src/save.ts` only deletes what 0.8.4 and earlier
+  saved (add a key to `OLD_KEYS` there if a game ever stops using one). Atoms are updated at the
+  call site (`update($, score, old => ...)`): the engine's scan refuses a module that passes an
+  atom to a helper. Every game exports `reset`, wired into `resetGame` in `src/arcade.tsx`, which
+  asks first (`/<game> reset`, then `/<game> reset yes` within a minute) and clears this terminal
+  only. Counting must not depend on the game being shown. No top-level `let` in `src/`: the build
+  turns top-level `var` into `const`.
 - `claude plugin validate` and `claude plugin test` pass before every push; CI runs both.
 - **What the Anthropic Directory refuses** (found on the Arcade, 6 October 2026), though Claude Code
   accepts it: a `userConfig` field with `options` (use a plain string and document the values), and

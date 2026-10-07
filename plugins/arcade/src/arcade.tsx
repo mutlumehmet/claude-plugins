@@ -114,7 +114,7 @@ import {
 } from './games/block-town'
 import { configureMilestones, promptMilestones, skillSeen, streakMilestones, subagentMilestones, toolMilestones, turnMilestones } from './milestones'
 import type { Milestone } from './milestones'
-import { projectName, useProject } from './save'
+import { forgetSaves } from './save'
 import { shown } from './shown'
 
 // Every game in the Arcade, in the order the menus list them. A new game is one file in
@@ -182,7 +182,7 @@ async function status($: EngineInterface, mode: Mode, pool: string[]) {
     '"/arcade random|rotate|all|off" sets how new terminals pick, ' +
     '"/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal\'s game. ' +
     '"/arcade hide" clears this terminal only. ' +
-    `Scores, the town and the pet are kept per project (this one: ${projectName()}); "/<game> reset" or "/arcade reset" starts this project over.`
+    'Scores, the town and the pet start from zero in every terminal and last until it closes; "/<game> reset" or "/arcade reset" starts this terminal over.'
   )
 }
 
@@ -248,11 +248,11 @@ function withPreview<R extends { text?: string }>(id: string, args: string | und
   if ((args ?? '').trim() !== '' || typeof ran.text !== 'string') return ran
   const moves = (PREVIEWS[id] ?? []).map(([arg, what]) => `  /${id} ${arg}  ${what}`)
   const list = moves.length > 0 ? `\n\nPreview a move (practice, nothing counts):\n${moves.join('\n')}` : ''
-  return { ...ran, text: `${ran.text}${list}\n\n/${id} reset starts this game over for this project (it asks first).` }
+  return { ...ran, text: `${ran.text}${list}\n\n/${id} reset starts this game over in this terminal (it asks first).` }
 }
 
 // Resets ask first: "/<game> reset" says what goes, and only "/<game> reset yes" within a minute
-// clears it, for this project only. "/arcade reset" does every game at once.
+// clears it, in this terminal only. "/arcade reset" does every game at once.
 const RESET_WINDOW_MS = 60_000
 const asked = new Map<string, number>()
 
@@ -282,8 +282,8 @@ async function askReset($: EngineInterface, id: string, args: string | undefined
     asked.set(id, now)
     return {
       text:
-        `This clears ${what} for the project ${projectName()}: its score${id === 'town' || id === 'arcade' ? ', its town' : ''}${id === 'tama' || id === 'arcade' ? ', its pet' : ''}. ` +
-        `Other projects keep theirs. Type "/${id} reset yes" within a minute to do it; anything else keeps it.`,
+        `This clears ${what} in this terminal: its score${id === 'town' || id === 'arcade' ? ', its town' : ''}${id === 'tama' || id === 'arcade' ? ', its pet' : ''}. ` +
+        `Other terminals keep theirs. Type "/${id} reset yes" within a minute to do it; anything else keeps it.`,
     }
   }
   if (now - (asked.get(id) ?? -Infinity) > RESET_WINDOW_MS) {
@@ -291,7 +291,7 @@ async function askReset($: EngineInterface, id: string, args: string | undefined
   }
   asked.delete(id)
   for (const g of id === 'arcade' ? GAMES.map(x => x.id) : [id]) await resetGame($, g)
-  return { text: `${what === title(id) ? what : 'Every Arcade game'} cleared for ${projectName()}. Other terminals of this project start from it on their next save.` }
+  return { text: `${what === title(id) ? what : 'Every Arcade game'} cleared in this terminal.` }
 }
 
 // A plugin hooks each event once, so register chains the games' hooks for it: each game's next
@@ -301,8 +301,8 @@ export const register: Register = (on, options: PluginOptions) => {
   const setting = { mode: modeOf(options.mode), pool: poolOf(options.pool) }
 
   on('session.start', async ($, e, next) => {
-    // Every game keeps its values per project, so the project comes first.
-    await useProject($, String(e.cwd ?? ''))
+    // The games keep nothing between sessions; what older versions saved goes.
+    await forgetSaves($)
     await $.command.register({
       name: 'arcade',
       description: 'Which Arcade games show: "/arcade <game>" for this terminal, "/arcade <game> all" pins one everywhere, "/arcade random|rotate|all|off", "/arcade pool <games>", "/arcade next" or "/arcade hide" for this terminal.',

@@ -2,10 +2,7 @@ import { expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 import type { On } from 'claude-code'
 
-// A disk with two repositories: /work/app (with a worktree at /work/app-feature) and /work/site.
-const GIT_DIRS = new Set(['/work/app/.git', '/work/site/.git'])
-const GIT_FILES: Record<string, string> = { '/work/app-feature/.git': 'gitdir: /work/app/.git/worktrees/app-feature\n' }
-
+// A store this test can reach into, holding what earlier versions of the Arcade saved.
 function world(on: On, store: Record<string, unknown>) {
   on('store.get', (_$, e) => ({ value: structuredClone(store[e.key]) }) as never)
   on('store.set', (_$, e) => {
@@ -17,55 +14,43 @@ function world(on: On, store: Record<string, unknown>) {
     return { value: undefined } as never
   })
   on('store.keys', () => ({ value: Object.keys(store) }) as never)
-  on('fs.exists', (_$, e) => ({ value: GIT_DIRS.has(e.path) || e.path in GIT_FILES }) as never)
-  on('fs.read', (_$, e) => {
-    if (e.path in GIT_FILES) return { value: GIT_FILES[e.path] } as never
-    throw new Error('EISDIR')
-  })
   on('command.register', () => ({ value: undefined }) as never)
   on('session.start', (_$, e) => ({ cwd: e.cwd }) as never)
+  on('tool.call', { tool: 'Read' }, () => ({ result: {}, text: 'ok' }) as never)
 }
 
-async function open($: Engine, cwd: string) {
-  await $.session.start({ cwd, surface: 'terminal', isInteractive: true })
+async function open($: Engine) {
+  await $.session.start({ cwd: '/work/app', surface: 'terminal', isInteractive: true })
 }
 
-const duckKeys = (store: Record<string, unknown>) => Object.keys(store).filter(k => k.startsWith('duck.score@')).sort()
+const duck = async ($: Engine) => (await $.command.run({ command: 'duck', args: '' } as never)).text ?? ''
+const octopus = async ($: Engine) => (await $.command.run({ command: 'octopus', args: '' } as never)).text ?? ''
 
-test('each repository keeps its own score, and a worktree shares its repository\'s', { options: { mode: 'fixed', pool: 'duck' } }, async ($, on) => {
-  const store: Record<string, unknown> = {}
+test('a new terminal starts at zero, and what earlier versions saved is deleted', { options: { mode: 'fixed', pool: 'duck' } }, async ($, on) => {
+  const store: Record<string, unknown> = {
+    'duck.score': { hits: 12, escaped: 3, tools: 40 },
+    'duck.score@abc': { hits: 7, escaped: 1, tools: 9 },
+    'town.map@abc': { plots: [], next: 0 },
+    'arcade.projects': { abc: { path: '/work/app', at: 0 } },
+    'days': { last: '2026-10-06', streak: 3 },
+    'rotate': 'duck',
+  }
   world(on, store)
   mock.clock(on)
-  await open($, '/work/app/src')
-  await $.command.run({ command: 'duck', args: 'reset' } as never)
-  await $.command.run({ command: 'duck', args: 'reset yes' } as never)
-  const app = duckKeys(store)
-  expect(app).toHaveLength(1)
-  await open($, '/work/app-feature/lib')
-  await $.command.run({ command: 'duck', args: 'reset' } as never)
-  await $.command.run({ command: 'duck', args: 'reset yes' } as never)
-  expect(duckKeys(store)).toEqual(app)
-  await open($, '/work/site')
-  await $.command.run({ command: 'duck', args: 'reset' } as never)
-  await $.command.run({ command: 'duck', args: 'reset yes' } as never)
-  expect(duckKeys(store)).toHaveLength(2)
-  // Nothing is written into the projects themselves: only store keys.
-  expect(Object.keys(store).some(k => k.includes('/work/'))).toBe(false)
+  await open($)
+  expect(await duck($)).toMatch(/▼ 0/)
+  expect(Object.keys(store).sort()).toEqual(['days', 'rotate'])
 })
 
-test('a score saved before scores were per project moves to the home folder\'s project', { options: { mode: 'fixed', pool: 'duck' } }, async ($, on) => {
-  const store: Record<string, unknown> = { 'duck.score': { hits: 12, escaped: 3, tools: 40 } }
+test('the games write nothing to the store while they play', { options: { mode: 'fixed', pool: 'town' } }, async ($, on) => {
+  const store: Record<string, unknown> = {}
   world(on, store)
-  mock.env(on, { HOME: '/home/me' })
-  mock.clock(on)
-  // Opened first in a repository: the old score goes home, and this project starts fresh.
-  await open($, '/work/app')
-  expect(store['duck.score']).toBeUndefined()
-  expect(duckKeys(store)).toHaveLength(1)
-  expect((await $.command.run({ command: 'duck', args: '' } as never)).text).toMatch(/▼ 0/)
-  // Opened in the home folder: there it is.
-  await open($, '/home/me')
-  expect((await $.command.run({ command: 'duck', args: '' } as never)).text).toMatch(/▼ 12/)
+  const clock = mock.clock(on)
+  await open($)
+  await $.tool.call({ tool: 'Read', file_path: '/work/app/a.ts' } as never)
+  await clock.advance(2100)
+  expect(await duck($)).toMatch(/⚒ 1/)
+  expect(Object.keys(store).filter(k => k !== 'days' && k !== 'setting' && k !== 'rotate')).toEqual([])
 })
 
 // Slow by nature: checking that the minute runs out moves every game's frame clock a minute on,
@@ -74,21 +59,21 @@ test('a reset asks first, needs "reset yes" within a minute, and clears only thi
   const store: Record<string, unknown> = {}
   world(on, store)
   const clock = mock.clock(on)
-  await open($, '/work/app')
-  // Seed this project's duck and dragon scores; "arcade.projects" lists the project's key.
-  const project = Object.keys(store['arcade.projects'] as object)[0]!
-  store[`duck.score@${project}`] = { hits: 5, escaped: 1, tools: 9 }
-  store[`dragon.hoard@${project}`] = { gold: 70, meals: 3, feats: 2 }
+  await open($)
+  // A tool call counts for every game: the duck and the octopus both show it.
+  await $.tool.call({ tool: 'Read', file_path: '/work/app/a.ts' } as never)
+  expect(await duck($)).toMatch(/⚒ 1/)
+  expect(await octopus($)).toMatch(/⚒ 1/)
   expect((await $.command.run({ command: 'duck', args: 'reset yes' } as never)).text).toMatch(/Nothing cleared/)
-  expect((await $.command.run({ command: 'duck', args: 'reset' } as never)).text).toMatch(/reset yes/)
+  expect((await $.command.run({ command: 'duck', args: 'reset' } as never)).text).toMatch(/in this terminal.*reset yes/s)
   await clock.advance(61_000)
   expect((await $.command.run({ command: 'duck', args: 'reset yes' } as never)).text).toMatch(/Nothing cleared/)
   await $.command.run({ command: 'duck', args: 'reset' } as never)
-  expect((await $.command.run({ command: 'duck', args: 'reset yes' } as never)).text).toMatch(/cleared/)
-  expect(store[`duck.score@${project}`]).toEqual({ hits: 0, escaped: 0, tools: 0 })
-  expect(store[`dragon.hoard@${project}`]).toEqual({ gold: 70, meals: 3, feats: 2 })
-  // "/arcade reset" clears every game of this project.
+  expect((await $.command.run({ command: 'duck', args: 'reset yes' } as never)).text).toMatch(/cleared in this terminal/)
+  expect(await duck($)).toMatch(/⚒ 0/)
+  expect(await octopus($)).toMatch(/⚒ 1/)
+  // "/arcade reset" clears every game in this terminal.
   await $.command.run({ command: 'arcade', args: 'reset' } as never)
   expect((await $.command.run({ command: 'arcade', args: 'reset yes' } as never)).text).toMatch(/Every Arcade game cleared/)
-  expect(store[`dragon.hoard@${project}`]).toEqual({ gold: 0, meals: 0, feats: 0 })
+  expect(await octopus($)).toMatch(/⚒ 0/)
 })

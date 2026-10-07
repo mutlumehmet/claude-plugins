@@ -13,11 +13,10 @@ of their own and send nothing to the author or to anyone else.
 ## What stays on your machine
 
 Some mods keep small amounts of their own state so they can work across sessions, for example a
-game's score, a pet's hunger, or counts of how often a skill ran. That state lives in Claude Code's
+count of how often a skill ran. That state lives in Claude Code's
 plugin store or in your Claude Code transcripts on your own machine, and you can remove it by
-uninstalling the plugin. The Arcade keeps it per project, under a short hash of the repository's
-path; it writes nothing into your projects, `/arcade reset` clears a project's games, and a project
-not opened for 90 days is forgotten. fork-lineage also keeps the fork reports you approve, and the links
+uninstalling the plugin. The Arcade keeps no scores: each terminal's games start from zero and end
+with it, and it writes nothing into your projects. fork-lineage also keeps the fork reports you approve, and the links
 between sessions, as files in `~/.claude-forks/` on your machine; they can contain conversation
 content, are never sent anywhere, and are cleaned up as described in its README. Each plugin's README lists exactly what it reads and keeps, under "What
 it reads and does".
@@ -27,8 +26,6 @@ it reads and does".
 The mods react to events inside your Claude Code session: tool names, whether a tool failed, shell
 command lines, file names, skill names and, for the games, the words of your message (only to spot
 praise). They read these in memory to draw or to guard, and do not store or send the content.
-The Arcade also checks for a `.git` entry in the folder Claude Code runs in and its parents, to tell
-which repository a session belongs to.
 fork-lineage reads your local transcripts to find which session a fork came from, and, only when
 you press its button, asks the session's own model (through Claude Code, on your account) for a
 report of the fork.

@@ -3,7 +3,6 @@ import type { EngineInterface, Hook, MatchedHook } from 'claude-code'
 
 import type { Pet, Stage } from '../../types'
 import type { Milestone } from '../milestones'
-import { keep as keepStore, loadKept } from '../save'
 import { isShown } from '../shown'
 import type { Game } from '../shown'
 
@@ -71,7 +70,7 @@ function fresh(now: number, generation: number): Pet {
 
 const isSick = (p: Pet) => p.stage !== 'egg' && (p.poops >= 3 || p.hunger === 0)
 
-// Real time passes even while Claude Code is closed: hunger and joy tick down, and it grows up.
+// Real time passes: hunger and joy tick down, and it grows up.
 function age(p: Pet, now: number): Pet {
   if (p.stage === 'egg') return { ...p, hungerAt: now, joyAt: now }
   const hungerTicks = Math.floor((now - p.hungerAt) / HUNGER_MS)
@@ -122,7 +121,7 @@ const isNight = (now: number) => {
 async function change($: EngineInterface, fn: (p: Pet) => Pet) {
   const now = await $.clock.now()
   sim.now = now
-  const changed = await update($, pet, await keepStore($, 'tama.pet', await read($, pet), p => fn(age(p, now))))
+  const changed = await update($, pet, p => fn(age(p, now)))
   sim.pet = changed
   return changed
 }
@@ -272,9 +271,8 @@ export async function celebrateMoments($: EngineInterface, found: Milestone[]) {
 // The game's hooks, one per event, which the Arcade's register.tsx chains with the other games'.
 export const start: Hook<'session.start'> = async ($, e, next) => {
   sim.now = await $.clock.now()
-  const saved = (await loadKept($, 'tama.pet')) as Pet | undefined
-  const start = saved ?? fresh(sim.now, 1)
-  sim.pet = await update($, pet, await keepStore($, 'tama.pet', await read($, pet), () => age(start, sim.now)))
+  // A new terminal gets a new egg; a reload of the code keeps the pet it had.
+  sim.pet = await update($, pet, p => (p.born === 0 ? fresh(sim.now, 1) : age(p, sim.now)))
   await $.command.register({
     name: 'tama',
     description: 'The Tamagotchi above the prompt: how it is doing. "/tama feed|play|clean" to care for it by hand.',
@@ -424,10 +422,10 @@ export const render: MatchedHook<'ui.render', { component: 'AbovePrompt' }> = as
   )
 }
 
-// A new egg for this project; the Arcade asks first (`/tama reset`, then `/tama reset yes`).
+// A new egg in this terminal; the Arcade asks first (`/tama reset`, then `/tama reset yes`).
 export async function reset($: EngineInterface) {
   sim.now = await $.clock.now()
-  sim.pet = await update($, pet, await keepStore($, 'tama.pet', await read($, pet), () => fresh(sim.now, 1)))
+  sim.pet = await update($, pet, () => fresh(sim.now, 1))
 }
 
 export const game: Game = { id: ID, title: 'Tama' }

@@ -3,7 +3,6 @@ import type { EngineInterface, Hook, MatchedHook } from 'claude-code'
 
 import type { DuckScore as Score } from '../../types'
 import type { Milestone } from '../milestones'
-import { keep as keepStore, loadKept } from '../save'
 import { isShown } from '../shown'
 import type { Game } from '../shown'
 
@@ -395,7 +394,7 @@ function base64(bytes: Uint8Array): string {
 // ---- Score ----
 
 async function save($: EngineInterface, change: (s: Score) => Score) {
-  const next = await update($, score, await keepStore($, 'duck.score', await read($, score), change))
+  const next = await update($, score, change)
   sim.stats = statsLine(next)
   return next
 }
@@ -436,10 +435,9 @@ export async function celebrateMoments($: EngineInterface, found: Milestone[]) {
 // ---- Hooks, chained by the Arcade's register with the other games' ----
 
 export const start: Hook<'session.start'> = async ($, e, next) => {
-  const saved = (await loadKept($, 'duck.score')) as Score | undefined
-  if (saved) await update($, score, () => saved)
-  sim.stats = statsLine(saved ?? (await read($, score)))
-  sim.round = roundOf((saved ?? (await read($, score))).hits)
+  const s = await read($, score)
+  sim.stats = statsLine(s)
+  sim.round = roundOf(s.hits)
   await $.command.register({
     name: 'duck',
     description: 'The duck hunt above the prompt: the score. "/duck shot|hunt|double|perfect|flyaway" to show off.',
@@ -517,7 +515,7 @@ export const tool: Hook<'tool.call'> = async ($, e, next) => {
     sim.lastActivity = sim.t
   })
   if (ran.deny !== undefined) return ran
-  const counted = await update($, score, await keepStore($, 'duck.score', await read($, score), old => ({ ...old, tools: old.tools + 1 })))
+  const counted = await update($, score, old => ({ ...old, tools: old.tools + 1 }))
   sim.stats = statsLine(counted)
   if (ran.isError === true) flyAway(false)
   return ran
@@ -543,9 +541,9 @@ export const render: MatchedHook<'ui.render', { component: 'AbovePrompt' }> = as
   )
 }
 
-// Clears this project's hunt; the Arcade asks first (`/duck reset`, then `/duck reset yes`).
+// Clears this terminal's hunt; the Arcade asks first (`/duck reset`, then `/duck reset yes`).
 export async function reset($: EngineInterface) {
-  const next = await update($, score, await keepStore($, 'duck.score', await read($, score), () => score.initial))
+  const next = await update($, score, () => score.initial)
   sim.stats = statsLine(next)
   sim.round = 1
   await update($, feat, () => '')

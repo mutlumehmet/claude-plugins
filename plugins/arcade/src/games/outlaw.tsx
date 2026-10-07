@@ -3,7 +3,6 @@ import type { EngineInterface, Hook, MatchedHook } from 'claude-code'
 
 import type { OutlawScore as Score } from '../../types'
 import type { Milestone } from '../milestones'
-import { keep as keepStore, loadKept } from '../save'
 import { isShown } from '../shown'
 import type { Game } from '../shown'
 
@@ -114,7 +113,7 @@ async function land($: EngineInterface, duel: Duel, isHit: boolean) {
   sim.men[target].fallUntil = sim.t + 36
   say(xOf(target) + 2, 0, duel.by === 'you' ? 'GOT HIM' : 'OUCH', 20)
   if (sim.practice) return
-  const next = await update($, score, await keepStore($, 'outlaw.score', await read($, score), old => {
+  const next = await update($, score, old => {
     const streak = duel.by === 'you' ? old.streak + 1 : 0
     return {
       you: old.you + (duel.by === 'you' ? 1 : 0),
@@ -122,7 +121,7 @@ async function land($: EngineInterface, duel: Duel, isHit: boolean) {
       streak,
       best: Math.max(old.best, streak),
     }
-  }))
+  })
 }
 
 function step($: EngineInterface) {
@@ -288,8 +287,6 @@ export async function celebrateMoments($: EngineInterface, found: Milestone[]) {
 
 // The game's hooks, one per event, which the Arcade's register.tsx chains with the other games'.
 export const start: Hook<'session.start'> = async ($, e, next) => {
-  const saved = (await loadKept($, 'outlaw.score')) as Score | undefined
-  if (saved) await update($, score, () => saved)
   await $.command.register({
     name: 'outlaw',
     description: 'The duel above the prompt: the score. "/outlaw draw" for a practice duel.',
@@ -384,9 +381,9 @@ export const render: MatchedHook<'ui.render', { component: 'AbovePrompt' }> = as
   )
 }
 
-// Clears this project's duels; the Arcade asks first (`/outlaw reset`, then `/outlaw reset yes`).
+// Clears this terminal's duels; the Arcade asks first (`/outlaw reset`, then `/outlaw reset yes`).
 export async function reset($: EngineInterface) {
-  await update($, score, await keepStore($, 'outlaw.score', await read($, score), () => score.initial))
+  await update($, score, () => score.initial)
 }
 
 export const game: Game = { id: ID, title: 'Outlaw' }

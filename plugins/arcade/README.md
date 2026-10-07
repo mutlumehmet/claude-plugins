@@ -37,7 +37,7 @@ random from all of them.
 The setting lives in Claude Code's settings (`pluginConfigs`), so the `/config` menu shows it too, and
 each Claude Code config directory keeps its own: a work and a personal account can show different
 games. Where there is no settings menu (`claude -p`), `/arcade` keeps the choice in the plugin's own
-store, still per config directory, until the settings change. A game that is not shown keeps playing and keeps its score; it only stops drawing and stays quiet. A game's own command (`/dragon`, `/duck` and the rest) shows its score and plays its practice moves; which games show is only ever `/arcade`.
+store, still per config directory, until the settings change. A game that is not shown keeps playing and keeps its score for this terminal; it only stops drawing and stays quiet. A game's own command (`/dragon`, `/duck` and the rest) shows its score and plays its practice moves; which games show is only ever `/arcade`.
 
 ## The games
 
@@ -49,7 +49,7 @@ A small one colour pixel dragon that lives at the right end of the line above th
 - **Each subagent** hatches from an egg as a small dragon that flies beside it, flaps faster as the subagent works, and flies home when it finishes (or falls when it fails).
 - **A failed tool** drops its head; **two minutes of quiet** and it falls asleep.
 - **Moments**: a small one is a puff of smoke, a medium one a breath of fire, a big one a blaze, and a merge, release, deploy, streak or record a roar.
-- **Gold** builds up with every moment and is kept between sessions. Under the dragon: `Lv 3  ◆ 55  ★ 9  ⚒ 58` (level, gold, wins, tool calls).
+- **Gold** builds up with every moment while the terminal is open. Under the dragon: `Lv 3  ◆ 55  ★ 9  ⚒ 58` (level, gold, wins, tool calls).
 - **`/dragon`** shows the hoard; `/dragon puff`, `fire`, `blaze` and `roar` show off each size.
 
 ### Jackpot (`jackpot`)
@@ -60,7 +60,7 @@ A pixel slot machine at the right end of the line above the prompt. Every finish
 - **Medium moments** queue one golden spin, **big moments** three: better odds, double pay, never a loss.
 - **Five clean turns in a row** (no tool error) raise the multiplier by one, up to ×5; a failed tool resets it.
 - **Payouts**: three 7s pay 100 chips, three dragons 50, diamonds 25, bells 15, stars 10, cherries 8; a cherry pair 3, any other pair 2. A jackpot strobes the cabinet and spills coins.
-- **Under the machine**: `◉ 2967  ×1  ▲ 2  ✦ 0  ♛ 1` (chips, multiplier, clean streak, golden spins waiting, jackpots). Chips are kept between sessions.
+- **Under the machine**: `◉ 2967  ×1  ▲ 2  ✦ 0  ♛ 1` (chips, multiplier, clean streak, golden spins waiting, jackpots).
 - **`/jackpot`** shows the rules and stats; `/jackpot spin`, `golden` and `demo` are practice spins that pay nothing.
 
 ### Outlaw (`outlaw`)
@@ -70,15 +70,15 @@ A one colour Atari Outlaw duel at the right end of the line above the prompt. Yo
 - **Medium moments** are one shot for your gunslinger, **big moments** three. **A failed tool** is a shot for the bug.
 - **A hit** is aimed at eye level and clears the cactus; **a miss** is from the hip and takes a chunk out of the cactus, which grows back between duels.
 - **Between duels** the two pace, shift their weight and tip their hats, a tumbleweed rolls by and a vulture circles; while Claude thinks they stand with a hand on the gun.
-- **Under the duel**: `YOU 7 : 3 BUGS  ▲ 4  ★ 6` (score, your run of hits, your best run). Kept between sessions.
+- **Under the duel**: `YOU 7 : 3 BUGS  ▲ 4  ★ 6` (score, your run of hits, your best run).
 - **`/outlaw`** shows the score and rules; `/outlaw draw` is a practice duel.
 
 ### Tama (`tama`)
 
-A classic Tamagotchi in a small LCD at the right end of the line above the prompt. It lives in real time, even while Claude Code is closed, and your work is what feeds it.
+A classic Tamagotchi in a small LCD at the right end of the line above the prompt. It lives in real time while the terminal is open, and your work is what feeds it. A new terminal starts with a new egg.
 
 - **It hatches** from an egg after three finished turns, then grows from baby to child to teen to adult over real days. The adult it becomes depends on how it was raised: hard working, a rascal, or well fed.
-- **Hunger** drops every 20 minutes and **joy** every hour, in real time, also while Claude Code is closed. **Every finished turn** is a meal.
+- **Hunger** drops every 20 minutes and **joy** every hour, in real time. **Every finished turn** is a meal.
 - **Medium moments** cheer it up a little, **big moments** a lot (hearts float up).
 - **A failed tool** leaves a mess; five clean turns in a row tidy one away. Three messes, or an empty stomach, and it falls ill.
 - **Left hungry for twelve hours** it packs its bags and leaves an egg behind. It never dies.
@@ -94,7 +94,7 @@ A classic falling-piece Tetris in a small handheld screen at the right end of th
 - **A full row** clears, with the classic scoring (40, 100, 300 or 1200 for one to four rows, times the level). Every ten rows is a level.
 - **A failed tool** pushes up a garbage row with one gap in it.
 - **Medium moments** clear one row from the bottom, **big moments** three.
-- **When the stack reaches the lid** the game ends, the well empties and a new game starts. The best score is kept.
+- **When the stack reaches the lid** the game ends, the well empties and a new game starts. The best score stays until the terminal closes.
 - **Under the screen**: `▤ 35  ◆ 4250  Lv 3` (rows, score, level).
 - **`/tetris`** shows the score and rules; `/tetris drop` adds pieces, `/tetris clear` clears a row.
 
@@ -115,7 +115,7 @@ Both GIFs are drawn by the mod's own code from a scripted session (a read, an ed
 - **Each subagent** is a baby octopus that swims behind it in a line, paddles faster as the subagent works, and swims home when it finishes (or sinks when it fails).
 - **A failed tool** leaves it dazed with stars over its head; **two minutes of quiet** and it curls up asleep.
 - **Moments**: a small one is a squirt of ink, a medium one a plane snatched out of the sky and thrown down (`BOOM!`), a big one a `RAMPAGE!` through the streets, and a merge, release, deploy, streak or record ends with a flag on the rubble and `THE CITY IS MINE`.
-- **The score** sits at the right end of the strip: `Lv 3  ⌂ 12  ✈ 4  ⚒ 140` (level, buildings toppled, planes downed, tool calls). It is kept between sessions.
+- **The score** sits at the right end of the strip: `Lv 3  ⌂ 12  ✈ 4  ⚒ 140` (level, buildings toppled, planes downed, tool calls).
 - **`/octopus`** shows the score; `/octopus ink`, `plane`, `rampage` and `conquer` show off each size.
 
 ### Duck Hunt (`duck`)
@@ -136,7 +136,7 @@ edit, passing tests, a commit, a merge); the window around the strip is a mock u
 - **Moments**: a small one is a shot (a flash of the crosshair), a medium one shoots a duck down and the dog pops up from the grass holding it, a big one is a double (`DOUBLE!`, the dog holds two), and a merge, release, deploy, streak or record is a `PERFECT!` round with feathers everywhere.
 - **A failed tool** lets the duck in the air get away (`FLY AWAY`), and the dog comes up laughing. **Two minutes of quiet** and the dog lies down asleep.
 - **Rounds**: every ten ducks down is a new round (`ROUND 3`).
-- **The score** sits at the right end of the strip: `R 2  ▼ 14  ↗ 3  ⚒ 140` (round, ducks down, ducks that got away, tool calls). It is kept between sessions.
+- **The score** sits at the right end of the strip: `R 2  ▼ 14  ↗ 3  ⚒ 140` (round, ducks down, ducks that got away, tool calls).
 - **`/duck`** shows the score; `/duck shot`, `hunt`, `double`, `perfect` and `flyaway` are practice that counts nothing.
 
 ### Dario (`dario`)
@@ -158,15 +158,15 @@ terminal.
 - **Every finished tool call** brings a ? block: Dario jumps, bumps it and a coin flies out. With two blocks already waiting, the coin comes straight away.
 - **A failed tool** sends a bug walking in, and it knocks into Dario (`OUCH`).
 - **Moments**: a small one is a hop and a sparkle, a medium one a bug stomped flat, a big one a flag pole: Dario slides down it for a `COURSE CLEAR!` and the next course. A merge, release, deploy, streak or record is a `WORLD CLEAR!` with fireworks.
-- **The score** sits at the right end of the strip: `1-3  ◎ 34  ✪ 5  ✗ 2  ⚒ 140` (world and course, coins, bugs stomped, knocks, tool calls). Every hundred coins is a `1UP`. It is kept between sessions.
+- **The score** sits at the right end of the strip: `1-3  ◎ 34  ✪ 5  ✗ 2  ⚒ 140` (world and course, coins, bugs stomped, knocks, tool calls). Every hundred coins is a `1UP`.
 - **`/dario`** shows the score; `/dario coin`, `ouch`, `stomp`, `clear` and `world` are practice that counts nothing.
 
 ### Block Town (`town`)
 
 A town in blocks, seen from the side, the full width of the line above the prompt: grass, dirt and
 stone, then houses, farms, a well, towers and a grove of trees. Your agents build it while they
-work, and it is kept between sessions, so a glance in the middle of a long session shows how much
-got done.
+work, and it grows for as long as the terminal is open, so a glance in the middle of a long session
+shows how much got done.
 
 ![Block Town in a terminal: the main agent and a helper villager build a house, a farm and a grove while sheep, a pig and chickens wander between them, a failing test brings a creeper, green tests raise part of the castle, a commit finishes a house and a merge builds the castle](../../docs/images/block-town-terminal.gif)
 
@@ -184,8 +184,8 @@ strip is a mock up of a terminal.
 - **Moments**: a small one plants a tree (trees grow as the work goes on, sapling to full tree; once the grove is full, they grow faster instead), a medium one finishes the building going up (`HOUSE BUILT`), a big one raises a third of the castle at the right end of the band (`THE CASTLE GROWS`), and a merge, release, deploy, streak or record raises the rest at once (`CASTLE BUILT!`, fireworks).
 - **When the band is full** the oldest building is torn down and built again, a house as a two storey hall.
 - **The score** sits at the right end of the strip: `Village  ▦ 309  ⌂ 2  ♣ 5  ♜ 1  ⚒ 27` (the town's size from camp, hamlet, village and town to city, blocks laid, houses, trees, castles, tool calls). **Two minutes of quiet** and the villagers go indoors.
-- **Kept and shared**: the town and its score are saved every two seconds while something changes, also while the town is not shown, and every terminal of the account builds the same town: a save merges with what another terminal saved (the more built copy of each building wins, and a creeper's hole or a rebuild is kept).
-- **`/town`** shows the score; `/town build`, `tree`, `finish`, `castle` and `creeper` are practice that counts nothing. **`/town reset`** starts over: it asks first, and only `/town reset yes` within a minute clears the town and its score, in every terminal.
+- **One town per terminal**: every terminal builds its own town, starting from an empty field, and it keeps growing while the town is not shown.
+- **`/town`** shows the score; `/town build`, `tree`, `finish`, `castle` and `creeper` are practice that counts nothing. **`/town reset`** starts over: it asks first, and only `/town reset yes` within a minute clears this terminal's town and its score.
 
 ### Bug Command (`bugs`)
 
@@ -208,7 +208,7 @@ the window around the strip is a mock up of a terminal.
 - **Moments**: a small one is a shot (or a flare in an empty sky), a medium one a sure hit, a big one a salvo at every bug in the sky that also rebuilds a fallen city (`BONUS CITY`).
 - **A bug that gets through** ruins its city. When every city has fallen it is `THE END`, and new cities go up.
 - **You can shoot**: click anywhere in the sky and the nearest silo fires there. After a click the sky has the keyboard: the arrows move the crosshair (with shift, faster), space or Enter fires at it, and `1`, `2`, `3` fire from the left, middle or right silo. A silo you fire from greys out for a moment. Esc hands the keyboard back to the prompt.
-- **The score** sits at the right end of the strip: `✸ 14  ☞ 5  ✝ 2  ⚒ 140  ⌂ 6` (bugs shot down, the ones you shot yourself, cities lost, tool calls, cities standing). It is kept between sessions, the standing cities too.
+- **The score** sits at the right end of the strip: `✸ 14  ☞ 5  ✝ 2  ⚒ 140  ⌂ 6` (bugs shot down, the ones you shot yourself, cities lost, tool calls, cities standing).
 - **`/bugs`** shows the score and the controls; `/bugs flare`, `shot` and `salvo` are practice that counts nothing, and `/bugs incoming` drops a practice bug to shoot at.
 
 ## Moments
@@ -239,35 +239,24 @@ All optional. Set them in `/plugin` (the plugin's settings) or in
 | `medium_commands` | A regular expression of shell commands whose success is medium | `terraform apply` |
 | `praise_words` | Extra words that count as praise, on top of the built-in list (thanks, great, perfect and a few in other languages) | `nice one, cheers` |
 
-## Scores per project
+## Scores
 
-Every game keeps its score, and Block Town its town and Tama its pet, per project: the repository
-Claude Code runs in, so your work on one repository builds its own town and plays its own score.
+Every game starts from zero in each terminal: the score, Block Town's town and Tama's pet belong
+to that terminal and last until it closes. Two terminals play two separate games. Nothing is saved
+between sessions; a reload of the plugin keeps what the terminal had.
 
-- **The project** is the folder holding `.git` at or above the folder Claude Code runs in. A git
-  worktree counts as its main repository, so all worktrees of a repository share one project.
-  Outside any repository, the folder itself is the project.
-- **Shared by every terminal of that project.** A save adds to what is stored instead of writing over
-  it, so two terminals in one repository both count. A terminal reads the stored score when it
-  opens and again each time it saves, so another terminal's points show up there with its next
-  point (there is no polling in between, on purpose).
 - **Starting over**: `/<game> reset` (for example `/duck reset`) says what goes and asks; only
-  `/<game> reset yes` within a minute clears that game for this project. `/arcade reset` does every
-  game at once. Other projects keep theirs.
-- **Where it lives**: Claude Code's plugin store on your machine, under each key with `@` and a short
-  hash of the project's path. Nothing is written into the project folder, so a repository gets no
-  new files. A project nobody opened for 90 days is forgotten.
-- **Upgrading from 0.7.0 or earlier**: the scores you had move to your home folder's project, the
-  one you get when you start Claude Code in `~`; every repository starts fresh.
+  `/<game> reset yes` within a minute clears that game in this terminal. `/arcade reset` does every
+  game at once. Other terminals keep theirs.
+- **Upgrading from 0.8.4 or earlier**: the scores those versions saved in Claude Code's plugin store
+  are deleted the first time a session starts.
 
 ## What it reads and does
 
 - **Reads**: the name of each tool Claude runs and whether it failed; for shell commands, the command
   line and whether its output says nothing changed; for file writes, the file name and its line
-  count; skill names; the words of your message (only to spot praise); subagent start and finish;
-  at session start, the `.git` entry of the folder Claude Code runs in and of its parents, to find
-  which repository it is (a worktree's `.git` file names its main repository).
-- **Keeps**: each game's score and state per project, and which game the last terminal showed, in Claude Code's plugin store on your machine; the mode and pool in your Claude Code settings. Nothing is written into your projects. See "Scores per project" below.
+  count; skill names; the words of your message (only to spot praise); subagent start and finish.
+- **Keeps**: no scores. Each terminal's games start from zero and end with it (see "Scores" below). In Claude Code's plugin store on your machine: which game the last terminal showed and your days in a row; the mode and pool in your Claude Code settings. Nothing is written into your projects.
 - **Draws**: the games it shows in the line above the prompt (a block at the right end, or the octopus's, the duck hunt's and Bug Command's strips across the full width), and an occasional notice.
 - **Hooks**: `skill.prompt` only notes which skill ran, so a finished skill can count as a moment; it passes the skill's prompt on unchanged. `command.run` answers its own commands (`/arcade` and the games' own commands) and no other. `/arcade <game> all`, `/arcade <mode>` and `/arcade pool` write `arcade.mode` and `arcade.pool` through Claude Code's own settings call, the same as changing them in the menu.
 - **Takes input**: only Bug Command, and only once you click its sky: from then until Esc, the keys you press go to the game, not the prompt. Clicks and keys never leave the game.
@@ -306,9 +295,8 @@ The sky runs the game loop; the hooks module hands it the session's events as pr
 score the sky posts back. Edit `src/`, never
 `hooks/`; CI fails when the two differ. A new game is one file in `src/games/`, one entry in
 `GAMES` and one link in each chain in `src/arcade.tsx`, its state keys in `types/index.d.ts`, a
-`reset` export wired into `resetGame` in `src/arcade.tsx`, and a test. Everything a game keeps
-between sessions goes through `src/save.ts` (`loadKept` to load, `keep` to save, see "Scores per
-project"); a game never calls `$.store` with a key of its own.
+`reset` export wired into `resetGame` in `src/arcade.tsx`, and a test. A game keeps its state in
+atoms only and never calls `$.store` (see "Scores").
 
 ## Known gaps
 
@@ -330,7 +318,6 @@ project"); a game never calls `$.store` with a key of its own.
 - **Dario**: The strip takes eight rows, like the octopus's and the duck hunt's.
 - **Dario**: Things queue at the right edge, so after a burst of tool calls a flag pole can take a few seconds to reach Dario.
 - **Block Town**: The town is laid out for the width of the terminal it was built in; a narrower terminal leaves out the buildings that do not fit, and a band under 64 columns has no room for the castle.
-- **Block Town**: Two terminals building the same spot at the same moment can each start a different building there; the merge keeps the more built one and the other one's blocks are lost. The last two seconds of work before a session closes may not be saved.
 - **Bug Command**: The sky is drawn as runs of coloured text rather than the raster the other strips use, so a busy sky redraws more than they do; a still sky does not redraw at all.
 - **Bug Command**: Only a terminal draws it; the Desktop Code tab, which draws the other games, does not show it yet.
 - **Bug Command**: A click hands the keyboard to the sky until Esc; typing into the prompt needs Esc first.
