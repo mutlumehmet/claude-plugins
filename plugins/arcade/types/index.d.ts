@@ -75,6 +75,8 @@ declare module 'claude-code' {
       // The game new terminals start with ('' unless fixed), and whether the first sessions' hint shows.
       defaultGame: string
       hint: boolean
+      // A newer Arcade version found on GitHub at this session's start ('' when none).
+      latest: string
       dragonHoard: Hoard
       dragonMood: DragonMood
       dragonFeat: string

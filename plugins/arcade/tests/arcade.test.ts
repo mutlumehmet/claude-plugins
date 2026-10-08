@@ -280,3 +280,90 @@ test('⟳ says when the Arcade is up to date, and when the updater cannot run', 
   await $.command.run({ command: 'arcade', args: 'update' } as never)
   expect(toasts.join(' ')).toMatch(/could not run the updater/)
 })
+
+// GitHub's copy of the manifest, and the installed one, for the check a terminal makes when it opens.
+function manifests(on: On, installed: string, published: string | Error, fetched: string[] = []) {
+  on('fs.read', (_$, e) => {
+    if (!String(e.path).endsWith('.claude-plugin/plugin.json')) return { value: '' } as never
+    return { value: JSON.stringify({ version: installed, repository: 'https://github.com/sample-owner/sample-plugins' }) } as never
+  })
+  on('http.fetch', (_$, e) => {
+    fetched.push(e.url)
+    if (published instanceof Error) throw published
+    return { value: { status: 200, ok: true, headers: {}, text: JSON.stringify({ version: published }) } } as never
+  })
+}
+
+// The check runs unawaited after session.start, so the test waits a few real ticks for it.
+async function settle() {
+  for (let i = 0; i < 20; i++) await new Promise(r => (globalThis as unknown as { setTimeout: (f: (v?: unknown) => void, ms: number) => void }).setTimeout(r, 5))
+}
+
+test('a terminal that opens looks once for a newer Arcade, lights ⟳ and says so once per version', async ($, on) => {
+  const store: Record<string, unknown> = { welcome: 9 }
+  const toasts: string[] = []
+  const fetched: string[] = []
+  const ran: string[][] = []
+  rawWorld(on, store, toasts)
+  under(on)
+  manifests(on, '0.10.1', '0.10.2', fetched)
+  on('process.run', (_$, e) => {
+    ran.push([...e.argv])
+    return { value: { exitCode: 0, stdout: '✔ Plugin "arcade" updated from 0.10.1 to 0.10.2 for scope user.', stderr: '' } } as never
+  })
+  on('prompt.fill', () => ({ isFilled: true }) as never)
+  await begin($, on)
+  await settle()
+  expect(fetched).toEqual(['https://raw.githubusercontent.com/sample-owner/sample-plugins/main/plugins/arcade/.claude-plugin/plugin.json'])
+  expect(ran).toHaveLength(0)
+  expect(toasts.filter(t => /Arcade 0\.10\.2 is out \(you have 0\.10\.1\)/.test(t))).toHaveLength(1)
+  expect(store.toldVersion).toBe('0.10.2')
+  const ui = await $.ui.mount(BAND)
+  expect(await ui.find({ type: 'Text', text: /●/ })).toBeDefined()
+  await ui.press({ key: 'arcade-update' })
+  expect(ran).toEqual([['claude', 'plugin', 'update', 'arcade']])
+  expect(await ui.find({ type: 'Text', text: /●/ })).toBeUndefined()
+  await ui.unmount()
+})
+
+test('the opening check stays quiet when up to date, offline, already told, or turned off', async ($, on) => {
+  const store: Record<string, unknown> = { welcome: 9, toldVersion: '0.10.2' }
+  const toasts: string[] = []
+  const fetched: string[] = []
+  const reply = { version: '0.10.2' as string | Error }
+  rawWorld(on, store, toasts)
+  under(on)
+  on('fs.read', () => ({ value: JSON.stringify({ version: '0.10.1', repository: 'https://github.com/sample-owner/sample-plugins' }) }) as never)
+  on('http.fetch', (_$, e) => {
+    fetched.push(e.url)
+    if (reply.version instanceof Error) throw reply.version
+    return { value: { status: 200, ok: true, headers: {}, text: JSON.stringify({ version: reply.version }) } } as never
+  })
+  await begin($, on)
+  await settle()
+  // Already told about 0.10.2: the button lights, no second toast.
+  expect(toasts.filter(t => /is out/.test(t))).toHaveLength(0)
+  const ui = await $.ui.mount(BAND)
+  expect(await ui.find({ type: 'Text', text: /●/ })).toBeDefined()
+  await ui.unmount()
+  expect((await $.command.run({ command: 'arcade', args: 'update check off' } as never)).text).toMatch(/will not look/)
+  expect(store.updateCheck).toBe('off')
+  const ui2 = await $.ui.mount(BAND)
+  expect(await ui2.find({ type: 'Text', text: /●/ })).toBeUndefined()
+  await ui2.unmount()
+  expect((await $.command.run({ command: 'arcade', args: 'update check' } as never)).text).toMatch(/is off/)
+  expect(fetched).toHaveLength(1)
+})
+
+test('the opening check says nothing when GitHub cannot be reached or has the same version', async ($, on) => {
+  const toasts: string[] = []
+  rawWorld(on, { welcome: 9 }, toasts)
+  under(on)
+  manifests(on, '0.10.2', new Error('offline'))
+  await begin($, on)
+  await settle()
+  expect(toasts.filter(t => /is out/.test(t))).toHaveLength(0)
+  const ui = await $.ui.mount(BAND)
+  expect(await ui.find({ type: 'Text', text: /●/ })).toBeUndefined()
+  await ui.unmount()
+})

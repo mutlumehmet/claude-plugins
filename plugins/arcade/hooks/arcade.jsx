@@ -4758,6 +4758,7 @@ const ALIASES = { "dragon-lair": "dragon", octo: "octopus", "octo-invader": "oct
 const pickedFor = atom12({ plugin: "arcade", key: "pickedFor" }, "");
 const defaultGame = atom12({ plugin: "arcade", key: "defaultGame" }, "");
 const hint = atom12({ plugin: "arcade", key: "hint" }, false);
+const latest = atom12({ plugin: "arcade", key: "latest" }, "");
 const MENU = "arcade-menu";
 const HINT_SESSIONS = 3;
 function gameId(word2) {
@@ -4796,7 +4797,7 @@ async function status($, mode, pool) {
   return `Arcade on this account: ${setting}.
 This terminal:
 ${rows.join("\n")}
-"/arcade <game>" swaps this terminal's game, "/arcade default <game>" makes it the game every new terminal starts with, "/arcade random|rotate|all|off" sets how new terminals pick, "/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal's game. "/arcade hide" clears this terminal only. "/arcade moments" tunes what counts as a big moment. "/arcade update" (or \u27F3) checks for a new version. Scores, the town and the pet start from zero in every terminal and last until it closes; "/<game> reset" or "/arcade reset" starts this terminal over.`;
+"/arcade <game>" swaps this terminal's game, "/arcade default <game>" makes it the game every new terminal starts with, "/arcade random|rotate|all|off" sets how new terminals pick, "/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal's game. "/arcade hide" clears this terminal only. "/arcade moments" tunes what counts as a big moment. "/arcade update" (or \u27F3) installs a new version; "/arcade update check off" stops the look for one when a terminal opens. Scores, the town and the pet start from zero in every terminal and last until it closes; "/<game> reset" or "/arcade reset" starts this terminal over.`;
 }
 async function save5($, mode, pool) {
   const saved = { mode, pool: pool.join(",") };
@@ -4867,6 +4868,7 @@ async function runUpdate($) {
 ${ran.stderr}`;
     const moved = out.match(/updated from (\d[\w.-]*\w) to (\d[\w.-]*\w)/);
     const same = out.match(/already at the latest version \(([^)]+)\)/);
+    if (moved || same) await update11($, latest, () => "");
     if (moved) {
       await $.prompt.fill({ text: "/reload-plugins" }).catch(() => void 0);
       return `Arcade updated from ${moved[1]} to ${moved[2]}. Press Enter on /reload-plugins to play it, or open a new terminal.`;
@@ -4877,6 +4879,40 @@ ${ran.stderr}`;
   } catch {
     return `Arcade: could not run the updater here. Try /plugin update ${PLUGIN_ID}.`;
   }
+}
+function isNewer(theirs, mine) {
+  const a = theirs.split(".").map((n) => parseInt(n, 10) || 0);
+  const b = mine.split(".").map((n) => parseInt(n, 10) || 0);
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    if ((a[i] ?? 0) !== (b[i] ?? 0)) return (a[i] ?? 0) > (b[i] ?? 0);
+  }
+  return false;
+}
+async function lookForUpdate($) {
+  try {
+    if (await $.store.get("updateCheck") === "off") return;
+    const mine = JSON.parse(await $.fs.read(`${$.plugin.root}/.claude-plugin/plugin.json`));
+    const repo = String(mine.repository ?? "").match(/github\.com\/([^/\s]+\/[^/\s#?]+?)(?:\.git)?\/?$/);
+    if (repo === null || !mine.version) return;
+    const got = await $.http.fetch(`https://raw.githubusercontent.com/${repo[1]}/main/plugins/${$.plugin.name}/.claude-plugin/plugin.json`);
+    if (!got.ok) return;
+    const theirs = String(JSON.parse(got.text).version ?? "");
+    if (!isNewer(theirs, mine.version)) return;
+    await update11($, latest, () => theirs);
+    if (await $.store.get("toldVersion") === theirs) return;
+    await $.store.set("toldVersion", theirs);
+    $.ui.toast(`Arcade ${theirs} is out (you have ${mine.version}). Press \u27F3 update above the game, or type /arcade update.`, { timeoutMs: 15e3 });
+  } catch {
+  }
+}
+async function updateCheckCommand($, word2) {
+  if (word2 === "off" || word2 === "on") {
+    await $.store.set("updateCheck", word2);
+    if (word2 === "off") await update11($, latest, () => "");
+    return word2 === "off" ? "Arcade will not look for new versions when a terminal opens. \u27F3 and /arcade update still work." : "Arcade will look for a new version once when each terminal opens.";
+  }
+  const now = await $.store.get("updateCheck") === "off" ? "off" : "on";
+  return `The check for a new Arcade when a terminal opens is ${now}. "/arcade update check off" or "on" changes it.`;
 }
 async function openMenu($) {
   try {
@@ -4986,6 +5022,7 @@ export const register = (on, options) => {
     const streak = streakMilestones(await $.store.get("days"), await $.clock.now());
     await $.store.set("days", streak.days);
     await celebrate7($, streak.found);
+    void lookForUpdate($);
     return ran;
   });
   on("command.run", { command: "arcade" }, async ($, e) => {
@@ -4995,6 +5032,7 @@ export const register = (on, options) => {
       if (await openMenu($)) return { text: 'Arcade menu open: pick a game, \u2606 makes it your default. Esc closes. "/arcade help" lists the commands.' };
       return { text: await status($, setting.mode, setting.pool) };
     }
+    if (first === "update" && rest[0] === "check") return { text: await updateCheckCommand($, rest[1] ?? "") };
     if (first === "update") {
       return { text: await checkUpdate($) };
     }
@@ -5090,6 +5128,7 @@ export const register = (on, options) => {
     const id = ids[0] ?? "";
     const fallback = await read12($, defaultGame);
     const isHinted = await read12($, hint);
+    const newer = await read12($, latest);
     return <Box flexDirection="column">
         <Box key="arcade-controls" flexDirection="row" justifyContent="flex-end" height={1}>
           {isHinted ? <Text key="arcade-hint" dimColor wrap="truncate">{"\u25B6 next game  \u2630 all games and your default    "}</Text> : null}
@@ -5099,7 +5138,8 @@ export const register = (on, options) => {
           <Text key="arcade-gap"> </Text>
           <Button key="arcade-menu" label="☰" plain dimColor onPress={() => openMenu($)} />
           <Text key="arcade-gap3"> </Text>
-          <Button key="arcade-update" label="⟳" plain dimColor onPress={() => checkUpdate($)} />
+          {newer !== "" ? <Text key="arcade-new" color="yellow">{"\u25CF "}</Text> : null}
+          {newer !== "" ? <Button key="arcade-update" label={`\u27F3 update ${newer}`} plain onPress={() => checkUpdate($)} /> : <Button key="arcade-update" label="⟳" plain dimColor onPress={() => checkUpdate($)} />}
           {fallback !== id ? <Text key="arcade-gap2"> </Text> : null}
           {fallback !== id ? <Button key="arcade-default" label="☆ make default" plain dimColor onPress={() => makeDefault($, setting, id)} /> : null}
         </Box>
@@ -5110,6 +5150,7 @@ export const register = (on, options) => {
     const { Box, Button, Text } = $.ui.resolve(e);
     const ids = await read12($, shown);
     const fallback = await read12($, defaultGame);
+    const newer = await read12($, latest);
     const width = Math.max(...GAMES.map((g) => g.title.length)) + 1;
     return <Box flexDirection="column">
         {GAMES.map((g) => <Box key={`row-${g.id}`} flexDirection="row" height={1}>
@@ -5124,7 +5165,7 @@ export const register = (on, options) => {
           </Box>)}
         <Text key="menu-gap"> </Text>
         <Box key="menu-update" height={1}>
-          <Button key="menu-check" label="⟳ Check for an Arcade update" plain dimColor onPress={() => checkUpdate($)} />
+          {newer !== "" ? <Button key="menu-check" label={`\u25CF \u27F3 Arcade ${newer} is out: update`} plain onPress={() => checkUpdate($)} /> : <Button key="menu-check" label="⟳ Check for an Arcade update" plain dimColor onPress={() => checkUpdate($)} />}
         </Box>
         <Text key="menu-help" dimColor wrap="wrap">
           {`A name plays it here. \u2606 makes it the game new terminals start with${fallback === "" ? ` (now: ${setting.mode})` : ""}. Esc closes.`}

@@ -84,10 +84,13 @@ when a task calls for them) or one mod (a hooks module that runs inside Claude C
   the controls sit in the mod's own UI (small `plain` Buttons, at the top of a band tree because a
   short terminal scrolls the band and cuts the bottom), and the default is a choice someone made,
   not `random`.
-- **Updates reach people only if they ask.** Claude Code does not auto-update this marketplace
-  unless the user turns it on, so a mod that changes often offers an update on press (the
-  Arcade's ⟳ runs `claude plugin update <bare name>`); never a background check, which would
-  break PRIVACY.md.
+- **Updates are found for people, installed only on press.** Claude Code does not auto-update this
+  marketplace unless the user turns it on, so a mod that changes often offers an update on press
+  (the Arcade's ⟳ runs `claude plugin update <bare name>`). Since 0.10.2 (8 October 2026) the Arcade
+  also reads its own `plugin.json` on GitHub once at `session.start` (unawaited) and lights ⟳ when
+  it is newer, with one toast per version; a tiny ⟳ alone told nobody. Never on a timer, never
+  installing by itself, always with an off switch (`/arcade update check off`), and PRIVACY.md
+  names the request.
 - **The marketplace name stays out of code**: `check-personal` allows it only in credit files.
   Use the bare plugin name.
 - **See it live before calling it done**: `claude --plugin-dir plugins/<mod>` in a pty driven by

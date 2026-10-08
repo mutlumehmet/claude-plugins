@@ -28,12 +28,15 @@ just work: the game plays along. Above the game sit small buttons:
 | **◀ ▶** | The previous or next game, in this terminal |
 | **☰** | The game menu: every game with a line about it. A name plays it here, **☆** makes it your default |
 | **☆ make default** | Shows once this terminal plays a game other than your default; makes it the game every new terminal starts with |
-| **⟳** | Checks for a new Arcade version and installs it (the same as `/plugin update arcade@mehmetmutlu`), then puts `/reload-plugins` in the prompt for you |
+| **⟳** | Checks for a new Arcade version and installs it (the same as `/plugin update arcade@mehmetmutlu`), then puts `/reload-plugins` in the prompt for you. When a newer version is out it lights up as a yellow **● ⟳ update 0.x.y** |
 
 **Updates**: Claude Code does not update plugins from this marketplace on its own unless you turn it
 on (`/plugin`, Marketplaces, mehmetmutlu, Enable auto-update). Without that, press **⟳** now and
-then, or type `/arcade update`. The Arcade only checks when you ask; it never checks in the
-background.
+then, or type `/arcade update`. So you hear about it, each new terminal looks once for a newer
+version (it reads the version number in this repository's `plugin.json` on GitHub, nothing else).
+When one is out, ⟳ turns into a yellow **● ⟳ update 0.x.y** and a notice says so, once per version.
+It never installs anything until you press it, and never checks again while the terminal is open.
+`/arcade update check off` stops the look, `on` brings it back.
 
 ## The games
 
@@ -84,6 +87,7 @@ Claude Code config directory (an account) keeps its own choice.
 | `/arcade pool dragon tetris` | Picks only from these games (for random, rotate and all) |
 | `/arcade hide` | Clears this terminal; `/arcade next` brings a game back |
 | `/arcade update` | Checks for a new Arcade version and installs it, like **⟳** |
+| `/arcade update check off` | Stops the look for a new version when a terminal opens (`on` brings it back) |
 | `/arcade help` | The setting, which games this terminal shows, and these commands |
 
 A game that is not shown keeps playing and keeps its score for this terminal; it only stops drawing
@@ -321,8 +325,11 @@ between sessions; a reload of the plugin keeps what the terminal had.
 - **Runs**: one command, and only when you press **⟳** or type `/arcade update`: Claude Code's own
   `claude plugin update arcade`, which fetches this marketplace from GitHub the same way
   `/plugin update` does.
-- **Never**: changes, blocks or delays a tool call or a message; sends anything anywhere (no network
-  calls of its own, no telemetry, no update checks in the background); reads file contents beyond counting lines of a file Claude writes.
+- **Reads from the network**: once per terminal, when it opens, the Arcade's own `plugin.json` on
+  GitHub (`raw.githubusercontent.com`), for its version number only. `/arcade update check off`
+  stops it.
+- **Never**: changes, blocks or delays a tool call or a message; sends anything about you anywhere
+  (no telemetry, no repeated or timed update checks); reads file contents beyond counting lines of a file Claude writes, and its own `plugin.json`.
 
 ## Install
 

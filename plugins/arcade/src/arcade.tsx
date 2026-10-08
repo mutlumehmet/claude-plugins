@@ -151,6 +151,7 @@ const pickedFor = atom({ plugin: 'arcade', key: 'pickedFor' } as const, '')
 // can offer to make the game on screen the default; and whether the first sessions' hint shows.
 const defaultGame = atom({ plugin: 'arcade', key: 'defaultGame' } as const, '')
 const hint = atom({ plugin: 'arcade', key: 'hint' } as const, false)
+const latest = atom({ plugin: 'arcade', key: 'latest' } as const, '')
 
 const MENU = 'arcade-menu'
 // How many sessions show the hint under the game; the first one also shows the welcome notice.
@@ -207,7 +208,7 @@ async function status($: EngineInterface, mode: Mode, pool: string[]) {
     '"/arcade <game>" swaps this terminal\'s game, "/arcade default <game>" makes it the game every new terminal starts with, ' +
     '"/arcade random|rotate|all|off" sets how new terminals pick, ' +
     '"/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal\'s game. ' +
-    '"/arcade hide" clears this terminal only. "/arcade moments" tunes what counts as a big moment. "/arcade update" (or ⟳) checks for a new version. ' +
+    '"/arcade hide" clears this terminal only. "/arcade moments" tunes what counts as a big moment. "/arcade update" (or ⟳) installs a new version; "/arcade update check off" stops the look for one when a terminal opens. ' +
     'Scores, the town and the pet start from zero in every terminal and last until it closes; "/<game> reset" or "/arcade reset" starts this terminal over.'
   )
 }
@@ -275,9 +276,9 @@ async function step($: EngineInterface, by: number) {
   await update($, shown, () => [id])
 }
 
-// Checks for a newer Arcade only when the person presses ⟳: Claude Code's own updater fetches the
-// marketplace, the Arcade itself never reaches the network and never checks on its own. The child
-// inherits the session's CLAUDE_CONFIG_DIR, so it updates the account this terminal runs on.
+// Installs a newer Arcade only when the person presses ⟳: Claude Code's own updater fetches the
+// marketplace. The child inherits the session's CLAUDE_CONFIG_DIR, so it updates the account this
+// terminal runs on.
 // The bare name: Claude Code finds the marketplace it was installed from.
 const PLUGIN_ID = 'arcade'
 const updating = { busy: false }
@@ -298,6 +299,7 @@ async function runUpdate($: EngineInterface) {
     const out = `${ran.stdout}\n${ran.stderr}`
     const moved = out.match(/updated from (\d[\w.-]*\w) to (\d[\w.-]*\w)/)
     const same = out.match(/already at the latest version \(([^)]+)\)/)
+    if (moved || same) await update($, latest, () => '')
     if (moved) {
       await $.prompt.fill({ text: '/reload-plugins' }).catch(() => undefined)
       return `Arcade updated from ${moved[1]} to ${moved[2]}. Press Enter on /reload-plugins to play it, or open a new terminal.`
@@ -308,6 +310,50 @@ async function runUpdate($: EngineInterface) {
   } catch {
     return `Arcade: could not run the updater here. Try /plugin update ${PLUGIN_ID}.`
   }
+}
+
+// Once per session, at its start (never on a timer): reads the version in this plugin's manifest on
+// GitHub, the repository named in our own plugin.json, and compares it with the installed one. A
+// newer one lights ⟳ and says so in a toast, once per version per account. Only reads one public
+// file; installing still waits for ⟳. "/arcade update check off" stops it.
+function isNewer(theirs: string, mine: string) {
+  const a = theirs.split('.').map(n => parseInt(n, 10) || 0)
+  const b = mine.split('.').map(n => parseInt(n, 10) || 0)
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    if ((a[i] ?? 0) !== (b[i] ?? 0)) return (a[i] ?? 0) > (b[i] ?? 0)
+  }
+  return false
+}
+
+async function lookForUpdate($: EngineInterface) {
+  try {
+    if ((await $.store.get('updateCheck')) === 'off') return
+    const mine = JSON.parse(await $.fs.read(`${$.plugin.root}/.claude-plugin/plugin.json`)) as { version?: string; repository?: string }
+    const repo = String(mine.repository ?? '').match(/github\.com\/([^/\s]+\/[^/\s#?]+?)(?:\.git)?\/?$/)
+    if (repo === null || !mine.version) return
+    const got = await $.http.fetch(`https://raw.githubusercontent.com/${repo[1]}/main/plugins/${$.plugin.name}/.claude-plugin/plugin.json`)
+    if (!got.ok) return
+    const theirs = String((JSON.parse(got.text) as { version?: string }).version ?? '')
+    if (!isNewer(theirs, mine.version)) return
+    await update($, latest, () => theirs)
+    if ((await $.store.get('toldVersion')) === theirs) return
+    await $.store.set('toldVersion', theirs)
+    $.ui.toast(`Arcade ${theirs} is out (you have ${mine.version}). Press ⟳ update above the game, or type /arcade update.`, { timeoutMs: 15000 })
+  } catch {
+    // Offline, GitHub down, or no network here: say nothing, ⟳ still works.
+  }
+}
+
+async function updateCheckCommand($: EngineInterface, word: string) {
+  if (word === 'off' || word === 'on') {
+    await $.store.set('updateCheck', word)
+    if (word === 'off') await update($, latest, () => '')
+    return word === 'off'
+      ? 'Arcade will not look for new versions when a terminal opens. ⟳ and /arcade update still work.'
+      : 'Arcade will look for a new version once when each terminal opens.'
+  }
+  const now = (await $.store.get('updateCheck')) === 'off' ? 'off' : 'on'
+  return `The check for a new Arcade when a terminal opens is ${now}. "/arcade update check off" or "on" changes it.`
 }
 
 async function openMenu($: EngineInterface) {
@@ -438,6 +484,8 @@ export const register: Register = (on, options: PluginOptions) => {
     const streak = streakMilestones((await $.store.get('days')) as { last: string; streak: number } | undefined, await $.clock.now())
     await $.store.set('days', streak.days)
     await celebrate($, streak.found)
+    // Not awaited: a slow network must not hold up the session's start.
+    void lookForUpdate($)
     return ran
   })
 
@@ -449,6 +497,7 @@ export const register: Register = (on, options: PluginOptions) => {
       if (await openMenu($)) return { text: 'Arcade menu open: pick a game, ☆ makes it your default. Esc closes. "/arcade help" lists the commands.' }
       return { text: await status($, setting.mode, setting.pool) }
     }
+    if (first === 'update' && rest[0] === 'check') return { text: await updateCheckCommand($, rest[1] ?? '') }
     if (first === 'update') {
       return { text: await checkUpdate($) }
     }
@@ -566,6 +615,7 @@ export const register: Register = (on, options: PluginOptions) => {
     const id = ids[0] ?? ''
     const fallback = await read($, defaultGame)
     const isHinted = await read($, hint)
+    const newer = await read($, latest)
     return (
       <Box flexDirection="column">
         <Box key="arcade-controls" flexDirection="row" justifyContent="flex-end" height={1}>
@@ -576,7 +626,12 @@ export const register: Register = (on, options: PluginOptions) => {
           <Text key="arcade-gap"> </Text>
           <Button key="arcade-menu" label="☰" plain dimColor onPress={() => openMenu($)} />
           <Text key="arcade-gap3"> </Text>
-          <Button key="arcade-update" label="⟳" plain dimColor onPress={() => checkUpdate($)} />
+          {newer !== '' ? <Text key="arcade-new" color="yellow">{'● '}</Text> : null}
+          {newer !== '' ? (
+            <Button key="arcade-update" label={`⟳ update ${newer}`} plain onPress={() => checkUpdate($)} />
+          ) : (
+            <Button key="arcade-update" label="⟳" plain dimColor onPress={() => checkUpdate($)} />
+          )}
           {fallback !== id ? <Text key="arcade-gap2"> </Text> : null}
           {fallback !== id ? <Button key="arcade-default" label="☆ make default" plain dimColor onPress={() => makeDefault($, setting, id)} /> : null}
         </Box>
@@ -592,6 +647,7 @@ export const register: Register = (on, options: PluginOptions) => {
     const { Box, Button, Text } = $.ui.resolve(e)
     const ids = await read($, shown)
     const fallback = await read($, defaultGame)
+    const newer = await read($, latest)
     const width = Math.max(...GAMES.map(g => g.title.length)) + 1
     return (
       <Box flexDirection="column">
@@ -613,7 +669,11 @@ export const register: Register = (on, options: PluginOptions) => {
         ))}
         <Text key="menu-gap"> </Text>
         <Box key="menu-update" height={1}>
-          <Button key="menu-check" label="⟳ Check for an Arcade update" plain dimColor onPress={() => checkUpdate($)} />
+          {newer !== '' ? (
+            <Button key="menu-check" label={`● ⟳ Arcade ${newer} is out: update`} plain onPress={() => checkUpdate($)} />
+          ) : (
+            <Button key="menu-check" label="⟳ Check for an Arcade update" plain dimColor onPress={() => checkUpdate($)} />
+          )}
         </Box>
         <Text key="menu-help" dimColor wrap="wrap">
           {`A name plays it here. ☆ makes it the game new terminals start with${fallback === '' ? ` (now: ${setting.mode})` : ''}. Esc closes.`}

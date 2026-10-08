@@ -7,9 +7,13 @@ collection that installs them.
 
 ## What is collected
 
-Nothing. The plugins have no telemetry, no analytics and no accounts. They make no network calls
-of their own and send nothing to the author or to anyone else. The Arcade's ⟳ button (and
-`/arcade update`) runs Claude Code's own `claude plugin update arcade`, only when you
+Nothing. The plugins have no telemetry, no analytics and no accounts. They send nothing to the
+author or to anyone else. One plugin makes one network call of its own: when a terminal opens, the
+Arcade reads the version number in its own `plugin.json` on GitHub
+(`raw.githubusercontent.com`, this repository), once, to light its ⟳ button when a newer version
+is out. It is a plain read of a public file, with no cookie, token or data about you; GitHub sees
+the request as it sees any page visit. `/arcade update check off` stops it. The ⟳ button (and
+`/arcade update`) then runs Claude Code's own `claude plugin update arcade`, only when you
 press it; that fetches this repository from GitHub exactly as `/plugin update` does, and sends
 nothing about you.
 
@@ -46,4 +50,4 @@ The plugins are developer tools and are not directed at children under 18.
 
 Questions or concerns: open an issue in this repository on GitHub (the Issues tab).
 
-Last updated: 5 October 2026.
+Last updated: 8 October 2026.
