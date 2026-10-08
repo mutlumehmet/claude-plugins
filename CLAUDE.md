@@ -76,6 +76,23 @@ when a task calls for them) or one mod (a hooks module that runs inside Claude C
 - Dialogs that guard an action list the safe choice first, so a reflexive Enter refuses.
 - Everything the mod shows is English. Tests use neutral sample data.
 - Bump `version` in `plugin.json` on every change, so installed copies update.
+- **Install asks nothing.** A `userConfig` field becomes a screen in the installer, one field
+  after another (the Arcade's seven put a friend off, 8 October 2026). Keep choices out of
+  `userConfig`: give every setting a default and let the mod's own command set it, kept in
+  `$.store` (per config directory, like an account).
+- **A mod shows how to use it.** The first session says once where its controls are (a toast),
+  the controls sit in the mod's own UI (small `plain` Buttons, at the top of a band tree because a
+  short terminal scrolls the band and cuts the bottom), and the default is a choice someone made,
+  not `random`.
+- **Updates reach people only if they ask.** Claude Code does not auto-update this marketplace
+  unless the user turns it on, so a mod that changes often offers an update on press (the
+  Arcade's ⟳ runs `claude plugin update <bare name>`); never a background check, which would
+  break PRIVACY.md.
+- **The marketplace name stays out of code**: `check-personal` allows it only in credit files.
+  Use the bare plugin name.
+- **See it live before calling it done**: `claude --plugin-dir plugins/<mod>` in a pty driven by
+  `expect` (drain with `expect -timeout N` between keys, a bare `sleep` logs nothing), then replay
+  the log through `@xterm/headless`; pyte garbles Claude Code's redraws.
 
 ## Adding or updating a skill
 
