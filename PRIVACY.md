@@ -1,14 +1,17 @@
 # Privacy
 
 This policy covers every plugin in this repository: the skills, the Claude Code Arcade
-(`arcade`: dragon, jackpot, outlaw, tama, tetris, octopus and duck), the mods in Claude Code Toolkit (subtask-icons,
+(`arcade` and its ten games), the mods in Claude Code Toolkit (subtask-icons,
 context-alarm, answer-buttons, skill-stats, dash-guard, shared-file-guard, fork-lineage), and the `toolkit`
 collection that installs them.
 
 ## What is collected
 
 Nothing. The plugins have no telemetry, no analytics and no accounts. They make no network calls
-of their own and send nothing to the author or to anyone else.
+of their own and send nothing to the author or to anyone else. The Arcade's ⟳ button (and
+`/arcade update`) runs Claude Code's own `claude plugin update arcade`, only when you
+press it; that fetches this repository from GitHub exactly as `/plugin update` does, and sends
+nothing about you.
 
 ## What stays on your machine
 

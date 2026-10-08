@@ -240,3 +240,43 @@ test('every game lists its moves to preview under its help', async ($, on) => {
     expect(text).toContain(`/${game} reset`)
   }
 })
+
+test('⟳ runs Claude Code\'s updater only when pressed, and says what happened', async ($, on) => {
+  const toasts: string[] = []
+  const ran: string[][] = []
+  let filled = ''
+  rawWorld(on, { welcome: 9 }, toasts)
+  under(on)
+  on('process.run', (_$, e) => {
+    ran.push([...e.argv])
+    return { value: { exitCode: 0, stdout: '✔ Plugin "arcade" updated from 0.10.0 to 0.10.1 for scope user. Restart to apply changes.', stderr: '' } } as never
+  })
+  on('prompt.fill', (_$, e) => {
+    filled = e.text
+    return { isFilled: true } as never
+  })
+  await begin($, on)
+  expect(ran).toHaveLength(0)
+  const ui = await $.ui.mount(BAND)
+  await ui.press({ key: 'arcade-update' })
+  expect(ran).toEqual([['claude', 'plugin', 'update', 'arcade']])
+  expect(toasts.join(' ')).toMatch(/updated from 0\.10\.0 to 0\.10\.1/)
+  expect(filled).toBe('/reload-plugins')
+  await ui.unmount()
+})
+
+test('⟳ says when the Arcade is up to date, and when the updater cannot run', async ($, on) => {
+  const toasts: string[] = []
+  let reply: unknown = { exitCode: 0, stdout: '✔ arcade is already at the latest version (0.10.1).', stderr: '' }
+  rawWorld(on, { welcome: 9 }, toasts)
+  on('process.run', () => {
+    if (reply instanceof Error) throw reply
+    return { value: reply } as never
+  })
+  await begin($, on)
+  await $.command.run({ command: 'arcade', args: 'update' } as never)
+  expect(toasts.join(' ')).toMatch(/up to date \(0\.10\.1\)/)
+  reply = new Error('no claude here')
+  await $.command.run({ command: 'arcade', args: 'update' } as never)
+  expect(toasts.join(' ')).toMatch(/could not run the updater/)
+})

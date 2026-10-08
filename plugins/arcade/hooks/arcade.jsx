@@ -4796,7 +4796,7 @@ async function status($, mode, pool) {
   return `Arcade on this account: ${setting}.
 This terminal:
 ${rows.join("\n")}
-"/arcade <game>" swaps this terminal's game, "/arcade default <game>" makes it the game every new terminal starts with, "/arcade random|rotate|all|off" sets how new terminals pick, "/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal's game. "/arcade hide" clears this terminal only. "/arcade moments" tunes what counts as a big moment. Scores, the town and the pet start from zero in every terminal and last until it closes; "/<game> reset" or "/arcade reset" starts this terminal over.`;
+"/arcade <game>" swaps this terminal's game, "/arcade default <game>" makes it the game every new terminal starts with, "/arcade random|rotate|all|off" sets how new terminals pick, "/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal's game. "/arcade hide" clears this terminal only. "/arcade moments" tunes what counts as a big moment. "/arcade update" (or \u27F3) checks for a new version. Scores, the town and the pet start from zero in every terminal and last until it closes; "/<game> reset" or "/arcade reset" starts this terminal over.`;
 }
 async function save5($, mode, pool) {
   const saved = { mode, pool: pool.join(",") };
@@ -4848,6 +4848,35 @@ async function step9($, by) {
   const at = GAMES.findIndex((g) => g.id === now[now.length - 1]);
   const id = GAMES[(at + by + GAMES.length) % GAMES.length]?.id ?? "";
   await update11($, shown, () => [id]);
+}
+const PLUGIN_ID = "arcade";
+const updating = { busy: false };
+async function checkUpdate($) {
+  if (updating.busy) return "Arcade: an update check is already running.";
+  updating.busy = true;
+  $.ui.toast("Arcade: checking for a new version\u2026");
+  const said = await runUpdate($);
+  updating.busy = false;
+  $.ui.toast(said, { timeoutMs: 12e3 });
+  return said;
+}
+async function runUpdate($) {
+  try {
+    const ran = await $.process.run(["claude", "plugin", "update", PLUGIN_ID], { timeoutMs: 12e4 });
+    const out = `${ran.stdout}
+${ran.stderr}`;
+    const moved = out.match(/updated from (\d[\w.-]*\w) to (\d[\w.-]*\w)/);
+    const same = out.match(/already at the latest version \(([^)]+)\)/);
+    if (moved) {
+      await $.prompt.fill({ text: "/reload-plugins" }).catch(() => void 0);
+      return `Arcade updated from ${moved[1]} to ${moved[2]}. Press Enter on /reload-plugins to play it, or open a new terminal.`;
+    }
+    if (same) return `Arcade is up to date (${same[1]}).`;
+    const line = out.split("\n").map((l) => l.trim()).find((l) => l !== "") ?? `exit ${ran.exitCode}`;
+    return `Arcade: the update did not run (${line.slice(0, 120)}). Try /plugin update ${PLUGIN_ID}.`;
+  } catch {
+    return `Arcade: could not run the updater here. Try /plugin update ${PLUGIN_ID}.`;
+  }
 }
 async function openMenu($) {
   try {
@@ -4966,6 +4995,9 @@ export const register = (on, options) => {
       if (await openMenu($)) return { text: 'Arcade menu open: pick a game, \u2606 makes it your default. Esc closes. "/arcade help" lists the commands.' };
       return { text: await status($, setting.mode, setting.pool) };
     }
+    if (first === "update") {
+      return { text: await checkUpdate($) };
+    }
     if (first === "help" || first === "status") return { text: await status($, setting.mode, setting.pool) };
     if (first === "moments") return { text: await momentsCommand($, options, e.args ?? "") };
     if (first === "default") {
@@ -5066,6 +5098,8 @@ export const register = (on, options) => {
           <Button key="arcade-next" label="▶" plain dimColor onPress={() => step9($, 1)} />
           <Text key="arcade-gap"> </Text>
           <Button key="arcade-menu" label="☰" plain dimColor onPress={() => openMenu($)} />
+          <Text key="arcade-gap3"> </Text>
+          <Button key="arcade-update" label="⟳" plain dimColor onPress={() => checkUpdate($)} />
           {fallback !== id ? <Text key="arcade-gap2"> </Text> : null}
           {fallback !== id ? <Button key="arcade-default" label="☆ make default" plain dimColor onPress={() => makeDefault($, setting, id)} /> : null}
         </Box>
@@ -5089,6 +5123,9 @@ export const register = (on, options) => {
             <Text key={`what-${g.id}`} dimColor wrap="truncate">{BLURBS[g.id] ?? ""}</Text>
           </Box>)}
         <Text key="menu-gap"> </Text>
+        <Box key="menu-update" height={1}>
+          <Button key="menu-check" label="⟳ Check for an Arcade update" plain dimColor onPress={() => checkUpdate($)} />
+        </Box>
         <Text key="menu-help" dimColor wrap="wrap">
           {`A name plays it here. \u2606 makes it the game new terminals start with${fallback === "" ? ` (now: ${setting.mode})` : ""}. Esc closes.`}
         </Text>

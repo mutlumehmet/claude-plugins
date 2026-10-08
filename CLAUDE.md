@@ -46,7 +46,7 @@ when a task calls for them) or one mod (a hooks module that runs inside Claude C
   folder, one-line description), generic install, contributing, about, license. Skill details never
   go into the main README. The one exception is the Arcade, which opens the README (decided 8
   October 2026, so a visitor sees the games first): install, how to switch games, and a gallery
-  table of every game with its command and GIF. A new game adds a row there and in the Arcade README.
+  table of every game with its command and GIF. A new game adds a row there and in the Arcade README. The Toolkit and Skills tables carry a visual per row too (a captioned film GIF from the mods-gifs render tool, or the skill's flow PNG, at width 360); a new mod or skill adds its own.
 - Never commit `.env`, config files with real values, or OS junk (`.DS_Store`).
 
 ## Rules for every mod

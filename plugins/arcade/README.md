@@ -21,28 +21,53 @@ to set up.
 ```
 
 Octo Invader starts by itself, and the first time a short notice says where the controls are. Then
-just work: the game plays along. Above the game sit three small buttons:
+just work: the game plays along. Above the game sit small buttons:
 
 | Button | What it does |
 |---|---|
 | **◀ ▶** | The previous or next game, in this terminal |
 | **☰** | The game menu: every game with a line about it. A name plays it here, **☆** makes it your default |
 | **☆ make default** | Shows once this terminal plays a game other than your default; makes it the game every new terminal starts with |
+| **⟳** | Checks for a new Arcade version and installs it (the same as `/plugin update arcade@mehmetmutlu`), then puts `/reload-plugins` in the prompt for you |
+
+**Updates**: Claude Code does not update plugins from this marketplace on its own unless you turn it
+on (`/plugin`, Marketplaces, mehmetmutlu, Enable auto-update). Without that, press **⟳** now and
+then, or type `/arcade update`. The Arcade only checks when you ask; it never checks in the
+background.
 
 ## The games
 
-| Game | Command | |
-|---|---|---|
-| **Octo Invader**: a pixel octopus smashes a city the full width of the line while Claude edits | `/arcade octopus` | <img src="../../docs/images/octo-invader.gif" width="360" alt="Octo Invader strip"> |
-| **Duck Hunt**: a dog and a marsh; your moments shoot the ducks down, failed tools let them fly away | `/arcade duck` | <img src="../../docs/images/duck-hunt.gif" width="360" alt="Duck Hunt strip"> |
-| **Bug Command**: bugs fall on six cities; Claude's tools shoot them down, and you can click the sky to fire too | `/arcade bugs` | <img src="../../docs/images/bug-command.gif" width="360" alt="Bug Command strip"> |
-| **Dario**: a side scroller; tool calls bring ? blocks and coins, a failed tool sends a bug | `/arcade dario` | <img src="../../docs/images/dario.gif" width="360" alt="Dario strip"> |
-| **Block Town**: your agents build a medieval town in blocks; big moments raise a castle | `/arcade town` | <img src="../../docs/images/block-town.gif" width="360" alt="Block Town strip"> |
-| **Dragon Lair**: a pixel dragon that breathes fire when you ship | `/arcade dragon` | <img src="../../docs/images/arcade-hero.gif" width="360" alt="The five small games: dragon, slot machine, duel, Tamagotchi, Tetris"> |
-| **Jackpot**: a slot machine; every finished turn pulls the lever | `/arcade jackpot` | (in the GIF above) |
-| **Outlaw**: an Atari duel; you fire at the good moments, the bug when a tool fails | `/arcade outlaw` | (in the GIF above) |
-| **Tama**: a Tamagotchi your work feeds, or it packs its bags | `/arcade tama` | (in the GIF above) |
-| **Tetris**: Claude's tools drop the pieces | `/arcade tetris` | (in the GIF above) |
+<table>
+<tr><td>
+<b>Octo Invader</b> <code>/arcade octopus</code>: a pixel octopus smashes a city the full width of the line while Claude edits<br>
+<img src="../../docs/images/octo-invader.gif" width="800" alt="Octo Invader strip">
+</td></tr>
+<tr><td>
+<b>Duck Hunt</b> <code>/arcade duck</code>: your moments shoot the ducks down, failed tools let them fly away<br>
+<img src="../../docs/images/duck-hunt.gif" width="800" alt="Duck Hunt strip">
+</td></tr>
+<tr><td>
+<b>Bug Command</b> <code>/arcade bugs</code>: bugs fall on six cities; Claude's tools shoot them down, and you can click the sky to fire too<br>
+<img src="../../docs/images/bug-command.gif" width="800" alt="Bug Command strip">
+</td></tr>
+<tr><td>
+<b>Dario</b> <code>/arcade dario</code>: a side scroller; tool calls bring ? blocks and coins, a failed tool sends a bug<br>
+<img src="../../docs/images/dario.gif" width="800" alt="Dario strip">
+</td></tr>
+<tr><td>
+<b>Block Town</b> <code>/arcade town</code>: your agents build a medieval town in blocks; big moments raise a castle<br>
+<img src="../../docs/images/block-town.gif" width="800" alt="Block Town strip">
+</td></tr>
+<tr><td>
+<img src="../../docs/images/arcade-hero.gif" width="400" align="right" alt="The five small games: dragon, slot machine, duel, Tamagotchi, Tetris">
+Five small games at the right of the line:<br>
+<b>Dragon Lair</b> <code>/arcade dragon</code>: a pixel dragon that breathes fire when you ship<br>
+<b>Jackpot</b> <code>/arcade jackpot</code>: a slot machine; every finished turn pulls the lever<br>
+<b>Outlaw</b> <code>/arcade outlaw</code>: an Atari duel; you fire at the good moments, the bug when a tool fails<br>
+<b>Tama</b> <code>/arcade tama</code>: a Tamagotchi your work feeds, or it packs its bags<br>
+<b>Tetris</b> <code>/arcade tetris</code>: Claude's tools drop the pieces
+</td></tr>
+</table>
 
 ## Switching games
 
@@ -58,6 +83,7 @@ Claude Code config directory (an account) keeps its own choice.
 | `/arcade random`, `rotate`, `all`, `off` | How new terminals pick: one at random, the next one in turn, every game at once, or none. `/arcade default <game>` goes back to one fixed game |
 | `/arcade pool dragon tetris` | Picks only from these games (for random, rotate and all) |
 | `/arcade hide` | Clears this terminal; `/arcade next` brings a game back |
+| `/arcade update` | Checks for a new Arcade version and installs it, like **⟳** |
 | `/arcade help` | The setting, which games this terminal shows, and these commands |
 
 A game that is not shown keeps playing and keeps its score for this terminal; it only stops drawing
@@ -288,12 +314,15 @@ between sessions; a reload of the plugin keeps what the terminal had.
   line and whether its output says nothing changed; for file writes, the file name and its line
   count; skill names; the words of your message (only to spot praise); subagent start and finish.
 - **Keeps**: no scores. Each terminal's games start from zero and end with it (see "Scores" below). In Claude Code's plugin store on your machine: your game choice (mode and pool), the moments keys, which game the last terminal showed, your days in a row, and how many sessions have shown the first run hint. Nothing is written into your projects.
-- **Draws**: the games it shows in the line above the prompt (a block at the right end, or the octopus's, the duck hunt's and Bug Command's strips across the full width), the small ◀ ▶ ☰ buttons above them, the game menu pane when you open it, and an occasional notice.
+- **Draws**: the games it shows in the line above the prompt (a block at the right end, or the octopus's, the duck hunt's and Bug Command's strips across the full width), the small ◀ ▶ ☰ ⟳ buttons above them, the game menu pane when you open it, and an occasional notice.
 - **Hooks**: `skill.prompt` only notes which skill ran, so a finished skill can count as a moment; it passes the skill's prompt on unchanged. `command.run` answers its own commands (`/arcade` and the games' own commands) and no other. It changes no Claude Code setting.
 - **Takes input**: only Bug Command, and only once you click its sky: from then until Esc, the keys you press go to the game, not the prompt. Clicks and keys never leave the game.
 - **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
+- **Runs**: one command, and only when you press **⟳** or type `/arcade update`: Claude Code's own
+  `claude plugin update arcade`, which fetches this marketplace from GitHub the same way
+  `/plugin update` does.
 - **Never**: changes, blocks or delays a tool call or a message; sends anything anywhere (no network
-  calls, no telemetry); reads file contents beyond counting lines of a file Claude writes.
+  calls of its own, no telemetry, no update checks in the background); reads file contents beyond counting lines of a file Claude writes.
 
 ## Install
 
