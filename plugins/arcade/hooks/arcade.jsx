@@ -373,7 +373,7 @@ function drawBabies(ink, W5) {
 function frame(a) {
   const W5 = COLUMNS;
   const ink = new Uint8Array(W5 * PIXEL_ROWS);
-  const over2 = /* @__PURE__ */ new Map();
+  const over = /* @__PURE__ */ new Map();
   draw(ink, W5, pose(a), shift(a), lift(a));
   drawBabies(ink, W5);
   for (const p of sim.particles) {
@@ -381,7 +381,7 @@ function frame(a) {
     const y = Math.round(p.y);
     if (x < 0 || x >= W5 || y < 0 || y >= PIXEL_ROWS) continue;
     if (p.ch) {
-      over2.set(Math.floor(y / 2) * W5 + x, p.ch);
+      over.set(Math.floor(y / 2) * W5 + x, p.ch);
       continue;
     }
     if (p.age / p.life > 0.7 && (x + sim.t) % 2 === 0) continue;
@@ -393,7 +393,7 @@ function frame(a) {
       const i = (cy * W5 + cx) * 3;
       const top = ink[cy * 2 * W5 + cx] === 1;
       const bottom = ink[(cy * 2 + 1) * W5 + cx] === 1;
-      const ch = over2.get(cy * W5 + cx);
+      const ch = over.get(cy * W5 + cx);
       words[i] = ch ? ch.codePointAt(0) : top && bottom ? 9608 : top ? 9600 : bottom ? 9604 : 32;
       words[i + 1] = INK;
       words[i + 2] = NONE;
@@ -829,9 +829,9 @@ const statsLine2 = (s) => `R ${roundOf(s.hits)}  \u25BC ${s.hits}  \u2197 ${s.es
 function frame2(isAsleep, stats) {
   const W5 = sim2.W;
   const buf = new Uint32Array(W5 * PH).fill(EMPTY);
-  const over2 = /* @__PURE__ */ new Map();
+  const over = /* @__PURE__ */ new Map();
   const text = (x, row, s, color) => [...s].forEach((ch, i) => {
-    if (x + i >= 0 && x + i < W5) over2.set(row * W5 + x + i, { ch, color });
+    if (x + i >= 0 && x + i < W5) over.set(row * W5 + x + i, { ch, color });
   });
   for (const d of sim2.ducks) drawDuck(buf, d);
   const isBehind = sim2.catch !== null || sim2.laughUntil > sim2.t;
@@ -857,7 +857,7 @@ function frame2(isAsleep, stats) {
       const i = (cy * W5 + cx) * 3;
       const top = buf[cy * 2 * W5 + cx];
       const bottom = buf[(cy * 2 + 1) * W5 + cx];
-      const g = over2.get(cy * W5 + cx);
+      const g = over.get(cy * W5 + cx);
       if (g) {
         words[i] = g.ch.codePointAt(0);
         words[i + 1] = g.color;
@@ -1219,7 +1219,7 @@ const hueColour = (hue) => {
 };
 function frame3() {
   const px = new Int32Array(W * H).fill(CLEAR);
-  const over2 = /* @__PURE__ */ new Map();
+  const over = /* @__PURE__ */ new Map();
   const set = (x, y, c) => {
     const xi = Math.round(x);
     const yi = Math.round(y);
@@ -1274,9 +1274,9 @@ function frame3() {
     const text = isJackpot ? sim3.payout > 0 ? cycle2(["JACKPOT!", `+${sim3.payout}`], 8) : "JACKPOT!" : sim3.payout > 0 ? `+${sim3.payout}` : "";
     const start11 = Math.floor((W - text.length) / 2);
     const fg = isJackpot ? hueColour(sim3.t * 40 % 360) : 16765773;
-    text.split("").forEach((ch, i) => over2.set(start11 + i, { ch, fg }));
+    text.split("").forEach((ch, i) => over.set(start11 + i, { ch, fg }));
   } else if (sim3.queue.some((s) => s.isGolden) || sim3.spin?.isGolden) {
-    "GOLDEN".split("").forEach((ch, i) => over2.set(11 + i, { ch, fg: cycle2([16765773, 16773800], 4) }));
+    "GOLDEN".split("").forEach((ch, i) => over.set(11 + i, { ch, fg: cycle2([16765773, 16773800], 4) }));
   }
   const words = new Uint32Array(W * ROWS3 * 3);
   for (let cy = 0; cy < ROWS3; cy++) {
@@ -1284,7 +1284,7 @@ function frame3() {
       const i = (cy * W + cx) * 3;
       const top = px[cy * 2 * W + cx];
       const bottom = px[(cy * 2 + 1) * W + cx];
-      const o = over2.get(cy * W + cx);
+      const o = over.get(cy * W + cx);
       if (o) {
         words[i] = o.ch.codePointAt(0);
         words[i + 1] = o.fg;
@@ -1920,9 +1920,9 @@ const statsLine4 = (s) => `Lv ${levelOf2(s.xp)}  \u2302 ${s.toppled}  \u2708 ${s
 function frame4(a, stats) {
   const W5 = sim4.W;
   const buf = new Uint32Array(W5 * PH2).fill(EMPTY2);
-  const over2 = /* @__PURE__ */ new Map();
+  const over = /* @__PURE__ */ new Map();
   const text = (x, row, s, color) => [...s].forEach((ch, i) => {
-    if (x + i >= 0 && x + i < W5) over2.set(row * W5 + x + i, { ch, color });
+    if (x + i >= 0 && x + i < W5) over.set(row * W5 + x + i, { ch, color });
   });
   drawCity(buf);
   if (sim4.flag) {
@@ -1950,7 +1950,7 @@ function frame4(a, stats) {
       const i = (cy * W5 + cx) * 3;
       const top = buf[cy * 2 * W5 + cx];
       const bottom = buf[(cy * 2 + 1) * W5 + cx];
-      const g = over2.get(cy * W5 + cx);
+      const g = over.get(cy * W5 + cx);
       if (g) {
         words[i] = g.ch.codePointAt(0);
         words[i + 1] = g.color;
@@ -2360,15 +2360,15 @@ function frame5() {
   }
   if (sim5.tumble) stamp(TUMBLE[Math.floor(sim5.t / 3) % 2], sim5.tumble.x, PIXEL_ROWS2 - 3 - Math.floor(sim5.t / 4) % 2, false);
   if (sim5.bird) stamp(BIRD[Math.floor(sim5.t / 4) % 2], sim5.bird.x, sim5.bird.y, false);
-  const over2 = /* @__PURE__ */ new Map();
-  for (const g of sim5.glyphs) if (g.x >= 0 && g.x < W2 && g.y >= 0 && g.y < ROWS5) over2.set(g.y * W2 + g.x, g.ch);
+  const over = /* @__PURE__ */ new Map();
+  for (const g of sim5.glyphs) if (g.x >= 0 && g.x < W2 && g.y >= 0 && g.y < ROWS5) over.set(g.y * W2 + g.x, g.ch);
   const words = new Uint32Array(W2 * ROWS5 * 3);
   for (let cy = 0; cy < ROWS5; cy++) {
     for (let cx = 0; cx < W2; cx++) {
       const i = (cy * W2 + cx) * 3;
       const top = ink[cy * 2 * W2 + cx] === 1;
       const bottom = ink[(cy * 2 + 1) * W2 + cx] === 1;
-      const ch = over2.get(cy * W2 + cx);
+      const ch = over.get(cy * W2 + cx);
       words[i] = ch ? ch.codePointAt(0) : top && bottom ? 9608 : top ? 9600 : bottom ? 9604 : 32;
       words[i + 1] = INK4;
       words[i + 2] = NONE4;
@@ -2639,10 +2639,10 @@ function frame6() {
     if (xi > 0 && xi < W3 - 1 && yi > 0 && yi < PIXEL_ROWS3 - 1) ink[yi * W3 + xi] = 1;
   };
   const stamp = (rows2, x, y) => rows2.forEach((row, dy) => [...row].forEach((c, dx) => c === "#" && set(x + dx, y + dy)));
-  const over2 = /* @__PURE__ */ new Map();
+  const over = /* @__PURE__ */ new Map();
   const glyph5 = (x, cell, ch) => {
     const xi = Math.round(x);
-    if (xi > 0 && xi < W3 - 1 && cell >= 0 && cell < ROWS6) over2.set(cell * W3 + xi, ch);
+    if (xi > 0 && xi < W3 - 1 && cell >= 0 && cell < ROWS6) over.set(cell * W3 + xi, ch);
   };
   for (let x = 0; x < W3; x++) {
     ink[x] = 1;
@@ -2685,7 +2685,7 @@ function frame6() {
       const i = (cy * W3 + cx) * 3;
       const top = ink[cy * 2 * W3 + cx] === 1;
       const bottom = ink[(cy * 2 + 1) * W3 + cx] === 1;
-      const ch = over2.get(cy * W3 + cx);
+      const ch = over.get(cy * W3 + cx);
       words[i] = ch ? ch.codePointAt(0) : top && bottom ? 9608 : top ? 9600 : bottom ? 9604 : 32;
       words[i + 1] = INK5;
       words[i + 2] = NONE5;
@@ -3589,9 +3589,9 @@ const statsLine8 = (s) => `${stageOf(s.clears)}  \u25CE ${s.coins}  \u272A ${s.s
 function frame8(isAsleep, stats) {
   const W5 = sim9.W;
   const buf = new Uint32Array(W5 * PH3).fill(EMPTY3);
-  const over2 = /* @__PURE__ */ new Map();
+  const over = /* @__PURE__ */ new Map();
   const text = (x, row, s, color) => [...s].forEach((ch, i) => {
-    if (x + i >= 0 && x + i < W5 && row >= 0 && row < ROWS9) over2.set(row * W5 + x + i, { ch, color });
+    if (x + i >= 0 && x + i < W5 && row >= 0 && row < ROWS9) over.set(row * W5 + x + i, { ch, color });
   });
   drawScene2(buf);
   drawThings(buf);
@@ -3612,7 +3612,7 @@ function frame8(isAsleep, stats) {
       const i = (cy * W5 + cx) * 3;
       const topPx = buf[cy * 2 * W5 + cx];
       const bottom = buf[(cy * 2 + 1) * W5 + cx];
-      const g = over2.get(cy * W5 + cx);
+      const g = over.get(cy * W5 + cx);
       if (g) {
         words[i] = g.ch.codePointAt(0);
         words[i + 1] = g.color;
@@ -4287,9 +4287,9 @@ const statsLine9 = (s) => `${levelOf3(s.blocks)}  \u25A6 ${s.blocks}  \u2302 ${s
 function frame9(isAsleep, stats) {
   const W5 = sim10.W;
   const buf = new Uint32Array(W5 * PH4).fill(EMPTY4);
-  const over2 = /* @__PURE__ */ new Map();
+  const over = /* @__PURE__ */ new Map();
   const text = (x, row, s, color) => [...s].forEach((ch, i) => {
-    if (x + i >= 0 && x + i < W5 && row >= 0 && row < ROWS10) over2.set(row * W5 + x + i, { ch, color });
+    if (x + i >= 0 && x + i < W5 && row >= 0 && row < ROWS10) over.set(row * W5 + x + i, { ch, color });
   });
   drawGround(buf);
   for (const p of sim10.plots) drawPlot(buf, p);
@@ -4318,7 +4318,7 @@ function frame9(isAsleep, stats) {
       const isMobBottom = mobs[(cy * 2 + 1) * W5 + cx] !== EMPTY4;
       const top = isMobBottom && !isMobTop ? EMPTY4 : buf[cy * 2 * W5 + cx];
       const bottom = buf[(cy * 2 + 1) * W5 + cx];
-      const g = isMobTop || isMobBottom ? void 0 : over2.get(cy * W5 + cx);
+      const g = isMobTop || isMobBottom ? void 0 : over.get(cy * W5 + cx);
       if (g) {
         words[i] = g.ch.codePointAt(0);
         words[i + 1] = g.color;
@@ -4740,16 +4740,32 @@ async function forgetSaves($) {
 }
 
 // src/arcade.tsx
-const GAMES = [game, game3, game5, game6, game7, game4, game2, game8, game9, game10];
+const GAMES = [game4, game2, game8, game9, game10, game, game3, game5, game6, game7];
+const BLURBS = {
+  octopus: "a pixel octopus smashes a city while Claude edits",
+  duck: "your commits shoot the ducks, failed tools let them fly",
+  bugs: "bugs fall on six cities; click the sky to fire too",
+  dario: "a side scroller: tool calls bring coins, bugs knock in",
+  town: "your agents build a block town, a castle on merges",
+  dragon: "a pixel dragon that breathes fire when you ship",
+  jackpot: "a slot machine: every finished turn pulls the lever",
+  outlaw: "an Atari duel: you against the bugs",
+  tama: "a Tamagotchi your work feeds",
+  tetris: "Tetris where Claude's tools drop the pieces"
+};
 const MODES = ["random", "rotate", "fixed", "all", "off"];
 const ALIASES = { "dragon-lair": "dragon", octo: "octopus", "octo-invader": "octopus", "duck-hunt": "duck", duckhunt: "duck", ducks: "duck", "bug-command": "bugs", bugcommand: "bugs", bug: "bugs", missile: "bugs", "missile-command": "bugs", mario: "dario", runner: "dario", "block-runner": "dario", "block-town": "town", blocktown: "town", minecraft: "town", village: "town", castle: "town" };
 const pickedFor = atom12({ plugin: "arcade", key: "pickedFor" }, "");
+const defaultGame = atom12({ plugin: "arcade", key: "defaultGame" }, "");
+const hint = atom12({ plugin: "arcade", key: "hint" }, false);
+const MENU = "arcade-menu";
+const HINT_SESSIONS = 3;
 function gameId(word2) {
   const id = ALIASES[word2.toLowerCase()] ?? word2.toLowerCase();
   return GAMES.some((g) => g.id === id) ? id : void 0;
 }
 function modeOf(value) {
-  return MODES.includes(value) ? value : "random";
+  return MODES.includes(value) ? value : "fixed";
 }
 function poolOf(value) {
   const ids = String(value ?? "").split(/[\s,]+/).map((w) => w ? gameId(w) : void 0).filter((id) => id !== void 0);
@@ -4769,6 +4785,7 @@ async function apply($, mode, pool) {
   const ids = await pick7($, mode, pool);
   await update11($, shown, () => ids);
   await update11($, pickedFor, () => `${mode}|${pool.join(",")}`);
+  await update11($, defaultGame, () => mode === "fixed" ? pool[0] ?? "" : "");
   return ids;
 }
 const title = (id) => GAMES.find((g) => g.id === id)?.title ?? id;
@@ -4779,24 +4796,66 @@ async function status($, mode, pool) {
   return `Arcade on this account: ${setting}.
 This terminal:
 ${rows.join("\n")}
-"/arcade <game>" swaps this terminal's game, "/arcade <game> all" pins it for every terminal, "/arcade random|rotate|all|off" sets how new terminals pick, "/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal's game. "/arcade hide" clears this terminal only. Scores, the town and the pet start from zero in every terminal and last until it closes; "/<game> reset" or "/arcade reset" starts this terminal over.`;
+"/arcade <game>" swaps this terminal's game, "/arcade default <game>" makes it the game every new terminal starts with, "/arcade random|rotate|all|off" sets how new terminals pick, "/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal's game. "/arcade hide" clears this terminal only. "/arcade moments" tunes what counts as a big moment. Scores, the town and the pet start from zero in every terminal and last until it closes; "/<game> reset" or "/arcade reset" starts this terminal over.`;
 }
-const over = (options) => `${String(options.mode ?? "")}|${String(options.pool ?? "")}`;
-async function save5($, options, mode, pool) {
-  try {
-    const keys = new Set((await $.config.list()).map((row) => row.key));
-    if (keys.has("arcade.mode") && keys.has("arcade.pool")) {
-      const a = await $.config.set({ key: "arcade.mode", value: mode });
-      const b = await $.config.set({ key: "arcade.pool", value: pool.join(",") });
-      if (a.deny === void 0 && b.deny === void 0) {
-        await $.store.delete("setting");
-        return;
-      }
-    }
-  } catch {
-  }
-  const saved = { mode, pool: pool.join(","), over: over(options) };
+async function save5($, mode, pool) {
+  const saved = { mode, pool: pool.join(",") };
   await $.store.set("setting", saved);
+}
+const MOMENT_KEYS = ["big_skills", "quiet_skills", "big_commands", "medium_commands", "praise_words"];
+const MOMENT_HELP = {
+  big_skills: "skills whose run is a big moment, comma separated",
+  quiet_skills: "skills that celebrate nothing, comma separated",
+  big_commands: "a regular expression of shell commands whose success is big",
+  medium_commands: "a regular expression of shell commands whose success is medium",
+  praise_words: "extra words that count as praise in your messages, comma separated"
+};
+async function moments($, options) {
+  const stored = await $.store.get("moments") ?? {};
+  const merged = {};
+  for (const key of MOMENT_KEYS) merged[key] = stored[key] ?? String(options[key] ?? "");
+  return merged;
+}
+async function momentsCommand($, options, args) {
+  const rest = args.trim().replace(/^moments\s*/i, "");
+  const key = rest.split(/\s+/)[0]?.toLowerCase() ?? "";
+  const now = await moments($, options);
+  if (key === "") {
+    const rows = MOMENT_KEYS.map((k) => `  ${k}: ${now[k] === "" ? "(none)" : now[k]}  (${MOMENT_HELP[k]})`);
+    return `What counts as a moment, on this account:
+${rows.join("\n")}
+"/arcade moments <key> <value>" sets one, "/arcade moments <key> none" clears it.`;
+  }
+  if (!MOMENT_KEYS.includes(key)) {
+    return `No moments setting called "${key}". Settings: ${MOMENT_KEYS.join(", ")}.`;
+  }
+  const raw = rest.slice(key.length).trim();
+  const value = raw.toLowerCase() === "none" ? "" : raw;
+  const stored = { ...now, [key]: value };
+  await $.store.set("moments", stored);
+  configureMilestones(stored);
+  return `${key}: ${value === "" ? "(none)" : value}`;
+}
+async function makeDefault($, setting, id) {
+  const pool = [id, ...setting.pool.filter((x) => x !== id)];
+  await save5($, "fixed", pool);
+  Object.assign(setting, { mode: "fixed", pool });
+  await update11($, pickedFor, () => `fixed|${pool.join(",")}`);
+  await update11($, defaultGame, () => id);
+}
+async function step9($, by) {
+  const now = await read12($, shown);
+  const at = GAMES.findIndex((g) => g.id === now[now.length - 1]);
+  const id = GAMES[(at + by + GAMES.length) % GAMES.length]?.id ?? "";
+  await update11($, shown, () => [id]);
+}
+async function openMenu($) {
+  try {
+    const opened = await $.ui.open({ id: MENU, title: "Arcade", focus: true, closeOnEscape: true, rows: GAMES.length + 5, columns: 64 });
+    return opened.isPlaced;
+  } catch {
+    return false;
+  }
 }
 async function celebrate7($, found) {
   if (found.length === 0) return;
@@ -4876,11 +4935,24 @@ export const register = (on, options) => {
     await forgetSaves($);
     await $.command.register({
       name: "arcade",
-      description: 'Which Arcade games show: "/arcade <game>" for this terminal, "/arcade <game> all" pins one everywhere, "/arcade random|rotate|all|off", "/arcade pool <games>", "/arcade next" or "/arcade hide" for this terminal.'
+      description: `The Arcade's game menu. "/arcade <game>" plays one in this terminal, "/arcade default <game>" makes it the game new terminals start with, "/arcade next", "/arcade random|rotate|all|off", "/arcade pool <games>", "/arcade moments", "/arcade hide".`
     });
     const saved = await $.store.get("setting");
-    if (saved?.over === over(options)) Object.assign(setting, { mode: modeOf(saved.mode), pool: poolOf(saved.pool) });
+    if (saved !== void 0) Object.assign(setting, { mode: modeOf(saved.mode), pool: poolOf(saved.pool) });
+    configureMilestones(await moments($, options));
     if (await read12($, pickedFor) !== `${setting.mode}|${setting.pool.join(",")}`) await apply($, setting.mode, setting.pool);
+    const seen = Number(await $.store.get("welcome") ?? 0);
+    if (seen < HINT_SESSIONS) {
+      await $.store.set("welcome", seen + 1);
+      await update11($, hint, () => true);
+      const first = (await read12($, shown))[0];
+      if (seen === 0 && first !== void 0) {
+        $.ui.toast(
+          `Arcade: ${title(first)} is your game. \u25B6 under it tries the next one, \u2630 lists all ${GAMES.length} and sets the game new terminals start with (or type /arcade).`,
+          { timeoutMs: 15e3 }
+        );
+      }
+    }
     const ran = await start($, e, ((e1) => start3($, e1, ((e2) => start5($, e2, ((e3) => start6($, e3, ((e4) => start7($, e4, ((e5) => start4($, e5, ((e6) => start2($, e6, ((e7) => start8($, e7, ((e8) => start9($, e8, ((e9) => start10($, e9, next)))))))))))))))))));
     const streak = streakMilestones(await $.store.get("days"), await $.clock.now());
     await $.store.set("days", streak.days);
@@ -4890,7 +4962,19 @@ export const register = (on, options) => {
   on("command.run", { command: "arcade" }, async ($, e) => {
     const words = (e.args ?? "").trim().split(/[\s,]+/).filter(Boolean);
     const [first = "", ...rest] = words.map((w) => w.toLowerCase());
-    if (first === "") return { text: await status($, setting.mode, setting.pool) };
+    if (first === "" || first === "menu") {
+      if (await openMenu($)) return { text: 'Arcade menu open: pick a game, \u2606 makes it your default. Esc closes. "/arcade help" lists the commands.' };
+      return { text: await status($, setting.mode, setting.pool) };
+    }
+    if (first === "help" || first === "status") return { text: await status($, setting.mode, setting.pool) };
+    if (first === "moments") return { text: await momentsCommand($, options, e.args ?? "") };
+    if (first === "default") {
+      const id2 = gameId(rest[0] ?? "");
+      if (id2 === void 0) return { text: `Name the game: ${GAMES.map((g) => g.id).join(", ")}.` };
+      await makeDefault($, setting, id2);
+      await update11($, shown, () => [id2]);
+      return { text: `${title(id2)} is the game every new terminal starts with, and plays here now.` };
+    }
     const reset11 = await askReset($, "arcade", e.args);
     if (reset11) return reset11;
     if (first === "hide") {
@@ -4910,7 +4994,7 @@ export const register = (on, options) => {
         return { text: `Name the games for the pool: ${GAMES.map((g) => g.id).join(", ")}.` };
       }
       const pool2 = poolOf(ids.join(","));
-      await save5($, options, setting.mode, pool2);
+      await save5($, setting.mode, pool2);
       setting.pool = pool2;
       await apply($, setting.mode, pool2);
       return { text: await status($, setting.mode, pool2) };
@@ -4922,11 +5006,11 @@ export const register = (on, options) => {
     }
     if (id !== void 0 && rest[0] !== "all") {
       await update11($, shown, () => [id]);
-      return { text: `${title(id)} in this terminal. "/arcade ${id} all" pins it for every terminal.` };
+      return { text: `${title(id)} in this terminal. "/arcade default ${id}" makes it the game new terminals start with.` };
     }
     const pool = id === void 0 ? setting.pool : [id, ...setting.pool.filter((x) => x !== id)];
     const next = id === void 0 ? mode : "fixed";
-    await save5($, options, next, pool);
+    await save5($, next, pool);
     Object.assign(setting, { mode: next, pool });
     await apply($, next, pool);
     return { text: await status($, next, pool) };
@@ -4966,5 +5050,48 @@ export const register = (on, options) => {
     if (e.agentId === void 0 && ran.deny === void 0) await celebrate7($, toolMilestones(e, ran));
     return ran;
   });
-  on("ui.render", { component: "AbovePrompt" }, ($, e, next) => render($, e, ((e1) => render3($, e1, ((e2) => render5($, e2, ((e3) => render6($, e3, ((e4) => render7($, e4, ((e5) => render4($, e5, ((e6) => render2($, e6, ((e7) => render8($, e7, ((e8) => render9($, e8, ((e9) => render10($, e9, next))))))))))))))))))));
+  on("ui.render", { component: "AbovePrompt" }, async ($, e, next) => {
+    const tree = await render($, e, ((e1) => render3($, e1, ((e2) => render5($, e2, ((e3) => render6($, e3, ((e4) => render7($, e4, ((e5) => render4($, e5, ((e6) => render2($, e6, ((e7) => render8($, e7, ((e8) => render9($, e8, ((e9) => render10($, e9, next)))))))))))))))))));
+    const ids = await read12($, shown);
+    if (e.surface !== "terminal" || e.props.hasSurvey || ids.length !== 1 || tree === null || tree === void 0) return tree;
+    const { Box, Button, Text } = $.ui.resolve(e);
+    const id = ids[0] ?? "";
+    const fallback = await read12($, defaultGame);
+    const isHinted = await read12($, hint);
+    return <Box flexDirection="column">
+        <Box key="arcade-controls" flexDirection="row" justifyContent="flex-end" height={1}>
+          {isHinted ? <Text key="arcade-hint" dimColor wrap="truncate">{"\u25B6 next game  \u2630 all games and your default    "}</Text> : null}
+          <Button key="arcade-prev" label="◀" plain dimColor onPress={() => step9($, -1)} />
+          <Text key="arcade-title" dimColor>{` ${title(id)} `}</Text>
+          <Button key="arcade-next" label="▶" plain dimColor onPress={() => step9($, 1)} />
+          <Text key="arcade-gap"> </Text>
+          <Button key="arcade-menu" label="☰" plain dimColor onPress={() => openMenu($)} />
+          {fallback !== id ? <Text key="arcade-gap2"> </Text> : null}
+          {fallback !== id ? <Button key="arcade-default" label="☆ make default" plain dimColor onPress={() => makeDefault($, setting, id)} /> : null}
+        </Box>
+        {tree}
+      </Box>;
+  });
+  on("ui.render", { component: "Pane", requestId: MENU }, async ($, e) => {
+    const { Box, Button, Text } = $.ui.resolve(e);
+    const ids = await read12($, shown);
+    const fallback = await read12($, defaultGame);
+    const width = Math.max(...GAMES.map((g) => g.title.length)) + 1;
+    return <Box flexDirection="column">
+        {GAMES.map((g) => <Box key={`row-${g.id}`} flexDirection="row" height={1}>
+            <Text key={`on-${g.id}`} color="green">{ids.includes(g.id) ? "\u25CF " : "  "}</Text>
+            <Box key={`name-${g.id}`} width={width} flexShrink={0}>
+              <Button key={`play-${g.id}`} label={g.title} plain onPress={() => update11($, shown, () => [g.id])} />
+            </Box>
+            <Box key={`fav-${g.id}`} width={3} flexShrink={0}>
+              {fallback === g.id ? <Text key={`is-${g.id}`} color="yellow">★</Text> : <Button key={`make-${g.id}`} label="☆" plain dimColor onPress={() => makeDefault($, setting, g.id)} />}
+            </Box>
+            <Text key={`what-${g.id}`} dimColor wrap="truncate">{BLURBS[g.id] ?? ""}</Text>
+          </Box>)}
+        <Text key="menu-gap"> </Text>
+        <Text key="menu-help" dimColor wrap="wrap">
+          {`A name plays it here. \u2606 makes it the game new terminals start with${fallback === "" ? ` (now: ${setting.mode})` : ""}. Esc closes.`}
+        </Text>
+      </Box>;
+  });
 };

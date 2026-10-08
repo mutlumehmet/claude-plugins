@@ -1,9 +1,9 @@
 import { expect, mock, test } from 'claude-code/testing'
 import type { On } from 'claude-code'
-import { begin } from './start'
+import { begin, pin } from './start'
 
 // The Arcade shows only this game in these tests.
-const ONLY = { options: { mode: 'fixed', pool: 'tama' } }
+const ONLY = { mode: 'fixed', pool: 'tama' }
 
 const BAND = {
   plugin: 'arcade',
@@ -22,7 +22,8 @@ function world(on: On) {
   })
 }
 
-test('a new Tamagotchi is an egg in the band', ONLY, async ($, on) => {
+test('a new Tamagotchi is an egg in the band', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on, true)
   const ui = await $.ui.mount(BAND)
@@ -31,13 +32,15 @@ test('a new Tamagotchi is an egg in the band', ONLY, async ($, on) => {
   await ui.unmount()
 })
 
-test('an egg cannot be fed by hand', ONLY, async ($, on) => {
+test('an egg cannot be fed by hand', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on, true)
   expect((await $.command.run({ command: 'tama', args: 'feed' } as never)).text).toMatch(/still an egg/)
 })
 
-test('/tama tells how it is doing, /arcade hide takes it away', ONLY, async ($, on) => {
+test('/tama tells how it is doing, /arcade hide takes it away', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on, true)
   expect((await $.command.run({ command: 'tama', args: '' } as never)).text).toMatch(/Generation 1: an egg/)

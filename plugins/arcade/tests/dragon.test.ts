@@ -1,10 +1,10 @@
 import { expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 import type { On } from 'claude-code'
-import { begin } from './start'
+import { begin, pin } from './start'
 
 // The Arcade shows only this game in these tests.
-const ONLY = { options: { mode: 'fixed', pool: 'dragon' } }
+const ONLY = { mode: 'fixed', pool: 'dragon' }
 
 const BAND = {
   plugin: 'arcade',
@@ -26,7 +26,8 @@ async function hoard($: Engine) {
   return (await $.command.run({ command: 'dragon', args: '' } as never)).text
 }
 
-test('the dragon sits in the band on the terminal', ONLY, async ($, on) => {
+test('the dragon sits in the band on the terminal', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   const ui = await $.ui.mount(BAND)
@@ -36,7 +37,8 @@ test('the dragon sits in the band on the terminal', ONLY, async ($, on) => {
   await ui.unmount()
 })
 
-test('/arcade hide takes the dragon out of the band', ONLY, async ($, on) => {
+test('/arcade hide takes the dragon out of the band', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   await $.command.run({ command: 'arcade', args: 'hide' } as never)
@@ -45,7 +47,8 @@ test('/arcade hide takes the dragon out of the band', ONLY, async ($, on) => {
   await ui.unmount()
 })
 
-test('/dragon fire breathes fire and adds gold', ONLY, async ($, on) => {
+test('/dragon fire breathes fire and adds gold', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   const ran = await $.command.run({ command: 'dragon', args: 'fire' } as never)
@@ -53,7 +56,8 @@ test('/dragon fire breathes fire and adds gold', ONLY, async ($, on) => {
   expect(await hoard($)).toMatch(/◆ 1 /)
 })
 
-test('nothing to commit earns no gold', ONLY, async ($, on) => {
+test('nothing to commit earns no gold', async ($, on) => {
+  pin(ONLY)
   world(on)
   on('tool.call', { tool: 'Bash' }, () => ({
     result: { stdout: 'nothing to commit, working tree clean', stderr: '', interrupted: false },
@@ -64,7 +68,8 @@ test('nothing to commit earns no gold', ONLY, async ($, on) => {
   expect(await hoard($)).toMatch(/◆ 0  ★ 0  ⚒ 1/)
 })
 
-test('a commit is a medium moment on its own, no other mod needed', ONLY, async ($, on) => {
+test('a commit is a medium moment on its own, no other mod needed', async ($, on) => {
+  pin(ONLY)
   world(on)
   on('tool.call', { tool: 'Bash' }, () => ({ result: { stdout: '[main abc] x', stderr: '', interrupted: false } }))
   await begin($, on)
@@ -72,7 +77,8 @@ test('a commit is a medium moment on its own, no other mod needed', ONLY, async 
   expect(await hoard($)).toMatch(/◆ 5 /)
 })
 
-test('a merge roars for 50 gold', ONLY, async ($, on) => {
+test('a merge roars for 50 gold', async ($, on) => {
+  pin(ONLY)
   world(on)
   on('tool.call', { tool: 'Bash' }, () => ({ result: { stdout: 'Merged', stderr: '', interrupted: false } }))
   await begin($, on)
@@ -80,7 +86,8 @@ test('a merge roars for 50 gold', ONLY, async ($, on) => {
   expect(await hoard($)).toMatch(/◆ 50 /)
 })
 
-test('a configured big command counts as big', { options: { ...ONLY.options, big_commands: 'make ship' } }, async ($, on) => {
+test('a configured big command counts as big', async ($, on) => {
+  pin({ ...ONLY, big_commands: 'make ship' })
   world(on)
   on('tool.call', { tool: 'Bash' }, () => ({ result: { stdout: 'ok', stderr: '', interrupted: false } }))
   await begin($, on)
@@ -88,7 +95,8 @@ test('a configured big command counts as big', { options: { ...ONLY.options, big
   expect(await hoard($)).toMatch(/◆ 25 /)
 })
 
-test('a hidden dragon sends no notifications', ONLY, async ($, on) => {
+test('a hidden dragon sends no notifications', async ($, on) => {
+  pin(ONLY)
   mock.store(on)
   const toasts: string[] = []
   on('ui.toast', ($, e) => {

@@ -1,9 +1,9 @@
 import { expect, mock, test } from 'claude-code/testing'
 import type { On } from 'claude-code'
-import { begin } from './start'
+import { begin, pin } from './start'
 
 // The Arcade shows only this game in these tests.
-const ONLY = { options: { mode: 'fixed', pool: 'tetris' } }
+const ONLY = { mode: 'fixed', pool: 'tetris' }
 
 const BAND = {
   plugin: 'arcade',
@@ -21,7 +21,8 @@ function world(on: On) {
   })
 }
 
-test('the handheld sits in the band beside the rest, with the score under it', ONLY, async ($, on) => {
+test('the handheld sits in the band beside the rest, with the score under it', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   const ui = await $.ui.mount(BAND)
@@ -31,7 +32,8 @@ test('the handheld sits in the band beside the rest, with the score under it', O
   await ui.unmount()
 })
 
-test('/tetris explains the rules', ONLY, async ($, on) => {
+test('/tetris explains the rules', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   const ran = await $.command.run({ command: 'tetris', args: '' } as never)
@@ -39,14 +41,16 @@ test('/tetris explains the rules', ONLY, async ($, on) => {
   expect(ran.text).toMatch(/full row clears/)
 })
 
-test('/tetris drop and /tetris clear queue work', ONLY, async ($, on) => {
+test('/tetris drop and /tetris clear queue work', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   expect((await $.command.run({ command: 'tetris', args: 'drop' } as never)).text).toMatch(/Three pieces/)
   expect((await $.command.run({ command: 'tetris', args: 'clear' } as never)).text).toMatch(/One row/)
 })
 
-test('/arcade hide takes the tetris out of the band', ONLY, async ($, on) => {
+test('/arcade hide takes the tetris out of the band', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   expect((await $.command.run({ command: 'arcade', args: 'hide' } as never)).text).toMatch(/No game in this terminal/)

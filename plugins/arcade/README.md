@@ -1,45 +1,186 @@
 # arcade
 
-The Claude Code Arcade: pixel games in the line above the prompt, played by your work. Pin the
-one you like, rotate through them, or get a random one in every new terminal. Part of
-[claude-plugins](../../README.md).
+The Claude Code Arcade: pixel games in the line above the prompt, played by your work. Every tool
+call, commit, merge and failed test moves the game on. Part of [claude-plugins](../../README.md).
 
-![The Claude Code Arcade: the games in a terminal, played by a session's work](../../docs/images/arcade-hero.gif)
+**Contents:** [Quick start](#quick-start) · [The games](#the-games) · [Switching games](#switching-games) ·
+[Game guides](#game-guides) · [Moments](#moments) · [Tuning the moments](#tuning-the-moments) ·
+[Scores](#scores) · [What it reads and does](#what-it-reads-and-does) · [Install](#install) ·
+[Known gaps](#known-gaps)
 
-| Game | Command | What it is |
+![Octo Invader in a terminal: a pixel octopus smashes a city above the prompt while Claude edits, commits and merges](../../docs/images/octo-invader-terminal.gif)
+
+## Quick start
+
+Type these at the Claude Code prompt, then pick a scope (user is the usual one). There is nothing
+to set up.
+
+```
+/plugin marketplace add mutlumehmet/claude-plugins
+/plugin install arcade@mehmetmutlu
+```
+
+Octo Invader starts by itself, and the first time a short notice says where the controls are. Then
+just work: the game plays along. Above the game sit three small buttons:
+
+| Button | What it does |
+|---|---|
+| **◀ ▶** | The previous or next game, in this terminal |
+| **☰** | The game menu: every game with a line about it. A name plays it here, **☆** makes it your default |
+| **☆ make default** | Shows once this terminal plays a game other than your default; makes it the game every new terminal starts with |
+
+## The games
+
+| Game | Command | |
 |---|---|---|
-| Dragon Lair | `/dragon` | A pixel dragon that acts out what Claude does and breathes fire when you ship |
-| Jackpot | `/jackpot` | A slot machine: every finished turn pulls the lever |
-| Outlaw | `/outlaw` | An Atari duel: your gunslinger fires at the good moments, the bug fires when a tool fails |
-| Tama | `/tama` | A Tamagotchi your work feeds, or it packs its bags |
-| Tetris | `/tetris` | Tetris where Claude's tools drop the pieces |
-| Octo Invader | `/octopus` | A pixel octopus that smashes a city the full width of the line while Claude edits |
-| Duck Hunt | `/duck` | A dog and a marsh the full width of the line: your moments shoot the ducks down, failed tools let them fly away |
-| Dario | `/dario` | A side scroller the full width of the line: tool calls bring ? blocks and coins, a failed tool sends a bug, moments stomp bugs and clear the course at the flag pole |
-| Block Town | `/town` | A side view medieval town in blocks that your agents build: every tool call lays blocks, subagents send helpers, creepers blow holes, big moments raise a castle |
-| Bug Command | `/bugs` | Bugs fall on six cities the full width of the line; Claude's tools shoot them down, and you can click the sky to fire too |
+| **Octo Invader**: a pixel octopus smashes a city the full width of the line while Claude edits | `/arcade octopus` | <img src="../../docs/images/octo-invader.gif" width="360" alt="Octo Invader strip"> |
+| **Duck Hunt**: a dog and a marsh; your moments shoot the ducks down, failed tools let them fly away | `/arcade duck` | <img src="../../docs/images/duck-hunt.gif" width="360" alt="Duck Hunt strip"> |
+| **Bug Command**: bugs fall on six cities; Claude's tools shoot them down, and you can click the sky to fire too | `/arcade bugs` | <img src="../../docs/images/bug-command.gif" width="360" alt="Bug Command strip"> |
+| **Dario**: a side scroller; tool calls bring ? blocks and coins, a failed tool sends a bug | `/arcade dario` | <img src="../../docs/images/dario.gif" width="360" alt="Dario strip"> |
+| **Block Town**: your agents build a medieval town in blocks; big moments raise a castle | `/arcade town` | <img src="../../docs/images/block-town.gif" width="360" alt="Block Town strip"> |
+| **Dragon Lair**: a pixel dragon that breathes fire when you ship | `/arcade dragon` | <img src="../../docs/images/arcade-hero.gif" width="360" alt="The five small games: dragon, slot machine, duel, Tamagotchi, Tetris"> |
+| **Jackpot**: a slot machine; every finished turn pulls the lever | `/arcade jackpot` | (in the GIF above) |
+| **Outlaw**: an Atari duel; you fire at the good moments, the bug when a tool fails | `/arcade outlaw` | (in the GIF above) |
+| **Tama**: a Tamagotchi your work feeds, or it packs its bags | `/arcade tama` | (in the GIF above) |
+| **Tetris**: Claude's tools drop the pieces | `/arcade tetris` | (in the GIF above) |
 
-## Choosing the games
+## Switching games
 
-Each new terminal shows the games the `mode` and `pool` settings pick. By default it is one game at
-random from all of them.
+The buttons above do the everyday switching. Everything else is a word after `/arcade`, and each
+Claude Code config directory (an account) keeps its own choice.
 
 | Command | What it does |
 |---|---|
-| `/arcade` | Shows the setting and which games this terminal shows |
-| `/arcade tetris` | Swaps this terminal to Tetris; other terminals and the setting stay as they are |
-| `/arcade tetris all` | Pins Tetris: every terminal shows it, new ones too (`mode` fixed, Tetris first in the pool) |
-| `/arcade random`, `rotate`, `all`, `off` | Sets how new terminals pick |
-| `/arcade pool dragon tetris` | Picks only from these games |
-| `/arcade next` | Swaps this terminal to the next game in the pool; new terminals still follow the setting |
+| `/arcade` | Opens the game menu (in `claude -p`, lists the games instead) |
+| `/arcade duck` | Plays Duck Hunt in this terminal; other terminals and your default stay as they are |
+| `/arcade default duck` | Makes Duck Hunt the game every new terminal starts with, and plays it here |
+| `/arcade next` | The next game in this terminal |
+| `/arcade random`, `rotate`, `all`, `off` | How new terminals pick: one at random, the next one in turn, every game at once, or none. `/arcade default <game>` goes back to one fixed game |
+| `/arcade pool dragon tetris` | Picks only from these games (for random, rotate and all) |
 | `/arcade hide` | Clears this terminal; `/arcade next` brings a game back |
+| `/arcade help` | The setting, which games this terminal shows, and these commands |
 
-The setting lives in Claude Code's settings (`pluginConfigs`), so the `/config` menu shows it too, and
-each Claude Code config directory keeps its own: a work and a personal account can show different
-games. Where there is no settings menu (`claude -p`), `/arcade` keeps the choice in the plugin's own
-store, still per config directory, until the settings change. A game that is not shown keeps playing and keeps its score for this terminal; it only stops drawing and stays quiet. A game's own command (`/dragon`, `/duck` and the rest) shows its score and plays its practice moves; which games show is only ever `/arcade`.
+A game that is not shown keeps playing and keeps its score for this terminal; it only stops drawing
+and stays quiet. A game's own command (`/dragon`, `/duck` and the rest) shows its score and plays
+its practice moves.
 
-## The games
+## Game guides
+
+What each game does with your work, its score line and its practice moves.
+
+
+### Octo Invader (`octopus`)
+
+A pixel octopus invades a city that runs the full width of the line above the prompt. It acts out what Claude is doing, Godzilla style, and pulls planes out of the sky when something worth celebrating happens.
+
+![octo-invader in a terminal: Claude reads, edits, commits and merges while the octopus walks the streets, smashes a building, pulls a plane out of the sky and takes the city](../../docs/images/octo-invader-terminal.gif)
+
+The strip on its own, as the mod draws it:
+
+![The octopus strip: a city the width of the terminal, buildings toppled, a plane downed, a flag on the rubble](../../docs/images/octo-invader.gif)
+
+Both GIFs are drawn by the mod's own code from a scripted session (a read, an edit, a web search, a commit, a merge); the window around the strip is a mock up of a terminal.
+
+- **While Claude works** the octopus shows it: it hops when you send a message, hovers over the rooftops while Claude thinks, walks the streets on its tentacles while a file is read, hunts about with a `?` while Claude searches, and takes to the sky for web and MCP tools.
+- **Edits and shell commands** are demolition: it walks up to the nearest building and pounds it down a storey at a time until it falls with a `CRASH!`. Fallen buildings rise again after about 45 seconds, so the city never runs out.
+- **Each subagent** is a baby octopus that swims behind it in a line, paddles faster as the subagent works, and swims home when it finishes (or sinks when it fails).
+- **A failed tool** leaves it dazed with stars over its head; **two minutes of quiet** and it curls up asleep.
+- **Moments**: a small one is a squirt of ink, a medium one a plane snatched out of the sky and thrown down (`BOOM!`), a big one a `RAMPAGE!` through the streets, and a merge, release, deploy, streak or record ends with a flag on the rubble and `THE CITY IS MINE`.
+- **The score** sits at the right end of the strip: `Lv 3  ⌂ 12  ✈ 4  ⚒ 140` (level, buildings toppled, planes downed, tool calls).
+- **`/octopus`** shows the score; `/octopus ink`, `plane`, `rampage` and `conquer` show off each size.
+
+### Duck Hunt (`duck`)
+
+A marsh the full width of the line above the prompt, with the grass along the bottom, a tree, a dog
+and ducks. Your work does the shooting.
+
+![Duck Hunt in a terminal: a test fails and the dog laughs, the tests go green for a double, a commit shoots a duck, a merge is a perfect round](../../docs/images/duck-hunt-terminal.gif)
+
+The strip on its own, as the mod draws it:
+
+![The Duck Hunt strip: a marsh the width of the terminal, the dog in the grass, ducks flushed and shot down](../../docs/images/duck-hunt.gif)
+
+Both GIFs are drawn by the Arcade's own code from a scripted session (a read, a failing test, an
+edit, passing tests, a commit, a merge); the window around the strip is a mock up of a terminal.
+
+- **While Claude works** the dog sniffs along the grass, faster while a tool runs, and now and then flushes a duck that flaps across the sky.
+- **Moments**: a small one is a shot (a flash of the crosshair), a medium one shoots a duck down and the dog pops up from the grass holding it, a big one is a double (`DOUBLE!`, the dog holds two), and a merge, release, deploy, streak or record is a `PERFECT!` round with feathers everywhere.
+- **A failed tool** lets the duck in the air get away (`FLY AWAY`), and the dog comes up laughing. **Two minutes of quiet** and the dog lies down asleep.
+- **Rounds**: every ten ducks down is a new round (`ROUND 3`).
+- **The score** sits at the right end of the strip: `R 2  ▼ 14  ↗ 3  ⚒ 140` (round, ducks down, ducks that got away, tool calls).
+- **`/duck`** shows the score; `/duck shot`, `hunt`, `double`, `perfect` and `flyaway` are practice that counts nothing.
+
+### Bug Command (`bugs`)
+
+Six cities and three silos along the bottom of the line above the prompt, the full width of it. Bugs
+fall on the cities; Claude's work fires the counter missiles, and you can fire too. The one Arcade
+game you can play along with while you wait.
+
+![Bug Command in a terminal: a failed test drops a fast bug and you click the sky to shoot it down, a bug gets through and a city falls, the tests going green fire a salvo that rebuilds it, and a commit is a sure hit](../../docs/images/bug-command-terminal.gif)
+
+The strip on its own, as the mod draws it:
+
+![The Bug Command strip: six cities and three silos the width of the terminal, red bug trails, blue counter missiles, blasts, and the mouse pointer firing](../../docs/images/bug-command.gif)
+
+Both GIFs are drawn by the Arcade's own code from a scripted session (a read, a failing test, an
+edit, passing tests, a commit), with the mouse clicks played into the sky's own pointer handler;
+the window around the strip is a mock up of a terminal.
+
+- **While Claude works** a bug falls now and then, a red trail from the top towards a city. **A failed tool** drops a fast one (`INCOMING`).
+- **Every finished tool call** fires a shot from the nearest silo at the lowest bug; most of them hit. A blast takes out every bug inside it, and each bug it takes out blasts too.
+- **Moments**: a small one is a shot (or a flare in an empty sky), a medium one a sure hit, a big one a salvo at every bug in the sky that also rebuilds a fallen city (`BONUS CITY`).
+- **A bug that gets through** ruins its city. When every city has fallen it is `THE END`, and new cities go up.
+- **You can shoot**: click anywhere in the sky and the nearest silo fires there. After a click the sky has the keyboard: the arrows move the crosshair (with shift, faster), space or Enter fires at it, and `1`, `2`, `3` fire from the left, middle or right silo. A silo you fire from greys out for a moment. Esc hands the keyboard back to the prompt.
+- **The score** sits at the right end of the strip: `✸ 14  ☞ 5  ✝ 2  ⚒ 140  ⌂ 6` (bugs shot down, the ones you shot yourself, cities lost, tool calls, cities standing).
+- **`/bugs`** shows the score and the controls; `/bugs flare`, `shot` and `salvo` are practice that counts nothing, and `/bugs incoming` drops a practice bug to shoot at.
+
+### Dario (`dario`)
+
+A side scrolling course the full width of the line above the prompt, with a ground of bricks,
+clouds, bushes and pipes. Dario runs while Claude works; you only watch.
+
+![Dario in a terminal: tool calls bring ? blocks and coins, a failing test sends a bug that knocks into Dario, green tests are a course clear at the flag pole, a commit stomps a bug and a merge is a world clear with fireworks](../../docs/images/dario-terminal.gif)
+
+The strip on its own, as the mod draws it:
+
+![The Dario strip: a brick ground the width of the terminal, Dario running, ? blocks, a bug, pipes and the flag pole](../../docs/images/dario.gif)
+
+Both GIFs are drawn by the Arcade's own code from a scripted session (a read, a search, a failing
+test, an edit, passing tests, a commit, a merge); the window around the strip is a mock up of a
+terminal.
+
+- **While Claude works** the course scrolls by, fastest while a tool runs, and Dario jumps the pipes on its way. **Two minutes of quiet** and he sits down for a nap.
+- **Every finished tool call** brings a ? block: Dario jumps, bumps it and a coin flies out. With two blocks already waiting, the coin comes straight away.
+- **A failed tool** sends a bug walking in, and it knocks into Dario (`OUCH`).
+- **Moments**: a small one is a hop and a sparkle, a medium one a bug stomped flat, a big one a flag pole: Dario slides down it for a `COURSE CLEAR!` and the next course. A merge, release, deploy, streak or record is a `WORLD CLEAR!` with fireworks.
+- **The score** sits at the right end of the strip: `1-3  ◎ 34  ✪ 5  ✗ 2  ⚒ 140` (world and course, coins, bugs stomped, knocks, tool calls). Every hundred coins is a `1UP`.
+- **`/dario`** shows the score; `/dario coin`, `ouch`, `stomp`, `clear` and `world` are practice that counts nothing.
+
+### Block Town (`town`)
+
+A town in blocks, seen from the side, the full width of the line above the prompt: grass, dirt and
+stone, then houses, farms, a well, towers and a grove of trees. Your agents build it while they
+work, and it grows for as long as the terminal is open, so a glance in the middle of a long session
+shows how much got done.
+
+![Block Town in a terminal: the main agent and a helper villager build a house, a farm and a grove while sheep, a pig and chickens wander between them, a failing test brings a creeper, green tests raise part of the castle, a commit finishes a house and a merge builds the castle](../../docs/images/block-town-terminal.gif)
+
+The strip on its own, as the mod draws it:
+
+![The Block Town strip: grass, dirt and stone the width of the terminal, houses, a farm with a sheep and a pig, chickens, trees and a finished castle](../../docs/images/block-town.gif)
+
+Both GIFs are drawn by the Arcade's own code from a scripted session (edits and reads with a
+subagent helping, a failing test, edits, passing tests, a commit, a merge); the window around the
+strip is a mock up of a terminal.
+
+- **Every tool call lays blocks** on the building going up (two, an edit or a write three), from the bottom row up, with scaffolding at its corners. The main agent's villager does it; **each subagent sends a helper villager** of its own colour, who goes home once that subagent is quiet.
+- **Animals** live in the town as it earns them: a sheep and a pig for every finished farm, a chicken for every house, a cow for every hall, as many as the band has room for. They wander in front of the town and graze on open grass between the buildings, run from a creeper, and lie down when the town sleeps. They come from the buildings, so nothing about them is saved.
+- **A failed tool** brings a creeper that walks up to a building, flashes and blows a hole in it (`BOOM`); the villagers build it back before starting anything new.
+- **Moments**: a small one plants a tree (trees grow as the work goes on, sapling to full tree; once the grove is full, they grow faster instead), a medium one finishes the building going up (`HOUSE BUILT`), a big one raises a third of the castle at the right end of the band (`THE CASTLE GROWS`), and a merge, release, deploy, streak or record raises the rest at once (`CASTLE BUILT!`, fireworks).
+- **When the band is full** the oldest building is torn down and built again, a house as a two storey hall.
+- **The score** sits at the right end of the strip: `Village  ▦ 309  ⌂ 2  ♣ 5  ♜ 1  ⚒ 27` (the town's size from camp, hamlet, village and town to city, blocks laid, houses, trees, castles, tool calls). **Two minutes of quiet** and the villagers go indoors.
+- **One town per terminal**: every terminal builds its own town, starting from an empty field, and it keeps growing while the town is not shown.
+- **`/town`** shows the score; `/town build`, `tree`, `finish`, `castle` and `creeper` are practice that counts nothing. **`/town reset`** starts over: it asks first, and only `/town reset yes` within a minute clears this terminal's town and its score.
 
 ### Dragon Lair (`dragon`)
 
@@ -98,119 +239,6 @@ A classic falling-piece Tetris in a small handheld screen at the right end of th
 - **Under the screen**: `▤ 35  ◆ 4250  Lv 3` (rows, score, level).
 - **`/tetris`** shows the score and rules; `/tetris drop` adds pieces, `/tetris clear` clears a row.
 
-### Octo Invader (`octopus`)
-
-A pixel octopus invades a city that runs the full width of the line above the prompt. It acts out what Claude is doing, Godzilla style, and pulls planes out of the sky when something worth celebrating happens.
-
-![octo-invader in a terminal: Claude reads, edits, commits and merges while the octopus walks the streets, smashes a building, pulls a plane out of the sky and takes the city](../../docs/images/octo-invader-terminal.gif)
-
-The strip on its own, as the mod draws it:
-
-![The octopus strip: a city the width of the terminal, buildings toppled, a plane downed, a flag on the rubble](../../docs/images/octo-invader.gif)
-
-Both GIFs are drawn by the mod's own code from a scripted session (a read, an edit, a web search, a commit, a merge); the window around the strip is a mock up of a terminal.
-
-- **While Claude works** the octopus shows it: it hops when you send a message, hovers over the rooftops while Claude thinks, walks the streets on its tentacles while a file is read, hunts about with a `?` while Claude searches, and takes to the sky for web and MCP tools.
-- **Edits and shell commands** are demolition: it walks up to the nearest building and pounds it down a storey at a time until it falls with a `CRASH!`. Fallen buildings rise again after about 45 seconds, so the city never runs out.
-- **Each subagent** is a baby octopus that swims behind it in a line, paddles faster as the subagent works, and swims home when it finishes (or sinks when it fails).
-- **A failed tool** leaves it dazed with stars over its head; **two minutes of quiet** and it curls up asleep.
-- **Moments**: a small one is a squirt of ink, a medium one a plane snatched out of the sky and thrown down (`BOOM!`), a big one a `RAMPAGE!` through the streets, and a merge, release, deploy, streak or record ends with a flag on the rubble and `THE CITY IS MINE`.
-- **The score** sits at the right end of the strip: `Lv 3  ⌂ 12  ✈ 4  ⚒ 140` (level, buildings toppled, planes downed, tool calls).
-- **`/octopus`** shows the score; `/octopus ink`, `plane`, `rampage` and `conquer` show off each size.
-
-### Duck Hunt (`duck`)
-
-A marsh the full width of the line above the prompt, with the grass along the bottom, a tree, a dog
-and ducks. Your work does the shooting.
-
-![Duck Hunt in a terminal: a test fails and the dog laughs, the tests go green for a double, a commit shoots a duck, a merge is a perfect round](../../docs/images/duck-hunt-terminal.gif)
-
-The strip on its own, as the mod draws it:
-
-![The Duck Hunt strip: a marsh the width of the terminal, the dog in the grass, ducks flushed and shot down](../../docs/images/duck-hunt.gif)
-
-Both GIFs are drawn by the Arcade's own code from a scripted session (a read, a failing test, an
-edit, passing tests, a commit, a merge); the window around the strip is a mock up of a terminal.
-
-- **While Claude works** the dog sniffs along the grass, faster while a tool runs, and now and then flushes a duck that flaps across the sky.
-- **Moments**: a small one is a shot (a flash of the crosshair), a medium one shoots a duck down and the dog pops up from the grass holding it, a big one is a double (`DOUBLE!`, the dog holds two), and a merge, release, deploy, streak or record is a `PERFECT!` round with feathers everywhere.
-- **A failed tool** lets the duck in the air get away (`FLY AWAY`), and the dog comes up laughing. **Two minutes of quiet** and the dog lies down asleep.
-- **Rounds**: every ten ducks down is a new round (`ROUND 3`).
-- **The score** sits at the right end of the strip: `R 2  ▼ 14  ↗ 3  ⚒ 140` (round, ducks down, ducks that got away, tool calls).
-- **`/duck`** shows the score; `/duck shot`, `hunt`, `double`, `perfect` and `flyaway` are practice that counts nothing.
-
-### Dario (`dario`)
-
-A side scrolling course the full width of the line above the prompt, with a ground of bricks,
-clouds, bushes and pipes. Dario runs while Claude works; you only watch.
-
-![Dario in a terminal: tool calls bring ? blocks and coins, a failing test sends a bug that knocks into Dario, green tests are a course clear at the flag pole, a commit stomps a bug and a merge is a world clear with fireworks](../../docs/images/dario-terminal.gif)
-
-The strip on its own, as the mod draws it:
-
-![The Dario strip: a brick ground the width of the terminal, Dario running, ? blocks, a bug, pipes and the flag pole](../../docs/images/dario.gif)
-
-Both GIFs are drawn by the Arcade's own code from a scripted session (a read, a search, a failing
-test, an edit, passing tests, a commit, a merge); the window around the strip is a mock up of a
-terminal.
-
-- **While Claude works** the course scrolls by, fastest while a tool runs, and Dario jumps the pipes on its way. **Two minutes of quiet** and he sits down for a nap.
-- **Every finished tool call** brings a ? block: Dario jumps, bumps it and a coin flies out. With two blocks already waiting, the coin comes straight away.
-- **A failed tool** sends a bug walking in, and it knocks into Dario (`OUCH`).
-- **Moments**: a small one is a hop and a sparkle, a medium one a bug stomped flat, a big one a flag pole: Dario slides down it for a `COURSE CLEAR!` and the next course. A merge, release, deploy, streak or record is a `WORLD CLEAR!` with fireworks.
-- **The score** sits at the right end of the strip: `1-3  ◎ 34  ✪ 5  ✗ 2  ⚒ 140` (world and course, coins, bugs stomped, knocks, tool calls). Every hundred coins is a `1UP`.
-- **`/dario`** shows the score; `/dario coin`, `ouch`, `stomp`, `clear` and `world` are practice that counts nothing.
-
-### Block Town (`town`)
-
-A town in blocks, seen from the side, the full width of the line above the prompt: grass, dirt and
-stone, then houses, farms, a well, towers and a grove of trees. Your agents build it while they
-work, and it grows for as long as the terminal is open, so a glance in the middle of a long session
-shows how much got done.
-
-![Block Town in a terminal: the main agent and a helper villager build a house, a farm and a grove while sheep, a pig and chickens wander between them, a failing test brings a creeper, green tests raise part of the castle, a commit finishes a house and a merge builds the castle](../../docs/images/block-town-terminal.gif)
-
-The strip on its own, as the mod draws it:
-
-![The Block Town strip: grass, dirt and stone the width of the terminal, houses, a farm with a sheep and a pig, chickens, trees and a finished castle](../../docs/images/block-town.gif)
-
-Both GIFs are drawn by the Arcade's own code from a scripted session (edits and reads with a
-subagent helping, a failing test, edits, passing tests, a commit, a merge); the window around the
-strip is a mock up of a terminal.
-
-- **Every tool call lays blocks** on the building going up (two, an edit or a write three), from the bottom row up, with scaffolding at its corners. The main agent's villager does it; **each subagent sends a helper villager** of its own colour, who goes home once that subagent is quiet.
-- **Animals** live in the town as it earns them: a sheep and a pig for every finished farm, a chicken for every house, a cow for every hall, as many as the band has room for. They wander in front of the town and graze on open grass between the buildings, run from a creeper, and lie down when the town sleeps. They come from the buildings, so nothing about them is saved.
-- **A failed tool** brings a creeper that walks up to a building, flashes and blows a hole in it (`BOOM`); the villagers build it back before starting anything new.
-- **Moments**: a small one plants a tree (trees grow as the work goes on, sapling to full tree; once the grove is full, they grow faster instead), a medium one finishes the building going up (`HOUSE BUILT`), a big one raises a third of the castle at the right end of the band (`THE CASTLE GROWS`), and a merge, release, deploy, streak or record raises the rest at once (`CASTLE BUILT!`, fireworks).
-- **When the band is full** the oldest building is torn down and built again, a house as a two storey hall.
-- **The score** sits at the right end of the strip: `Village  ▦ 309  ⌂ 2  ♣ 5  ♜ 1  ⚒ 27` (the town's size from camp, hamlet, village and town to city, blocks laid, houses, trees, castles, tool calls). **Two minutes of quiet** and the villagers go indoors.
-- **One town per terminal**: every terminal builds its own town, starting from an empty field, and it keeps growing while the town is not shown.
-- **`/town`** shows the score; `/town build`, `tree`, `finish`, `castle` and `creeper` are practice that counts nothing. **`/town reset`** starts over: it asks first, and only `/town reset yes` within a minute clears this terminal's town and its score.
-
-### Bug Command (`bugs`)
-
-Six cities and three silos along the bottom of the line above the prompt, the full width of it. Bugs
-fall on the cities; Claude's work fires the counter missiles, and you can fire too. The one Arcade
-game you can play along with while you wait.
-
-![Bug Command in a terminal: a failed test drops a fast bug and you click the sky to shoot it down, a bug gets through and a city falls, the tests going green fire a salvo that rebuilds it, and a commit is a sure hit](../../docs/images/bug-command-terminal.gif)
-
-The strip on its own, as the mod draws it:
-
-![The Bug Command strip: six cities and three silos the width of the terminal, red bug trails, blue counter missiles, blasts, and the mouse pointer firing](../../docs/images/bug-command.gif)
-
-Both GIFs are drawn by the Arcade's own code from a scripted session (a read, a failing test, an
-edit, passing tests, a commit), with the mouse clicks played into the sky's own pointer handler;
-the window around the strip is a mock up of a terminal.
-
-- **While Claude works** a bug falls now and then, a red trail from the top towards a city. **A failed tool** drops a fast one (`INCOMING`).
-- **Every finished tool call** fires a shot from the nearest silo at the lowest bug; most of them hit. A blast takes out every bug inside it, and each bug it takes out blasts too.
-- **Moments**: a small one is a shot (or a flare in an empty sky), a medium one a sure hit, a big one a salvo at every bug in the sky that also rebuilds a fallen city (`BONUS CITY`).
-- **A bug that gets through** ruins its city. When every city has fallen it is `THE END`, and new cities go up.
-- **You can shoot**: click anywhere in the sky and the nearest silo fires there. After a click the sky has the keyboard: the arrows move the crosshair (with shift, faster), space or Enter fires at it, and `1`, `2`, `3` fire from the left, middle or right silo. A silo you fire from greys out for a moment. Esc hands the keyboard back to the prompt.
-- **The score** sits at the right end of the strip: `✸ 14  ☞ 5  ✝ 2  ⚒ 140  ⌂ 6` (bugs shot down, the ones you shot yourself, cities lost, tool calls, cities standing).
-- **`/bugs`** shows the score and the controls; `/bugs flare`, `shot` and `salvo` are practice that counts nothing, and `/bugs incoming` drops a practice bug to shoot at.
-
 ## Moments
 
 The Arcade spots the moments once and hands each one to every game, coding or not.
@@ -224,20 +252,23 @@ The Arcade spots the moments once and hands each one to every game, coding or no
 A commit that says "nothing to commit" or a push that says "Everything up-to-date" counts for
 nothing. Tool calls inside subagents do not count; their finishing does.
 
-## Settings
+## Tuning the moments
 
-All optional. Set them in `/plugin` (the plugin's settings) or in
-`settings.json` under `pluginConfigs`.
+All optional, and none of it is asked at install. `/arcade moments` shows what is set;
+`/arcade moments <key> <value>` sets one and `/arcade moments <key> none` clears it. Kept per Claude
+Code config directory.
 
-| Setting | What it is for | Example |
+| Key | What it is for | Example |
 |---|---|---|
-| `mode` | How each new terminal picks: `random` (one game from the pool, the default), `rotate` (the next one in turn), `fixed` (always the first in the pool), `all` (every game in the pool), `off` | `fixed` |
-| `pool` | Comma separated games to pick from; empty means all of them | `dragon, tetris` |
-| `big_skills` | Skills whose run is a big moment (every other skill is medium) | `release-notes, publish-report` |
-| `quiet_skills` | Skills that celebrate nothing | `commit` |
-| `big_commands` | A regular expression of shell commands whose success is big | `make ship` |
-| `medium_commands` | A regular expression of shell commands whose success is medium | `terraform apply` |
-| `praise_words` | Extra words that count as praise, on top of the built-in list (thanks, great, perfect and a few in other languages) | `nice one, cheers` |
+| `big_skills` | Skills whose run is a big moment (every other skill is medium) | `/arcade moments big_skills release-notes, publish-report` |
+| `quiet_skills` | Skills that celebrate nothing | `/arcade moments quiet_skills commit` |
+| `big_commands` | A regular expression of shell commands whose success is big | `/arcade moments big_commands make ship` |
+| `medium_commands` | A regular expression of shell commands whose success is medium | `/arcade moments medium_commands terraform apply` |
+| `praise_words` | Extra words that count as praise, on top of the built-in list (thanks, great, perfect and a few in other languages) | `/arcade moments praise_words nice one, cheers` |
+
+**Upgrading from 0.9.0 or earlier**: those versions kept the game choice and these keys as plugin
+settings (`pluginConfigs` in settings.json). The Arcade no longer declares them, so set them again
+with the commands above.
 
 ## Scores
 
@@ -256,9 +287,9 @@ between sessions; a reload of the plugin keeps what the terminal had.
 - **Reads**: the name of each tool Claude runs and whether it failed; for shell commands, the command
   line and whether its output says nothing changed; for file writes, the file name and its line
   count; skill names; the words of your message (only to spot praise); subagent start and finish.
-- **Keeps**: no scores. Each terminal's games start from zero and end with it (see "Scores" below). In Claude Code's plugin store on your machine: which game the last terminal showed and your days in a row; the mode and pool in your Claude Code settings. Nothing is written into your projects.
-- **Draws**: the games it shows in the line above the prompt (a block at the right end, or the octopus's, the duck hunt's and Bug Command's strips across the full width), and an occasional notice.
-- **Hooks**: `skill.prompt` only notes which skill ran, so a finished skill can count as a moment; it passes the skill's prompt on unchanged. `command.run` answers its own commands (`/arcade` and the games' own commands) and no other. `/arcade <game> all`, `/arcade <mode>` and `/arcade pool` write `arcade.mode` and `arcade.pool` through Claude Code's own settings call, the same as changing them in the menu.
+- **Keeps**: no scores. Each terminal's games start from zero and end with it (see "Scores" below). In Claude Code's plugin store on your machine: your game choice (mode and pool), the moments keys, which game the last terminal showed, your days in a row, and how many sessions have shown the first run hint. Nothing is written into your projects.
+- **Draws**: the games it shows in the line above the prompt (a block at the right end, or the octopus's, the duck hunt's and Bug Command's strips across the full width), the small ◀ ▶ ☰ buttons above them, the game menu pane when you open it, and an occasional notice.
+- **Hooks**: `skill.prompt` only notes which skill ran, so a finished skill can count as a moment; it passes the skill's prompt on unchanged. `command.run` answers its own commands (`/arcade` and the games' own commands) and no other. It changes no Claude Code setting.
 - **Takes input**: only Bug Command, and only once you click its sky: from then until Esc, the keys you press go to the game, not the prompt. Clicks and keys never leave the game.
 - **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
 - **Never**: changes, blocks or delays a tool call or a message; sends anything anywhere (no network
@@ -266,12 +297,8 @@ between sessions; a reload of the plugin keeps what the terminal had.
 
 ## Install
 
-Needs Claude Code 2.1.287 or later (mods). Tested on 2.1.289.
-
-```
-/plugin marketplace add mutlumehmet/claude-plugins
-/plugin install arcade@mehmetmutlu
-```
+Needs Claude Code 2.1.287 or later (mods). Tested on 2.1.294. The commands are in
+[Quick start](#quick-start).
 
 A mod runs inside Claude Code with your permissions. Read the code before you install any mod.
 
@@ -294,11 +321,14 @@ module is `src/clients/bug-sky.tsx`, which the same script builds into `hooks/bu
 The sky runs the game loop; the hooks module hands it the session's events as props and keeps the
 score the sky posts back. Edit `src/`, never
 `hooks/`; CI fails when the two differ. A new game is one file in `src/games/`, one entry in
-`GAMES` and one link in each chain in `src/arcade.tsx`, its state keys in `types/index.d.ts`, a
+`GAMES` and `BLURBS` and one link in each chain in `src/arcade.tsx`, its state keys in `types/index.d.ts`, a
 `reset` export wired into `resetGame` in `src/arcade.tsx`, and a test. A game keeps its state in
 atoms only and never calls `$.store` (see "Scores").
 
 ## Known gaps
+
+- The GIFs on this page were rendered before 0.10.0, so they do not show the ◀ ▶ ☰ buttons above the game.
+- The buttons and the game menu are drawn in a terminal only; in the Desktop Code tab, use `/arcade`.
 
 - With `all`, or several games shown, the line above the prompt gets tall; the octopus alone takes
   eight rows.

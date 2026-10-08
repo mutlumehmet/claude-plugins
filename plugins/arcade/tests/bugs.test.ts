@@ -1,10 +1,10 @@
 import { expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 import type { On } from 'claude-code'
-import { begin } from './start'
+import { begin, pin } from './start'
 
 // The Arcade shows only this game in these tests.
-const ONLY = { options: { mode: 'fixed', pool: 'bugs' } }
+const ONLY = { mode: 'fixed', pool: 'bugs' }
 const SKY = 'bug-sky'
 const SHOT_TRAIL = '#4c6ef5'
 const BUG_TRAIL = '#a8323e'
@@ -37,7 +37,8 @@ async function colors(ui: Finder) {
   return (await ui.findAll({ type: 'Text', in: SKY })).flatMap(t => [t.props.color, t.props.backgroundColor])
 }
 
-test('the sky is a Client the full width of the band, and keeps what was there below it', ONLY, async ($, on) => {
+test('the sky is a Client the full width of the band, and keeps what was there below it', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   const ui = await $.ui.mount(BAND)
@@ -49,7 +50,8 @@ test('the sky is a Client the full width of the band, and keeps what was there b
   await ui.unmount()
 })
 
-test('a click in the sky fires from a silo', ONLY, async ($, on) => {
+test('a click in the sky fires from a silo', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   const ui = await $.ui.mount(BAND)
@@ -60,7 +62,8 @@ test('a click in the sky fires from a silo', ONLY, async ($, on) => {
   await ui.unmount()
 })
 
-test('keys move the crosshair and space fires', ONLY, async ($, on) => {
+test('keys move the crosshair and space fires', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   const ui = await $.ui.mount(BAND)
@@ -71,7 +74,8 @@ test('keys move the crosshair and space fires', ONLY, async ($, on) => {
   await ui.unmount()
 })
 
-test('a failed tool drops a bug, and the sky says how to shoot it', ONLY, async ($, on) => {
+test('a failed tool drops a bug, and the sky says how to shoot it', async ($, on) => {
+  pin(ONLY)
   world(on)
   on('tool.call', { tool: 'Bash' }, () => ({ result: { stdout: '', stderr: 'boom', interrupted: false }, text: 'boom', isError: true }) as never)
   await begin($, on)
@@ -84,7 +88,8 @@ test('a failed tool drops a bug, and the sky says how to shoot it', ONLY, async 
   await ui.unmount()
 })
 
-test('what the sky posts goes to the score', ONLY, async ($, on) => {
+test('what the sky posts goes to the score', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   const ui = await $.ui.mount(BAND)
@@ -93,7 +98,8 @@ test('what the sky posts goes to the score', ONLY, async ($, on) => {
   await ui.unmount()
 })
 
-test('a commit after a failed tool shoots the bug down', ONLY, async ($, on) => {
+test('a commit after a failed tool shoots the bug down', async ($, on) => {
+  pin(ONLY)
   const toasts: string[] = []
   world(on, toasts)
   let isError = true
@@ -115,7 +121,8 @@ test('a commit after a failed tool shoots the bug down', ONLY, async ($, on) => 
   await ui.unmount()
 })
 
-test('/bugs practice counts nothing', ONLY, async ($, on) => {
+test('/bugs practice counts nothing', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   expect((await $.command.run({ command: 'bugs', args: 'salvo' } as never)).text).toMatch(/nothing counts/)
@@ -123,7 +130,8 @@ test('/bugs practice counts nothing', ONLY, async ($, on) => {
   expect(await stats($)).toMatch(/^✸ 0  ☞ 0  ✝ 0/)
 })
 
-test('/arcade knows the game by its other names', { options: { mode: 'all', pool: 'bug-command, duck' } }, async ($, on) => {
+test('/arcade knows the game by its other names', async ($, on) => {
+  pin({ mode: 'all', pool: 'bug-command, duck' })
   world(on)
   await begin($, on)
   const text = (await $.command.run({ command: 'arcade', args: '' } as never)).text ?? ''

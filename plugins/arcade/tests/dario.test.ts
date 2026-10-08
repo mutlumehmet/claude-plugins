@@ -1,10 +1,10 @@
 import { expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 import type { On } from 'claude-code'
-import { begin } from './start'
+import { begin, pin } from './start'
 
 // The Arcade shows only this game in these tests.
-const ONLY = { options: { mode: 'fixed', pool: 'dario' } }
+const ONLY = { mode: 'fixed', pool: 'dario' }
 
 const BAND = {
   plugin: 'arcade',
@@ -29,7 +29,8 @@ async function stats($: Engine) {
   return (await $.command.run({ command: 'dario', args: '' } as never)).text ?? ''
 }
 
-test('the course fills the band and keeps what was there below it', ONLY, async ($, on) => {
+test('the course fills the band and keeps what was there below it', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   const ui = await $.ui.mount(BAND)
@@ -40,7 +41,8 @@ test('the course fills the band and keeps what was there below it', ONLY, async 
   await ui.unmount()
 })
 
-test('/dario explains the score, and practice counts nothing', ONLY, async ($, on) => {
+test('/dario explains the score, and practice counts nothing', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   expect(await stats($)).toMatch(/^1-1  ◎ 0  ✪ 0  ✗ 0  ⚒ 0/)
@@ -50,7 +52,8 @@ test('/dario explains the score, and practice counts nothing', ONLY, async ($, o
   expect(await stats($)).toMatch(/^1-1  ◎ 0  ✪ 0  ✗ 0/)
 })
 
-test('a commit is a stomp, with a notice; nothing to commit is none', ONLY, async ($, on) => {
+test('a commit is a stomp, with a notice; nothing to commit is none', async ($, on) => {
+  pin(ONLY)
   const toasts: string[] = []
   world(on, toasts)
   let out = 'nothing to commit, working tree clean'
@@ -68,7 +71,8 @@ test('a commit is a stomp, with a notice; nothing to commit is none', ONLY, asyn
   expect(await stats($)).toMatch(/Last win: Commit: a bug stomped/)
 })
 
-test('/arcade knows Dario by its other names', { options: { mode: 'all', pool: 'dario, duck' } }, async ($, on) => {
+test('/arcade knows Dario by its other names', async ($, on) => {
+  pin({ mode: 'all', pool: 'dario, duck' })
   world(on)
   await begin($, on)
   const text = (await $.command.run({ command: 'arcade', args: '' } as never)).text ?? ''

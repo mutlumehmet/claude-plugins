@@ -3,10 +3,10 @@ import type { Engine } from 'claude-code/testing'
 import type { On } from 'claude-code'
 
 import { outcome, score } from '../src/games/jackpot'
-import { begin } from './start'
+import { begin, pin } from './start'
 
 // The Arcade shows only this game in these tests.
-const ONLY = { options: { mode: 'fixed', pool: 'jackpot' } }
+const ONLY = { mode: 'fixed', pool: 'jackpot' }
 
 const BAND = {
   plugin: 'arcade',
@@ -26,7 +26,8 @@ function world(on: On) {
 
 const stats = async ($: Engine) => (await $.command.run({ command: 'jackpot', args: '' } as never)).text
 
-test('the machine sits in the band with its stats line', ONLY, async ($, on) => {
+test('the machine sits in the band with its stats line', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   const ui = await $.ui.mount(BAND)
@@ -36,19 +37,20 @@ test('the machine sits in the band with its stats line', ONLY, async ($, on) => 
   await ui.unmount()
 })
 
-test('scores: three sevens are the jackpot, a pair pays a little, nothing pays nothing', ONLY, async () => {
+test('scores: three sevens are the jackpot, a pair pays a little, nothing pays nothing', async () => {
   expect(score(['seven', 'seven', 'seven'])).toEqual({ win: 'jackpot', pay: 100 })
   expect(score(['bell', 'bell', 'bell'])).toEqual({ win: 'triple', pay: 15 })
   expect(score(['cherry', 'star', 'cherry'])).toEqual({ win: 'pair', pay: 3 })
   expect(score(['seven', 'bell', 'star'])).toEqual({ win: 'none', pay: 0 })
 })
 
-test('a golden spin never loses, and the lowest roll is the jackpot', ONLY, async () => {
+test('a golden spin never loses, and the lowest roll is the jackpot', async () => {
   for (let i = 0; i < 200; i++) expect(score(outcome(true)).pay).toBeGreaterThan(0)
   expect(outcome(false, 0)).toEqual(['seven', 'seven', 'seven'])
 })
 
-test('/arcade hide takes the jackpot out of the band', ONLY, async ($, on) => {
+test('/arcade hide takes the jackpot out of the band', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   await $.command.run({ command: 'arcade', args: 'hide' } as never)

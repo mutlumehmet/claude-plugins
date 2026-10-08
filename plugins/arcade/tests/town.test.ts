@@ -1,10 +1,10 @@
 import { expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 import type { On } from 'claude-code'
-import { begin } from './start'
+import { begin, pin } from './start'
 
 // The Arcade shows only this game in these tests.
-const ONLY = { options: { mode: 'fixed', pool: 'town' } }
+const ONLY = { mode: 'fixed', pool: 'town' }
 
 const BAND = {
   plugin: 'arcade',
@@ -29,7 +29,8 @@ async function stats($: Engine) {
   return (await $.command.run({ command: 'town', args: '' } as never)).text ?? ''
 }
 
-test('the town fills the band and keeps what was there below it', ONLY, async ($, on) => {
+test('the town fills the band and keeps what was there below it', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   const ui = await $.ui.mount(BAND)
@@ -40,7 +41,8 @@ test('the town fills the band and keeps what was there below it', ONLY, async ($
   await ui.unmount()
 })
 
-test('/town explains the score, and practice counts nothing', ONLY, async ($, on) => {
+test('/town explains the score, and practice counts nothing', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   const ui = await $.ui.mount(BAND)
@@ -52,7 +54,8 @@ test('/town explains the score, and practice counts nothing', ONLY, async ($, on
   await ui.unmount()
 })
 
-test('every tool call lays a block, and a commit finishes the house going up', ONLY, async ($, on) => {
+test('every tool call lays a block, and a commit finishes the house going up', async ($, on) => {
+  pin(ONLY)
   const toasts: string[] = []
   world(on, toasts)
   on('tool.call', { tool: 'Bash' }, () => ({
@@ -70,14 +73,16 @@ test('every tool call lays a block, and a commit finishes the house going up', O
   await ui.unmount()
 })
 
-test('/arcade knows the town by its other names', { options: { mode: 'all', pool: 'minecraft, duck' } }, async ($, on) => {
+test('/arcade knows the town by its other names', async ($, on) => {
+  pin({ mode: 'all', pool: 'minecraft, duck' })
   world(on)
   await begin($, on)
   const text = (await $.command.run({ command: 'arcade', args: '' } as never)).text ?? ''
   expect(text).toMatch(/● Block Town \(town\)/)
 })
 
-test('the town counts while it is not shown, and a reset needs a second word', { options: { mode: 'fixed', pool: 'duck' } }, async ($, on) => {
+test('the town counts while it is not shown, and a reset needs a second word', async ($, on) => {
+  pin({ mode: 'fixed', pool: 'duck' })
   const store: Record<string, unknown> = {}
   mock.store(on, store)
   const clock = mock.clock(on)
@@ -92,7 +97,8 @@ test('the town counts while it is not shown, and a reset needs a second word', {
   expect(await stats($)).toMatch(/^Camp  ▦ 0  ⌂ 0  ♣ 0  ♜ 0  ⚒ 0/)
 })
 
-test('a finished farm brings a sheep and a pig, and a house a chicken', ONLY, async ($, on) => {
+test('a finished farm brings a sheep and a pig, and a house a chicken', async ($, on) => {
+  pin(ONLY)
   world(on)
   // The frame clock draws while the test moves it on: answer the redraws.
   on('ui.blit', () => ({ value: {} }) as never)

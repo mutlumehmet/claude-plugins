@@ -1,10 +1,10 @@
 import { expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 import type { On } from 'claude-code'
-import { begin } from './start'
+import { begin, pin } from './start'
 
 // The Arcade shows only this game in these tests.
-const ONLY = { options: { mode: 'fixed', pool: 'octopus' } }
+const ONLY = { mode: 'fixed', pool: 'octopus' }
 
 const BAND = {
   plugin: 'arcade',
@@ -26,7 +26,8 @@ async function stats($: Engine) {
   return (await $.command.run({ command: 'octopus', args: '' } as never)).text
 }
 
-test('the city fills the band and keeps what was there below it', ONLY, async ($, on) => {
+test('the city fills the band and keeps what was there below it', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   const ui = await $.ui.mount(BAND)
@@ -37,7 +38,8 @@ test('the city fills the band and keeps what was there below it', ONLY, async ($
   await ui.unmount()
 })
 
-test('/arcade hide takes the octopus out of the band, /arcade next brings it back', ONLY, async ($, on) => {
+test('/arcade hide takes the octopus out of the band, /arcade next brings it back', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   const run = async (args: string) => (await $.command.run({ command: 'octopus', args } as never)).text ?? ''
@@ -49,7 +51,8 @@ test('/arcade hide takes the octopus out of the band, /arcade next brings it bac
   expect(await run('')).toMatch(/Lv 1/)
 })
 
-test('/octopus plane shows off and adds xp', ONLY, async ($, on) => {
+test('/octopus plane shows off and adds xp', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   const ran = await $.command.run({ command: 'octopus', args: 'plane' } as never)
@@ -57,7 +60,8 @@ test('/octopus plane shows off and adds xp', ONLY, async ($, on) => {
   expect(await stats($)).toMatch(/Last win: Practice: \+1 xp/)
 })
 
-test('a commit is a medium moment, nothing to commit is none', ONLY, async ($, on) => {
+test('a commit is a medium moment, nothing to commit is none', async ($, on) => {
+  pin(ONLY)
   world(on)
   let out = 'nothing to commit, working tree clean'
   on('tool.call', { tool: 'Bash' }, () => ({

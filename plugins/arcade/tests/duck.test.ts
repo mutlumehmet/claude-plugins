@@ -1,10 +1,10 @@
 import { expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 import type { On } from 'claude-code'
-import { begin } from './start'
+import { begin, pin } from './start'
 
 // The Arcade shows only this game in these tests.
-const ONLY = { options: { mode: 'fixed', pool: 'duck' } }
+const ONLY = { mode: 'fixed', pool: 'duck' }
 
 const BAND = {
   plugin: 'arcade',
@@ -29,7 +29,8 @@ async function stats($: Engine) {
   return (await $.command.run({ command: 'duck', args: '' } as never)).text ?? ''
 }
 
-test('the marsh fills the band and keeps what was there below it', ONLY, async ($, on) => {
+test('the marsh fills the band and keeps what was there below it', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   const ui = await $.ui.mount(BAND)
@@ -40,7 +41,8 @@ test('the marsh fills the band and keeps what was there below it', ONLY, async (
   await ui.unmount()
 })
 
-test('/arcade hide takes the duck out of the band, /arcade next brings it back', ONLY, async ($, on) => {
+test('/arcade hide takes the duck out of the band, /arcade next brings it back', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   expect((await $.command.run({ command: 'arcade', args: 'hide' } as never)).text).toMatch(/No game in this terminal/)
@@ -53,7 +55,8 @@ test('/arcade hide takes the duck out of the band, /arcade next brings it back',
   await ui.unmount()
 })
 
-test('/duck explains the score, and practice counts nothing', ONLY, async ($, on) => {
+test('/duck explains the score, and practice counts nothing', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   expect(await stats($)).toMatch(/^R 1  ▼ 0  ↗ 0  ⚒ 0/)
@@ -62,7 +65,8 @@ test('/duck explains the score, and practice counts nothing', ONLY, async ($, on
   expect(await stats($)).toMatch(/^R 1  ▼ 0  ↗ 0/)
 })
 
-test('a commit is a duck down, with a notice; nothing to commit is none', ONLY, async ($, on) => {
+test('a commit is a duck down, with a notice; nothing to commit is none', async ($, on) => {
+  pin(ONLY)
   const toasts: string[] = []
   world(on, toasts)
   let out = 'nothing to commit, working tree clean'
@@ -80,7 +84,8 @@ test('a commit is a duck down, with a notice; nothing to commit is none', ONLY, 
   expect(await stats($)).toMatch(/Last win: .*a duck down/)
 })
 
-test('/arcade knows the hunt by its other names', { options: { mode: 'all', pool: 'duck-hunt, outlaw' } }, async ($, on) => {
+test('/arcade knows the hunt by its other names', async ($, on) => {
+  pin({ mode: 'all', pool: 'duck-hunt, outlaw' })
   world(on)
   await begin($, on)
   const text = (await $.command.run({ command: 'arcade', args: '' } as never)).text ?? ''

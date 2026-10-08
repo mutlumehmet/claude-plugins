@@ -9,21 +9,40 @@
 Claude Code plugins I use every day, cleaned up so they work on anyone's machine. Formerly
 `agent-skills`; old links redirect here.
 
-A plugin is a package Claude Code installs as one unit. Here a plugin holds either **skills**
-(folders of instructions Claude loads when a task calls for them) or a **mod** (a small piece of
-code that runs inside Claude Code and can hold, change or add to what it does). Nothing here is tied
-to my setup: anything that differs between people lives in a config file or a plugin setting, and
-every integration beyond the basics is optional.
+**Contents:** [Claude Code Arcade](#claude-code-arcade) · [Claude Code Toolkit](#claude-code-toolkit) ·
+[Skills](#skills) · [Install](#install) · [Contributing](#contributing) · [About](#about)
 
-## Plugins
+## Claude Code Arcade
 
-Each plugin has its own page with what it does, its settings and its known gaps.
+Pixel games that live above your prompt and are played by your work: every tool call, commit,
+merge and failed test moves the game on. Ten games in one plugin, [`arcade`](plugins/arcade).
 
-| Plugin | Kind | What it does |
+![Octo Invader in a terminal: a pixel octopus smashes a city above the prompt while Claude edits, commits and merges](docs/images/octo-invader-terminal.gif)
+
+**Install it** (type these at the Claude Code prompt, then pick a scope; there is nothing to set up):
+
+```
+/plugin marketplace add mutlumehmet/claude-plugins
+/plugin install arcade@mehmetmutlu
+```
+
+**Play:** Octo Invader starts by itself. Above the game sit three small buttons: **◀ ▶** switch
+to the previous or next game, **☰** opens the game menu, and **☆ make default** (it shows once you
+switch) makes that game the one every new terminal starts with. Prefer typing? `/arcade` opens
+the menu, `/arcade duck` plays Duck Hunt here, `/arcade default duck` makes it your default.
+
+| Game | Command | |
 |---|---|---|
-| [`project-workflow`](plugins/project-workflow) | skills | [`create-project`](plugins/project-workflow/skills/create-project) sets up a new project folder the same way every time; [`save-context`](plugins/project-workflow/skills/save-context) saves what a session decided, changed and left open before you close it |
+| **Octo Invader**: an octopus smashes a city while Claude edits | `/arcade octopus` | <img src="docs/images/octo-invader.gif" width="360" alt="Octo Invader strip"> |
+| **Duck Hunt**: your commits shoot the ducks, failed tools let them fly | `/arcade duck` | <img src="docs/images/duck-hunt.gif" width="360" alt="Duck Hunt strip"> |
+| **Bug Command**: bugs fall on six cities; click the sky to fire too | `/arcade bugs` | <img src="docs/images/bug-command.gif" width="360" alt="Bug Command strip"> |
+| **Dario**: a side scroller, tool calls bring coins | `/arcade dario` | <img src="docs/images/dario.gif" width="360" alt="Dario strip"> |
+| **Block Town**: your agents build a town, a castle on merges | `/arcade town` | <img src="docs/images/block-town.gif" width="360" alt="Block Town strip"> |
+| **Dragon Lair, Jackpot, Outlaw, Tama, Tetris**: five small games at the right of the line | `/arcade dragon`, `jackpot`, `outlaw`, `tama`, `tetris` | <img src="docs/images/arcade-hero.gif" width="360" alt="The five small games"> |
 
-### Claude Code Toolkit
+Every game, what counts as a moment, and every command: [the Arcade's own page](plugins/arcade).
+
+## Claude Code Toolkit
 
 Small mods for long sessions. Install them all with `/plugin install toolkit@mehmetmutlu`
 ([`toolkit`](plugins/toolkit)), or any one by name.
@@ -38,24 +57,19 @@ Small mods for long sessions. Install them all with `/plugin install toolkit@meh
 | [`shared-file-guard`](plugins/shared-file-guard) | mod | Refuses shell writes to shared files another session changed |
 | [`fork-lineage`](plugins/fork-lineage) | mod | Shows which session a fork came from, and sends the fork's report to its parent when you approve |
 
-### Claude Code Arcade
-
-![Octo Invader in a terminal: a pixel octopus smashes a city above the prompt while Claude edits, commits and merges](docs/images/octo-invader-terminal.gif)
-
-![The Claude Code Arcade: the dragon, the slot machine, the duel, the Tamagotchi and Tetris, played by a session's work](docs/images/arcade-hero.gif)
-
-Games that live above your prompt and are played by your work, in one plugin,
-[`arcade`](plugins/arcade): a pixel dragon, a slot machine, an Atari duel, a Tamagotchi, Tetris, an
-octopus that invades a city and a duck hunt. The Arcade spots the moments worth celebrating, coding or not: small (a
-turn done, a file saved), medium (a commit, a skill run, a message sent) and big (a merge, a deploy,
-a finished task list, a PDF made). Pin one game with `/arcade tetris all`, get a random one in every new
-terminal (the default), rotate through them, or limit the choice with `/arcade pool dragon tetris`.
+## Skills
 
 | Plugin | Kind | What it does |
 |---|---|---|
-| [`arcade`](plugins/arcade) | mod | Games above the prompt (`/dragon`, `/jackpot`, `/outlaw`, `/tama`, `/tetris`, `/octopus`, `/duck`, `/bugs`, `/dario`, `/town`), one or several per terminal, chosen with `/arcade` |
+| [`project-workflow`](plugins/project-workflow) | skills | [`create-project`](plugins/project-workflow/skills/create-project) sets up a new project folder the same way every time; [`save-context`](plugins/project-workflow/skills/save-context) saves what a session decided, changed and left open before you close it |
 
 ## Install
+
+A plugin is a package Claude Code installs as one unit. Here a plugin holds either **skills**
+(folders of instructions Claude loads when a task calls for them) or a **mod** (a small piece of
+code that runs inside Claude Code and can hold, change or add to what it does). Anything that
+differs between people lives in a config file or a plugin setting, and every integration beyond the
+basics is optional.
 
 Add this repo as a marketplace once, then install the plugins you want:
 

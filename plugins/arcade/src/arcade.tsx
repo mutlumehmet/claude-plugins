@@ -117,9 +117,25 @@ import type { Milestone } from './milestones'
 import { forgetSaves } from './save'
 import { shown } from './shown'
 
-// Every game in the Arcade, in the order the menus list them. A new game is one file in
-// games/, one entry here, and one link in each chain below.
-export const GAMES = [dragonGame, jackpotGame, outlawGame, tamaGame, tetrisGame, octopusGame, duckGame, bugsGame, darioGame, townGame]
+// Every game in the Arcade, in the order the menus list them. The first is the game a new player
+// starts with (decided 8 October 2026: Octo Invader, every terminal, until they pick another).
+// A new game is one file in games/, one entry here, one line in BLURBS, and one link in each
+// chain below.
+export const GAMES = [octopusGame, duckGame, bugsGame, darioGame, townGame, dragonGame, jackpotGame, outlawGame, tamaGame, tetrisGame]
+
+// One line per game for the game menu.
+const BLURBS: Record<string, string> = {
+  octopus: 'a pixel octopus smashes a city while Claude edits',
+  duck: 'your commits shoot the ducks, failed tools let them fly',
+  bugs: 'bugs fall on six cities; click the sky to fire too',
+  dario: 'a side scroller: tool calls bring coins, bugs knock in',
+  town: 'your agents build a block town, a castle on merges',
+  dragon: 'a pixel dragon that breathes fire when you ship',
+  jackpot: 'a slot machine: every finished turn pulls the lever',
+  outlaw: 'an Atari duel: you against the bugs',
+  tama: 'a Tamagotchi your work feeds',
+  tetris: "Tetris where Claude's tools drop the pieces",
+}
 
 export const MODES = ['random', 'rotate', 'fixed', 'all', 'off'] as const
 type Mode = (typeof MODES)[number]
@@ -131,13 +147,22 @@ const ALIASES: Record<string, string> = { 'dragon-lair': 'dragon', octo: 'octopu
 // picks again.
 const pickedFor = atom({ plugin: 'arcade', key: 'pickedFor' } as const, '')
 
+// The game new terminals start with ('' when the setting is not one fixed game), so the controls
+// can offer to make the game on screen the default; and whether the first sessions' hint shows.
+const defaultGame = atom({ plugin: 'arcade', key: 'defaultGame' } as const, '')
+const hint = atom({ plugin: 'arcade', key: 'hint' } as const, false)
+
+const MENU = 'arcade-menu'
+// How many sessions show the hint under the game; the first one also shows the welcome notice.
+const HINT_SESSIONS = 3
+
 function gameId(word: string) {
   const id = ALIASES[word.toLowerCase()] ?? word.toLowerCase()
   return GAMES.some(g => g.id === id) ? id : undefined
 }
 
 function modeOf(value: unknown): Mode {
-  return MODES.includes(value as Mode) ? (value as Mode) : 'random'
+  return MODES.includes(value as Mode) ? (value as Mode) : 'fixed'
 }
 
 // The pool setting as game ids; empty or unreadable means every game.
@@ -165,6 +190,7 @@ async function apply($: EngineInterface, mode: Mode, pool: string[]) {
   const ids = await pick($, mode, pool)
   await update($, shown, () => ids)
   await update($, pickedFor, () => `${mode}|${pool.join(',')}`)
+  await update($, defaultGame, () => (mode === 'fixed' ? (pool[0] ?? '') : ''))
   return ids
 }
 
@@ -178,39 +204,85 @@ async function status($: EngineInterface, mode: Mode, pool: string[]) {
     mode === 'fixed' ? `fixed on ${title(pool[0] ?? '')}` : mode === 'off' ? 'off' : `${mode}, from ${pool.map(title).join(', ')}`
   return (
     `Arcade on this account: ${setting}.\nThis terminal:\n${rows.join('\n')}\n` +
-    '"/arcade <game>" swaps this terminal\'s game, "/arcade <game> all" pins it for every terminal, ' +
+    '"/arcade <game>" swaps this terminal\'s game, "/arcade default <game>" makes it the game every new terminal starts with, ' +
     '"/arcade random|rotate|all|off" sets how new terminals pick, ' +
     '"/arcade pool <games>" limits the choice, "/arcade next" swaps this terminal\'s game. ' +
-    '"/arcade hide" clears this terminal only. ' +
+    '"/arcade hide" clears this terminal only. "/arcade moments" tunes what counts as a big moment. ' +
     'Scores, the town and the pet start from zero in every terminal and last until it closes; "/<game> reset" or "/arcade reset" starts this terminal over.'
   )
 }
 
-// Saves what /arcade chose. First choice: the plugin's own mode and pool settings, written the way
-// the /config menu writes them, so the menu shows the choice and each Claude Code config directory
-// keeps its own. Where those rows do not exist (checked 5 October 2026 on 2.1.289: an interactive
-// session has them, `claude -p` has none), the choice goes to the plugin store instead, also kept
-// per config directory. `over` records the settings it was chosen over: once they change, they win.
-type Saved = { mode: string; pool: string; over: string }
+// Saves what /arcade chose in the plugin's store, so each Claude Code config directory (an account)
+// keeps its own. Since 0.10.0 the Arcade declares no userConfig, so installing it asks nothing; a
+// setting from 0.9.0 or earlier in pluginConfigs is still read until /arcade saves one here.
+type Saved = { mode: string; pool: string }
 
-const over = (options: PluginOptions) => `${String(options.mode ?? '')}|${String(options.pool ?? '')}`
-
-async function save($: EngineInterface, options: PluginOptions, mode: Mode, pool: string[]) {
-  try {
-    const keys = new Set((await $.config.list()).map(row => row.key))
-    if (keys.has('arcade.mode') && keys.has('arcade.pool')) {
-      const a = await $.config.set({ key: 'arcade.mode', value: mode })
-      const b = await $.config.set({ key: 'arcade.pool', value: pool.join(',') })
-      if (a.deny === undefined && b.deny === undefined) {
-        await $.store.delete('setting')
-        return
-      }
-    }
-  } catch {
-    // No settings rows here; the store below keeps the choice.
-  }
-  const saved: Saved = { mode, pool: pool.join(','), over: over(options) }
+async function save($: EngineInterface, mode: Mode, pool: string[]) {
+  const saved: Saved = { mode, pool: pool.join(',') }
   await $.store.set('setting', saved)
+}
+
+// What counts as a big or a medium moment, set with "/arcade moments <key> <value>".
+const MOMENT_KEYS = ['big_skills', 'quiet_skills', 'big_commands', 'medium_commands', 'praise_words'] as const
+const MOMENT_HELP: Record<string, string> = {
+  big_skills: 'skills whose run is a big moment, comma separated',
+  quiet_skills: 'skills that celebrate nothing, comma separated',
+  big_commands: 'a regular expression of shell commands whose success is big',
+  medium_commands: 'a regular expression of shell commands whose success is medium',
+  praise_words: 'extra words that count as praise in your messages, comma separated',
+}
+
+async function moments($: EngineInterface, options: PluginOptions) {
+  const stored = ((await $.store.get('moments')) ?? {}) as Record<string, string>
+  const merged: Record<string, string> = {}
+  for (const key of MOMENT_KEYS) merged[key] = stored[key] ?? String(options[key] ?? '')
+  return merged
+}
+
+async function momentsCommand($: EngineInterface, options: PluginOptions, args: string) {
+  const rest = args.trim().replace(/^moments\s*/i, '')
+  const key = rest.split(/\s+/)[0]?.toLowerCase() ?? ''
+  const now = await moments($, options)
+  if (key === '') {
+    const rows = MOMENT_KEYS.map(k => `  ${k}: ${now[k] === '' ? '(none)' : now[k]}  (${MOMENT_HELP[k]})`)
+    return `What counts as a moment, on this account:\n${rows.join('\n')}\n"/arcade moments <key> <value>" sets one, "/arcade moments <key> none" clears it.`
+  }
+  if (!MOMENT_KEYS.includes(key as (typeof MOMENT_KEYS)[number])) {
+    return `No moments setting called "${key}". Settings: ${MOMENT_KEYS.join(', ')}.`
+  }
+  const raw = rest.slice(key.length).trim()
+  const value = raw.toLowerCase() === 'none' ? '' : raw
+  const stored = { ...now, [key]: value }
+  await $.store.set('moments', stored)
+  configureMilestones(stored)
+  return `${key}: ${value === '' ? '(none)' : value}`
+}
+
+// Makes one game the one every new terminal starts with (fixed mode, that game first in the pool).
+async function makeDefault($: EngineInterface, setting: { mode: Mode; pool: string[] }, id: string) {
+  const pool = [id, ...setting.pool.filter(x => x !== id)]
+  await save($, 'fixed', pool)
+  Object.assign(setting, { mode: 'fixed', pool })
+  await update($, pickedFor, () => `fixed|${pool.join(',')}`)
+  await update($, defaultGame, () => id)
+}
+
+// Swaps this terminal to the game before or after the one it shows, through every game.
+async function step($: EngineInterface, by: number) {
+  const now = await read($, shown)
+  const at = GAMES.findIndex(g => g.id === now[now.length - 1])
+  const id = GAMES[(at + by + GAMES.length) % GAMES.length]?.id ?? ''
+  await update($, shown, () => [id])
+}
+
+async function openMenu($: EngineInterface) {
+  try {
+    const opened = await $.ui.open({ id: MENU, title: 'Arcade', focus: true, closeOnEscape: true, rows: GAMES.length + 5, columns: 64 })
+    return opened.isPlaced
+  } catch {
+    // No panes here (a test, `claude -p`): /arcade's text lists the games instead.
+    return false
+  }
 }
 
 // Hands each moment to every game; a hidden game keeps score and stays quiet.
@@ -305,11 +377,26 @@ export const register: Register = (on, options: PluginOptions) => {
     await forgetSaves($)
     await $.command.register({
       name: 'arcade',
-      description: 'Which Arcade games show: "/arcade <game>" for this terminal, "/arcade <game> all" pins one everywhere, "/arcade random|rotate|all|off", "/arcade pool <games>", "/arcade next" or "/arcade hide" for this terminal.',
+      description: 'The Arcade\'s game menu. "/arcade <game>" plays one in this terminal, "/arcade default <game>" makes it the game new terminals start with, "/arcade next", "/arcade random|rotate|all|off", "/arcade pool <games>", "/arcade moments", "/arcade hide".',
     })
     const saved = (await $.store.get('setting')) as Saved | undefined
-    if (saved?.over === over(options)) Object.assign(setting, { mode: modeOf(saved.mode), pool: poolOf(saved.pool) })
+    if (saved !== undefined) Object.assign(setting, { mode: modeOf(saved.mode), pool: poolOf(saved.pool) })
+    configureMilestones(await moments($, options))
     if ((await read($, pickedFor)) !== `${setting.mode}|${setting.pool.join(',')}`) await apply($, setting.mode, setting.pool)
+
+    // The first sessions on an account say where the controls are; the very first says it aloud.
+    const seen = Number((await $.store.get('welcome')) ?? 0)
+    if (seen < HINT_SESSIONS) {
+      await $.store.set('welcome', seen + 1)
+      await update($, hint, () => true)
+      const first = (await read($, shown))[0]
+      if (seen === 0 && first !== undefined) {
+        $.ui.toast(
+          `Arcade: ${title(first)} is your game. ▶ under it tries the next one, ☰ lists all ${GAMES.length} and sets the game new terminals start with (or type /arcade).`,
+          { timeoutMs: 15000 },
+        )
+      }
+    }
 
     const ran = await dragonStart($, e, ((e1: typeof e) => jackpotStart($, e1, ((e2: typeof e) => outlawStart($, e2, ((e3: typeof e) => tamaStart($, e3, ((e4: typeof e) => tetrisStart($, e4, ((e5: typeof e) => octopusStart($, e5, ((e6: typeof e) => duckStart($, e6, ((e7: typeof e) => bugsStart($, e7, ((e8: typeof e) => darioStart($, e8, ((e9: typeof e) => townStart($, e9, next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)
     // Days in a row: counted once a day, at the session's start.
@@ -323,7 +410,21 @@ export const register: Register = (on, options: PluginOptions) => {
     const words = (e.args ?? '').trim().split(/[\s,]+/).filter(Boolean)
     const [first = '', ...rest] = words.map(w => w.toLowerCase())
 
-    if (first === '') return { text: await status($, setting.mode, setting.pool) }
+    if (first === '' || first === 'menu') {
+      if (await openMenu($)) return { text: 'Arcade menu open: pick a game, ☆ makes it your default. Esc closes. "/arcade help" lists the commands.' }
+      return { text: await status($, setting.mode, setting.pool) }
+    }
+    if (first === 'help' || first === 'status') return { text: await status($, setting.mode, setting.pool) }
+
+    if (first === 'moments') return { text: await momentsCommand($, options, e.args ?? '') }
+
+    if (first === 'default') {
+      const id = gameId(rest[0] ?? '')
+      if (id === undefined) return { text: `Name the game: ${GAMES.map(g => g.id).join(', ')}.` }
+      await makeDefault($, setting, id)
+      await update($, shown, () => [id])
+      return { text: `${title(id)} is the game every new terminal starts with, and plays here now.` }
+    }
 
     const reset = await askReset($, 'arcade', e.args)
     if (reset) return reset
@@ -347,7 +448,7 @@ export const register: Register = (on, options: PluginOptions) => {
         return { text: `Name the games for the pool: ${GAMES.map(g => g.id).join(', ')}.` }
       }
       const pool = poolOf(ids.join(','))
-      await save($, options, setting.mode, pool)
+      await save($, setting.mode, pool)
       setting.pool = pool
       await apply($, setting.mode, pool)
       return { text: await status($, setting.mode, pool) }
@@ -361,12 +462,12 @@ export const register: Register = (on, options: PluginOptions) => {
     // "/arcade tetris" swaps only this terminal; the setting and other terminals stay as they are.
     if (id !== undefined && rest[0] !== 'all') {
       await update($, shown, () => [id])
-      return { text: `${title(id)} in this terminal. "/arcade ${id} all" pins it for every terminal.` }
+      return { text: `${title(id)} in this terminal. "/arcade default ${id}" makes it the game new terminals start with.` }
     }
     // "/arcade tetris all" pins Tetris: fixed mode with Tetris first in the pool.
     const pool = id === undefined ? setting.pool : [id, ...setting.pool.filter(x => x !== id)]
     const next = id === undefined ? (mode as Mode) : 'fixed'
-    await save($, options, next, pool)
+    await save($, next, pool)
     Object.assign(setting, { mode: next, pool })
     await apply($, next, pool)
     return { text: await status($, next, pool) }
@@ -416,6 +517,66 @@ export const register: Register = (on, options: PluginOptions) => {
     return ran
   })
 
-  // The games draw at the right of the band, beside whatever else is there.
-  on('ui.render', { component: 'AbovePrompt' }, ($, e, next) => dragonRender($, e, ((e1: typeof e) => jackpotRender($, e1, ((e2: typeof e) => outlawRender($, e2, ((e3: typeof e) => tamaRender($, e3, ((e4: typeof e) => tetrisRender($, e4, ((e5: typeof e) => octopusRender($, e5, ((e6: typeof e) => duckRender($, e6, ((e7: typeof e) => bugsRender($, e7, ((e8: typeof e) => darioRender($, e8, ((e9: typeof e) => townRender($, e9, next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next))
+  // The games draw at the right of the band, beside whatever else is there; above them, a row of
+  // small controls (on top, so a short terminal that scrolls the band still shows them): the previous and next game, the menu, and (when this terminal shows a game other
+  // than the default) a button to make it the default.
+  on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+    const tree = await dragonRender($, e, ((e1: typeof e) => jackpotRender($, e1, ((e2: typeof e) => outlawRender($, e2, ((e3: typeof e) => tamaRender($, e3, ((e4: typeof e) => tetrisRender($, e4, ((e5: typeof e) => octopusRender($, e5, ((e6: typeof e) => duckRender($, e6, ((e7: typeof e) => bugsRender($, e7, ((e8: typeof e) => darioRender($, e8, ((e9: typeof e) => townRender($, e9, next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)
+    const ids = await read($, shown)
+    if (e.surface !== 'terminal' || e.props.hasSurvey || ids.length !== 1 || tree === null || tree === undefined) return tree
+    const { Box, Button, Text } = $.ui.resolve(e)
+    const id = ids[0] ?? ''
+    const fallback = await read($, defaultGame)
+    const isHinted = await read($, hint)
+    return (
+      <Box flexDirection="column">
+        <Box key="arcade-controls" flexDirection="row" justifyContent="flex-end" height={1}>
+          {isHinted ? <Text key="arcade-hint" dimColor wrap="truncate">{'▶ next game  ☰ all games and your default    '}</Text> : null}
+          <Button key="arcade-prev" label="◀" plain dimColor onPress={() => step($, -1)} />
+          <Text key="arcade-title" dimColor>{` ${title(id)} `}</Text>
+          <Button key="arcade-next" label="▶" plain dimColor onPress={() => step($, 1)} />
+          <Text key="arcade-gap"> </Text>
+          <Button key="arcade-menu" label="☰" plain dimColor onPress={() => openMenu($)} />
+          {fallback !== id ? <Text key="arcade-gap2"> </Text> : null}
+          {fallback !== id ? <Button key="arcade-default" label="☆ make default" plain dimColor onPress={() => makeDefault($, setting, id)} /> : null}
+        </Box>
+        {tree}
+      </Box>
+    )
+  })
+
+  // The game menu: every game with a line about it, its name a button that plays it here, and a
+  // star that makes it the game new terminals start with. Narrow when docked, so the line about each
+  // game is the part that gives way.
+  on('ui.render', { component: 'Pane', requestId: MENU }, async ($, e) => {
+    const { Box, Button, Text } = $.ui.resolve(e)
+    const ids = await read($, shown)
+    const fallback = await read($, defaultGame)
+    const width = Math.max(...GAMES.map(g => g.title.length)) + 1
+    return (
+      <Box flexDirection="column">
+        {GAMES.map(g => (
+          <Box key={`row-${g.id}`} flexDirection="row" height={1}>
+            <Text key={`on-${g.id}`} color="green">{ids.includes(g.id) ? '● ' : '  '}</Text>
+            <Box key={`name-${g.id}`} width={width} flexShrink={0}>
+              <Button key={`play-${g.id}`} label={g.title} plain onPress={() => update($, shown, () => [g.id])} />
+            </Box>
+            <Box key={`fav-${g.id}`} width={3} flexShrink={0}>
+              {fallback === g.id ? (
+                <Text key={`is-${g.id}`} color="yellow">★</Text>
+              ) : (
+                <Button key={`make-${g.id}`} label="☆" plain dimColor onPress={() => makeDefault($, setting, g.id)} />
+              )}
+            </Box>
+            <Text key={`what-${g.id}`} dimColor wrap="truncate">{BLURBS[g.id] ?? ''}</Text>
+          </Box>
+        ))}
+        <Text key="menu-gap"> </Text>
+        <Text key="menu-help" dimColor wrap="wrap">
+          {`A name plays it here. ☆ makes it the game new terminals start with${fallback === '' ? ` (now: ${setting.mode})` : ''}. Esc closes.`}
+        </Text>
+      </Box>
+    )
+  })
+
 }

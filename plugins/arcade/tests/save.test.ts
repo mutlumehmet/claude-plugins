@@ -26,8 +26,9 @@ async function open($: Engine) {
 const duck = async ($: Engine) => (await $.command.run({ command: 'duck', args: '' } as never)).text ?? ''
 const octopus = async ($: Engine) => (await $.command.run({ command: 'octopus', args: '' } as never)).text ?? ''
 
-test('a new terminal starts at zero, and what earlier versions saved is deleted', { options: { mode: 'fixed', pool: 'duck' } }, async ($, on) => {
+test('a new terminal starts at zero, and what earlier versions saved is deleted', async ($, on) => {
   const store: Record<string, unknown> = {
+    setting: { mode: 'fixed', pool: 'duck' },
     'duck.score': { hits: 12, escaped: 3, tools: 40 },
     'duck.score@abc': { hits: 7, escaped: 1, tools: 9 },
     'town.map@abc': { plots: [], next: 0 },
@@ -39,24 +40,24 @@ test('a new terminal starts at zero, and what earlier versions saved is deleted'
   mock.clock(on)
   await open($)
   expect(await duck($)).toMatch(/▼ 0/)
-  expect(Object.keys(store).sort()).toEqual(['days', 'rotate'])
+  expect(Object.keys(store).sort()).toEqual(['days', 'rotate', 'setting', 'welcome'])
 })
 
-test('the games write nothing to the store while they play', { options: { mode: 'fixed', pool: 'town' } }, async ($, on) => {
-  const store: Record<string, unknown> = {}
+test('the games write nothing to the store while they play', async ($, on) => {
+  const store: Record<string, unknown> = { setting: { mode: 'fixed', pool: 'town' } }
   world(on, store)
   const clock = mock.clock(on)
   await open($)
   await $.tool.call({ tool: 'Read', file_path: '/work/app/a.ts' } as never)
   await clock.advance(2100)
   expect(await duck($)).toMatch(/⚒ 1/)
-  expect(Object.keys(store).filter(k => k !== 'days' && k !== 'setting' && k !== 'rotate')).toEqual([])
+  expect(Object.keys(store).filter(k => !['days', 'setting', 'rotate', 'welcome'].includes(k))).toEqual([])
 })
 
 // Slow by nature: checking that the minute runs out moves every game's frame clock a minute on,
 // about 900 frames each, which takes a few seconds on a CI runner.
-test('a reset asks first, needs "reset yes" within a minute, and clears only this game', { timeoutMs: 20_000, options: { mode: 'fixed', pool: 'duck' } }, async ($, on) => {
-  const store: Record<string, unknown> = {}
+test('a reset asks first, needs "reset yes" within a minute, and clears only this game', { timeoutMs: 20_000 }, async ($, on) => {
+  const store: Record<string, unknown> = { setting: { mode: 'fixed', pool: 'duck' } }
   world(on, store)
   const clock = mock.clock(on)
   await open($)

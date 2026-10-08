@@ -1,9 +1,9 @@
 import { expect, mock, test } from 'claude-code/testing'
 import type { On } from 'claude-code'
-import { begin } from './start'
+import { begin, pin } from './start'
 
 // The Arcade shows only this game in these tests.
-const ONLY = { options: { mode: 'fixed', pool: 'outlaw' } }
+const ONLY = { mode: 'fixed', pool: 'outlaw' }
 
 const BAND = {
   plugin: 'arcade',
@@ -24,7 +24,8 @@ function world(on: On, toasts: string[] = []) {
   })
 }
 
-test('the duel sits in the band with the score under it', ONLY, async ($, on) => {
+test('the duel sits in the band with the score under it', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   const ui = await $.ui.mount(BAND)
@@ -34,7 +35,8 @@ test('the duel sits in the band with the score under it', ONLY, async ($, on) =>
   await ui.unmount()
 })
 
-test('/arcade hide takes the outlaw out of the band', ONLY, async ($, on) => {
+test('/arcade hide takes the outlaw out of the band', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   await $.command.run({ command: 'arcade', args: 'hide' } as never)
@@ -43,14 +45,16 @@ test('/arcade hide takes the outlaw out of the band', ONLY, async ($, on) => {
   await ui.unmount()
 })
 
-test('/outlaw explains the score and /outlaw draw is a practice duel', ONLY, async ($, on) => {
+test('/outlaw explains the score and /outlaw draw is a practice duel', async ($, on) => {
+  pin(ONLY)
   world(on)
   await begin($, on)
   expect((await $.command.run({ command: 'outlaw', args: '' } as never)).text).toMatch(/YOU 0 : 0 BUGS/)
   expect((await $.command.run({ command: 'outlaw', args: 'draw' } as never)).text).toMatch(/no score/)
 })
 
-test('a commit makes the gunslinger draw, with no other mod installed', ONLY, async ($, on) => {
+test('a commit makes the gunslinger draw, with no other mod installed', async ($, on) => {
+  pin(ONLY)
   const toasts: string[] = []
   world(on, toasts)
   on('tool.call', { tool: 'Bash' }, () => ({ result: { stdout: '[main abc] x', stderr: '', interrupted: false } }))

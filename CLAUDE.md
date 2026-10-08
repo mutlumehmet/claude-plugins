@@ -42,9 +42,11 @@ when a task calls for them) or one mod (a hooks module that runs inside Claude C
 - **Every README ends with an About section** that shows `docs/images/site-banner.png` linked to
   the author's site (in a plugin README the path is `../../docs/images/site-banner.png`, in a skill README `../../../../docs/images/site-banner.png`), then a line
   with the author, the site and the sponsor links. The site URL is in `CLAUDE.local.md`.
-- **The main `README.md` stays short:** banner, intro, one table row per skill (name linking to its
+- **The main `README.md` stays short:** banner, intro, a contents line, one table row per skill (name linking to its
   folder, one-line description), generic install, contributing, about, license. Skill details never
-  go into the main README.
+  go into the main README. The one exception is the Arcade, which opens the README (decided 8
+  October 2026, so a visitor sees the games first): install, how to switch games, and a gallery
+  table of every game with its command and GIF. A new game adds a row there and in the Arcade README.
 - Never commit `.env`, config files with real values, or OS junk (`.DS_Store`).
 
 ## Rules for every mod

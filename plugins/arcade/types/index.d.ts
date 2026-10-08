@@ -72,6 +72,9 @@ declare module 'claude-code' {
       // Which games this session shows, and the setting they were picked for.
       shown: readonly string[]
       pickedFor: string
+      // The game new terminals start with ('' unless fixed), and whether the first sessions' hint shows.
+      defaultGame: string
+      hint: boolean
       dragonHoard: Hoard
       dragonMood: DragonMood
       dragonFeat: string
