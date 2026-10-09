@@ -1,0 +1,31 @@
+{
+  "label": "Diablo II effects: level up, quest done, gold, a portal opens (Blizzard, fan use)",
+  "ordered": [
+    "potion-drink.mp3",
+    "select.mp3"
+  ],
+  "needsYou": [
+    "hostile.mp3",
+    "waypoint.mp3"
+  ],
+  "longDone": [
+    "level-up.mp3",
+    "quest-done.mp3"
+  ],
+  "subagent": [
+    "gold.mp3",
+    "rune.mp3"
+  ],
+  "failed": [
+    "item-broken.mp3",
+    "glass-break.mp3"
+  ],
+  "pushed": [
+    "portal-open.mp3",
+    "cairn-success.mp3"
+  ],
+  "compacted": [
+    "identify.mp3",
+    "scroll.mp3"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "label": "Duke Nukem 3D: come get some, hail to the king, baby (fan use)",
+  "ordered": [
+    "come-get-some.mp3",
+    "im-going-in.mp3"
+  ],
+  "needsYou": [
+    "waiting-for-christmas.mp3",
+    "you-wanna-dance.mp3"
+  ],
+  "longDone": [
+    "damn-im-good.mp3",
+    "piece-of-cake.mp3"
+  ],
+  "subagent": [
+    "groovy.mp3",
+    "back-to-work.mp3"
+  ],
+  "failed": [
+    "game-over.mp3",
+    "this-sucks.mp3",
+    "gotta-hurt.mp3"
+  ],
+  "pushed": [
+    "hail-to-the-king.mp3",
+    "bubble-gum.mp3"
+  ],
+  "compacted": [
+    "much-better.mp3",
+    "needed-that.mp3"
+  ]
+}

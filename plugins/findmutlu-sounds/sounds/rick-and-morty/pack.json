@@ -1,0 +1,36 @@
+{
+  "label": "Rick and Morty: family-friendly lines from Rick and the crew (fan use)",
+  "ordered": [
+    "wubba-lubba-dub-dub.mp3",
+    "here-we-go.mp3",
+    "time-for-action.mp3",
+    "twenty-minute-adventure.mp3"
+  ],
+  "needsYou": [
+    "show-me-what-you-got.mp3",
+    "yes-or-no.mp3",
+    "hey-morty.mp3"
+  ],
+  "longDone": [
+    "pickle-rick.mp3",
+    "pure-luck.mp3"
+  ],
+  "subagent": [
+    "what-is-my-purpose.mp3",
+    "everything-you-want.mp3",
+    "oh-yeah.mp3"
+  ],
+  "failed": [
+    "oh-jeeze.mp3",
+    "oh-man.mp3",
+    "not-in-control.mp3"
+  ],
+  "pushed": [
+    "im-pickle-rick.mp3",
+    "my-plan-all-along.mp3"
+  ],
+  "compacted": [
+    "brain-functionality.mp3",
+    "super-intelligence.mp3"
+  ]
+}

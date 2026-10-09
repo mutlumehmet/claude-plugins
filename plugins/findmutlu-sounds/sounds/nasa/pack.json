@@ -1,0 +1,29 @@
+{
+  "label": "NASA radio: the Eagle has landed, liftoff, we have had a problem (public domain)",
+  "ordered": [
+    "roger-roll.m4a",
+    "quindar-beep.m4a"
+  ],
+  "needsYou": [
+    "houston-discovery.m4a",
+    "how-do-you-read.m4a"
+  ],
+  "longDone": [
+    "eagle-landed.m4a",
+    "wheels-stop.m4a"
+  ],
+  "subagent": [
+    "go-for-deploy.m4a",
+    "go-at-throttle-up.m4a"
+  ],
+  "failed": [
+    "weve-had-a-problem.m4a"
+  ],
+  "pushed": [
+    "liftoff.m4a",
+    "liftoff-41d.m4a"
+  ],
+  "compacted": [
+    "vector-transfer.m4a"
+  ]
+}

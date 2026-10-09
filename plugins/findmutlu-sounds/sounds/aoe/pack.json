@@ -1,0 +1,40 @@
+{
+  "label": "Age of Empires II: wololo, the horn and the taunts (Microsoft Game Content Usage Rules)",
+  "ordered": [
+    "yes.mp3",
+    "start-the-game-already.mp3",
+    "roggan.mp3"
+  ],
+  "needsYou": [
+    "conversion-warning.mp3",
+    "what-age-are-you-in.mp3",
+    "wait-for-my-signal.mp3"
+  ],
+  "longDone": [
+    "drum-fanfare.mp3",
+    "long-time-no-siege.mp3",
+    "good-to-be-the-king.mp3",
+    "nice-town.mp3"
+  ],
+  "subagent": [
+    "horn.mp3",
+    "sssh-ho.mp3",
+    "oooh.mp3"
+  ],
+  "failed": [
+    "herb-laugh.mp3",
+    "no.mp3",
+    "two-hours-to-die.mp3",
+    "the-wonder-no.mp3",
+    "being-rushed.mp3"
+  ],
+  "pushed": [
+    "viking-horn.mp3",
+    "converted.mp3",
+    "raiding-party.mp3"
+  ],
+  "compacted": [
+    "wololo.mp3",
+    "give-me-your-extra-resources.mp3"
+  ]
+}

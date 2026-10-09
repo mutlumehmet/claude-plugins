@@ -1,0 +1,35 @@
+{
+  "label": "The Big Lebowski: the Dude, Walter, Donny and friends, clean lines (fan use)",
+  "ordered": [
+    "the-dude-abides.mp3",
+    "far-out.mp3",
+    "no-problemo.mp3"
+  ],
+  "needsYou": [
+    "phones-ringing-dude.mp3",
+    "whats-your-point.mp3",
+    "certain-things-have-come-to-light.mp3"
+  ],
+  "longDone": [
+    "rug-tied-the-room-together.mp3",
+    "goodnight-sweet-prince.mp3"
+  ],
+  "subagent": [
+    "i-like-your-style.mp3",
+    "ive-got-information.mp3"
+  ],
+  "failed": [
+    "over-the-line.mp3",
+    "mark-it-zero.mp3",
+    "world-of-pain.mp3",
+    "this-aggression-will-not-stand.mp3"
+  ],
+  "pushed": [
+    "way-to-go-donny.mp3",
+    "wave-of-the-future.mp3"
+  ],
+  "compacted": [
+    "just-take-it-easy.mp3",
+    "strikes-and-gutters.mp3"
+  ]
+}

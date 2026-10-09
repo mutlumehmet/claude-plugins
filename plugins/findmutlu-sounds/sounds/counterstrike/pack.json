@@ -1,0 +1,31 @@
+{
+  "label": "Counter-Strike: the radio calls (fan use)",
+  "ordered": [
+    "lets-go.m4a",
+    "roger-that.m4a",
+    "affirmative.m4a"
+  ],
+  "needsYou": [
+    "need-backup.m4a",
+    "report-in.m4a"
+  ],
+  "longDone": [
+    "area-clear.m4a"
+  ],
+  "subagent": [
+    "moving-out.m4a",
+    "you-take-the-point.m4a"
+  ],
+  "failed": [
+    "negative.m4a",
+    "enemy-spotted.m4a"
+  ],
+  "pushed": [
+    "lock-and-load.m4a"
+  ],
+  "compacted": [
+    "fall-back.m4a",
+    "stick-together.m4a",
+    "hold-your-position.m4a"
+  ]
+}

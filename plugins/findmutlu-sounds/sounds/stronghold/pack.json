@@ -1,0 +1,37 @@
+{
+  "label": "Stronghold Crusader: the AI lords (fan use)",
+  "ordered": [
+    "richard-i-march.mp3",
+    "abbot-agreed.mp3",
+    "marshal-off-we-go.mp3",
+    "philip-on-my-honor.mp3"
+  ],
+  "needsYou": [
+    "abbot-send-help.mp3",
+    "sheriff-help-surrounded.mp3"
+  ],
+  "longDone": [
+    "richard-sound-the-fanfare.mp3",
+    "abbot-victory-for-me.mp3",
+    "pig-no-one-beats-the-pig.mp3"
+  ],
+  "subagent": [
+    "rat-plans-worked-perfectly.mp3",
+    "saladin-another-has-fallen.mp3",
+    "emir-this-is-easy.mp3"
+  ],
+  "failed": [
+    "abbot-my-troops-fail-me.mp3",
+    "emir-what-a-disaster.mp3",
+    "marshal-bad-tactics.mp3"
+  ],
+  "pushed": [
+    "richard-the-lion-roars.mp3",
+    "wolf-i-win-you-lose.mp3",
+    "sheriff-sweet-victory.mp3"
+  ],
+  "compacted": [
+    "sheriff-not-father-christmas.mp3",
+    "richard-lean-times.mp3"
+  ]
+}

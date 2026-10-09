@@ -51,6 +51,11 @@
       "description": "Remembers which session a fork came from (renames never break it), shows it above the prompt, and sends a fork's report to its parent only when you approve it"
     },
     {
+      "name": "findmutlu-sounds",
+      "source": "./plugins/findmutlu-sounds",
+      "description": "A short sound when Claude needs you, a long job finishes, a test fails or a push lands. Packs from StarCraft, Warcraft, Age of Empires, Command & Conquer, Diablo, Counter-Strike, Duke Nukem, Rick and Morty, The Big Lebowski and more, or your own"
+    },
+    {
       "name": "toolkit",
       "source": "./plugins/toolkit",
       "description": "The Claude Code Toolkit in one install: small mods for long sessions, each also installable on its own."

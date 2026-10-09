@@ -1,0 +1,33 @@
+{
+  "label": "Team Fortress 2: the Engineer (fan use)",
+  "ordered": [
+    "teleporter-comin-right-up.mp3",
+    "buildin-a-sentry.mp3",
+    "lets-do-this-texas-style.mp3"
+  ],
+  "needsYou": [
+    "not-on-auto-pilot.mp3",
+    "help-me.mp3"
+  ],
+  "longDone": [
+    "done-and-done.mp3",
+    "knife-fight-in-a-phonebooth.mp3"
+  ],
+  "subagent": [
+    "another-satisfied-customer.mp3",
+    "nice-work.mp3"
+  ],
+  "failed": [
+    "you-just-aint-doin-it-right.mp3",
+    "sentry-down.mp3",
+    "told-ya-dont-touch.mp3"
+  ],
+  "pushed": [
+    "yeehaw.mp3",
+    "move-em-out.mp3"
+  ],
+  "compacted": [
+    "good-night-irene.mp3",
+    "now-ive-seen-everything.mp3"
+  ]
+}

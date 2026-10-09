@@ -1,0 +1,1 @@
+{ "description": "sound packs hooks module", "modules": ["./register.js"] }

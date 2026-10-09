@@ -1,0 +1,32 @@
+{
+  "label": "The Elder Scrolls IV: Sheogorath, Prince of Madness (fan use)",
+  "ordered": [
+    "good-choice.m4a",
+    "i-like-it.m4a",
+    "dance-sing-smile.m4a"
+  ],
+  "needsYou": [
+    "ive-been-waiting-for-you.m4a",
+    "need-a-champion.m4a"
+  ],
+  "longDone": [
+    "cheese-for-everyone.m4a"
+  ],
+  "subagent": [
+    "congratulations.m4a",
+    "but-youre-not-done-yet.m4a"
+  ],
+  "failed": [
+    "boring-boring-boring.m4a",
+    "absolutely-not.m4a",
+    "how-rude.m4a"
+  ],
+  "pushed": [
+    "prince-of-madness.m4a",
+    "dont-get-too-comfortable.m4a"
+  ],
+  "compacted": [
+    "a-little-busy-here.m4a",
+    "niggling-little-details.m4a"
+  ]
+}

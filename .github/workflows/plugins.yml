@@ -16,6 +16,8 @@ jobs:
         run: npm install -g @anthropic-ai/claude-code
       - name: The Arcade's hooks/arcade.jsx is built from its src/
         run: plugins/arcade/scripts/build.sh --check
+      - name: Generated sound pack tables match their sounds/*/pack.json
+        run: for s in plugins/*/scripts/packs.py; do python3 "$s" --check; done
       - name: Validate the marketplace and every plugin
         run: |
           claude plugin validate .

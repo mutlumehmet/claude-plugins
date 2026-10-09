@@ -1,0 +1,37 @@
+{
+  "label": "Rick and Morty: Mr. Meeseeks, look at me! (fan use)",
+  "ordered": [
+    "can-do.mp3",
+    "can-do-2.mp3",
+    "ooh-okay.mp3",
+    "okay.mp3"
+  ],
+  "needsYou": [
+    "what-do-you-got.mp3",
+    "excuse-me.mp3",
+    "back-to-the-task.mp3"
+  ],
+  "longDone": [
+    "all-done.mp3",
+    "exist-this-long.mp3"
+  ],
+  "subagent": [
+    "im-mr-meeseeks.mp3",
+    "look-at-me.mp3",
+    "fulfill-my-purpose.mp3",
+    "yes-sirree.mp3"
+  ],
+  "failed": [
+    "cant-take-it.mp3",
+    "frustrating.mp3",
+    "doesnt-work-like-that.mp3"
+  ],
+  "pushed": [
+    "ooh-yeah.mp3",
+    "yes-maam.mp3"
+  ],
+  "compacted": [
+    "gotta-relax.mp3",
+    "let-me-try.mp3"
+  ]
+}

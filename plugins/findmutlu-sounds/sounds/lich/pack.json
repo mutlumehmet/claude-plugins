@@ -1,0 +1,33 @@
+{
+  "label": "Warcraft III: the Lich and Kel'Thuzad (fan use)",
+  "ordered": [
+    "as-the-master-commands.m4a",
+    "i-shall-obey.m4a",
+    "direct-my-hatred.m4a"
+  ],
+  "needsYou": [
+    "thy-bidding-master.m4a",
+    "what-is-thy-will.m4a",
+    "i-await-your-command.m4a"
+  ],
+  "longDone": [
+    "thy-will-be-done.m4a",
+    "the-ancient-evil-survives.m4a"
+  ],
+  "subagent": [
+    "for-the-lich-king.m4a",
+    "it-is-destined.m4a"
+  ],
+  "failed": [
+    "aaugh.m4a",
+    "do-not-try-my-patience.m4a"
+  ],
+  "pushed": [
+    "kneel-before-my-frost-nova.m4a",
+    "dread-lord-not-drug-lord.m4a"
+  ],
+  "compacted": [
+    "the-scourge-will-consume-all.m4a",
+    "bone-to-pick.m4a"
+  ]
+}

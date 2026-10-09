@@ -1,0 +1,29 @@
+{
+  "label": "StarCraft Terran: SCV good to go, nuclear launch detected (Blizzard, fan use)",
+  "ordered": [
+    "scv-good-to-go.mp3",
+    "jacked-up.mp3"
+  ],
+  "needsYou": [
+    "piece-of-me.mp3",
+    "supply-depots.mp3"
+  ],
+  "longDone": [
+    "battlecruiser-operational.mp3"
+  ],
+  "subagent": [
+    "research-complete.mp3",
+    "upgrade-complete.mp3"
+  ],
+  "failed": [
+    "nuclear-launch.mp3",
+    "base-under-attack.mp3"
+  ],
+  "pushed": [
+    "in-the-pipe.mp3"
+  ],
+  "compacted": [
+    "not-enough-minerals.mp3",
+    "vespene-gas.mp3"
+  ]
+}

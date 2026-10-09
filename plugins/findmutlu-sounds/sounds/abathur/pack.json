@@ -1,0 +1,29 @@
+{
+  "label": "StarCraft II: Abathur, the Zerg evolution master (fan use)",
+  "ordered": [
+    "thanks-00.ogg",
+    "thanks-01.ogg"
+  ],
+  "needsYou": [
+    "idle.ogg",
+    "help-me.ogg"
+  ],
+  "longDone": [
+    "evolution-00.ogg",
+    "evolution-01.ogg"
+  ],
+  "subagent": [
+    "brutalisk.ogg",
+    "thanks-02.ogg"
+  ],
+  "failed": [
+    "units-lost.ogg"
+  ],
+  "pushed": [
+    "positive.ogg",
+    "generic.ogg"
+  ],
+  "compacted": [
+    "brutalisk-reminder.ogg"
+  ]
+}

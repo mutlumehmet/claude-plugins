@@ -1,0 +1,35 @@
+{
+  "label": "Tiberian Sun: CABAL, the Nod AI (fan use)",
+  "ordered": [
+    "establishing-battlefield-control.m4a",
+    "building.m4a",
+    "please-stand-by.m4a"
+  ],
+  "needsYou": [
+    "incoming-transmission.m4a",
+    "select-target.m4a",
+    "new-construction-options.m4a"
+  ],
+  "longDone": [
+    "primary-objective-achieved.m4a",
+    "mission-accomplished.m4a"
+  ],
+  "subagent": [
+    "reinforcements-have-arrived.m4a",
+    "objective-complete.m4a"
+  ],
+  "failed": [
+    "base-perimeter-breached.m4a",
+    "critical-unit-lost.m4a",
+    "you-make-this-easy.m4a"
+  ],
+  "pushed": [
+    "congratulations-on-your-success.m4a",
+    "prepare-for-decimation.m4a"
+  ],
+  "compacted": [
+    "construct-more-power-plants.m4a",
+    "low-power.m4a",
+    "silos-needed.m4a"
+  ]
+}

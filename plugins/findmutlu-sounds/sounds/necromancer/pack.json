@@ -1,0 +1,37 @@
+{
+  "label": "Diablo II Necromancer: raise skeleton, not enough mana, I cannot carry any more (Blizzard, fan use)",
+  "ordered": [
+    "ok.mp3",
+    "yes.mp3",
+    "lets-go.mp3"
+  ],
+  "needsYou": [
+    "need-help.mp3",
+    "yes-question.mp3",
+    "what-else.mp3"
+  ],
+  "longDone": [
+    "diablo-killed.mp3",
+    "baal-defeated.mp3",
+    "andariel-done.mp3"
+  ],
+  "subagent": [
+    "raise-skeleton.mp3",
+    "golem.mp3",
+    "revive.mp3"
+  ],
+  "failed": [
+    "i-cant.mp3",
+    "oops.mp3",
+    "not-enough-mana.mp3"
+  ],
+  "pushed": [
+    "time-to-die.mp3",
+    "meet-your-fate.mp3",
+    "corpse-explosion.mp3"
+  ],
+  "compacted": [
+    "cant-carry.mp3",
+    "need-mana.mp3"
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "label": "World of Warcraft: the Tauren (fan use)",
+  "ordered": [
+    "peace-and-patience.ogg",
+    "indeed.ogg",
+    "it-is-so.ogg"
+  ],
+  "needsYou": [
+    "i-need-assistance.ogg",
+    "wont-you-help.ogg"
+  ],
+  "longDone": [
+    "fate-smiles-upon-you.ogg",
+    "our-ancestors-be-praised.ogg"
+  ],
+  "subagent": [
+    "well-done.ogg",
+    "pleasure-doing-business.ogg"
+  ],
+  "failed": [
+    "impermissible.ogg",
+    "i-cannot-do-that.ogg"
+  ],
+  "pushed": [
+    "for-the-horde.ogg",
+    "ride-the-winds.ogg"
+  ],
+  "compacted": [
+    "my-inventory-is-full.ogg",
+    "i-cannot-carry-more.ogg",
+    "moo.ogg"
+  ]
+}

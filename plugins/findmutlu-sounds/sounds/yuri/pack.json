@@ -1,0 +1,33 @@
+{
+  "label": "Red Alert 2: Yuri's Revenge: Yuri (fan use)",
+  "ordered": [
+    "your-thoughts-are-mine.m4a",
+    "a-trivial-matter.m4a",
+    "yes-i-know.m4a"
+  ],
+  "needsYou": [
+    "i-foresaw-this-need.m4a",
+    "share-your-thoughts.m4a",
+    "something-to-think-about.m4a"
+  ],
+  "longDone": [
+    "yes-my-exquisite-mind.m4a",
+    "they-will-obey.m4a"
+  ],
+  "subagent": [
+    "another-pawn-joins-us.m4a",
+    "he-shall-serve-me-well.m4a"
+  ],
+  "failed": [
+    "i-did-not-foresee-this.m4a",
+    "this-could-be-a-problem.m4a"
+  ],
+  "pushed": [
+    "there-is-only-one-yuri.m4a",
+    "yield-to-me.m4a"
+  ],
+  "compacted": [
+    "all-in-the-mind.m4a",
+    "i-cannot-be-overcome.m4a"
+  ]
+}

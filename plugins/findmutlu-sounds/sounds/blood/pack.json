@@ -1,0 +1,32 @@
+{
+  "label": "Blood: Caleb laughs, quotes and boomsticks (fan use)",
+  "ordered": [
+    "lets-go.mp3",
+    "alright.mp3"
+  ],
+  "needsYou": [
+    "come-out.mp3",
+    "play-with-me.mp3"
+  ],
+  "longDone": [
+    "i-won.mp3",
+    "did-it.mp3"
+  ],
+  "subagent": [
+    "laughing.mp3",
+    "yeah.mp3"
+  ],
+  "failed": [
+    "all-dead.mp3",
+    "rip.mp3",
+    "pathetic.mp3"
+  ],
+  "pushed": [
+    "boomstick.mp3",
+    "napalm.mp3"
+  ],
+  "compacted": [
+    "live-again.mp3",
+    "nevermore.mp3"
+  ]
+}

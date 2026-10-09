@@ -1,0 +1,33 @@
+{
+  "label": "Red Alert 2: Kirov reporting, for mother Russia (EA, fan use)",
+  "ordered": [
+    "acknowledged.mp3",
+    "yes-commander.mp3",
+    "can-do.mp3"
+  ],
+  "needsYou": [
+    "commander.mp3",
+    "give-me-a-job.mp3",
+    "anytime-boss.mp3"
+  ],
+  "longDone": [
+    "kirov-reporting.mp3",
+    "cha-ching.mp3"
+  ],
+  "subagent": [
+    "unit-reporting.mp3",
+    "agent-ready.mp3"
+  ],
+  "failed": [
+    "mommy.mp3",
+    "bail-out.mp3"
+  ],
+  "pushed": [
+    "kaboom.mp3",
+    "for-mother-russia.mp3"
+  ],
+  "compacted": [
+    "your-mind-is-clear.mp3",
+    "deconstructing.mp3"
+  ]
+}

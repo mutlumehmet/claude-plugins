@@ -1,0 +1,28 @@
+{
+  "label": "StarCraft Protoss: construct additional pylons, my life for Aiur (Blizzard, fan use)",
+  "ordered": [
+    "adun-toridas.mp3"
+  ],
+  "needsYou": [
+    "transmission.mp3"
+  ],
+  "longDone": [
+    "upgrade-complete.mp3",
+    "research.mp3"
+  ],
+  "subagent": [
+    "upgrade.mp3",
+    "systems-functional.mp3"
+  ],
+  "failed": [
+    "pylons.mp3",
+    "pylons-2.mp3"
+  ],
+  "pushed": [
+    "life-for-aiur.mp3",
+    "power-overwhelming.mp3"
+  ],
+  "compacted": [
+    "vespene-gas.mp3"
+  ]
+}

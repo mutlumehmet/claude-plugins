@@ -1,0 +1,35 @@
+{
+  "label": "Warcraft III peon: work work, zug zug, something need doing? (Blizzard, fan use)",
+  "ordered": [
+    "work-work.mp3",
+    "okey-dokey.mp3",
+    "i-can-do-that.mp3",
+    "be-happy-to.mp3"
+  ],
+  "needsYou": [
+    "something-need-doing.mp3",
+    "ready-to-work.mp3",
+    "what-do-you-want.mp3"
+  ],
+  "longDone": [
+    "zug-zug.mp3"
+  ],
+  "subagent": [
+    "me-busy.mp3",
+    "yes.mp3",
+    "ok.mp3"
+  ],
+  "failed": [
+    "splat.mp3",
+    "tummy-feels-funny.mp3",
+    "not-that-kind-of-orc.mp3"
+  ],
+  "pushed": [
+    "kill-them.mp3",
+    "why-not.mp3"
+  ],
+  "compacted": [
+    "leave-me-alone.mp3",
+    "no-time-for-play.mp3"
+  ]
+}
