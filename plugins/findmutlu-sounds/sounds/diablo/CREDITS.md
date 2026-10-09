@@ -2,7 +2,7 @@
 
 Sounds from Diablo II: Lord of Destruction © Blizzard Entertainment, Inc. Not licensed: shared as non-commercial fan use, not endorsed by or affiliated with the rights holder. If you hold the rights and want them removed, open an issue and the pack goes.
 
-Every clip is the original MP3 as uploaded to the soundboard https://www.101soundboards.com/boards/1631363-diablo-2-diablo-2-lord-of-destruction-pc-items-objects-gargoyle-trap-catapult, unchanged except three that carried extra audio from the upload: level-up.mp3 lost a 0.15 s beep stamped before the sound, gold.mp3 and potion-drink.mp3 lost a separate trailing sound after a silent gap. Those three are trimmed and re-encoded (MP3, VBR quality 2); the source column still links the uploads.
+Every clip is the original MP3 as uploaded to the soundboard https://www.101soundboards.com/boards/1631363-diablo-2-diablo-2-lord-of-destruction-pc-items-objects-gargoyle-trap-catapult, unchanged except five that carried extra audio from the upload: level-up.mp3 lost a 0.15 s beep stamped before the sound; gold.mp3 (2.0 s), rune.mp3 (0.6 s) and scroll.mp3 (1.2 s) lost the site's own intro, matched against the same intro on other 101soundboards files, so each now starts at the item sound; potion-drink.mp3 lost a separate trailing sound after a silent gap. Those five are trimmed and re-encoded (MP3); the source column still links the uploads.
 
 | File | Moment | Source file |
 | :- | :- | :- |
