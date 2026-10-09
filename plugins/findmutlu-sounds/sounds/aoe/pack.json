@@ -36,5 +36,13 @@
   "compacted": [
     "wololo.mp3",
     "give-me-your-extra-resources.mp3"
+  ],
+  "subagentStart": [
+    "villager-created.mp3",
+    "military-created.mp3"
+  ],
+  "mcp": [
+    "trebuchet-fire.mp3",
+    "mangonel-fire.mp3"
   ]
 }

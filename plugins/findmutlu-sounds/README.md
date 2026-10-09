@@ -7,6 +7,10 @@ Claude asks for your OK, a long job finishes, a test fails, a push goes through.
 SCV, a Protoss zealot, an Age of Empires monk or Turkish villager, a Kirov airship, a Diablo II necromancer, Duke Nukem, Pickle Rick, Caleb from Blood, or the NASA
 radio. Part of [claude-plugins](../../README.md).
 
+[![The teaser: a Claude Code session runs npm test, one test fails, and StarCraft's "Nuclear launch detected" plays. Turn the sound on.](../../docs/images/findmutlu-sounds-teaser.png)](../../docs/videos/findmutlu-sounds-teaser.mp4)
+
+**[Watch the teaser with sound](../../docs/videos/findmutlu-sounds-teaser.mp4)** (28 seconds).
+
 ## How it works
 
 [![The how it works film: it opens on the pack logos, then a Claude session, drawn as a Fat Invader at its laptop, sends each moment to a speaker, and the speaker plays that moment's sound. Turn the sound on.](../../docs/images/findmutlu-sounds-how.png)](../../docs/videos/findmutlu-sounds-how.mp4)
@@ -18,10 +22,12 @@ radio. Part of [claude-plugins](../../README.md).
 | `ordered` | You send a prompt after 5 quiet minutes (an order given, back at work) |
 | `needsYou` | Claude waits for you: a permission prompt, a question for you or a plan to approve |
 | `longDone` | A turn that took 60 seconds or more is answered |
+| `subagentStart` | A subagent starts (a villager is created, from the aoe pack, whatever your pack) |
 | `subagent` | A subagent finishes |
 | `failed` | A test, build, lint or type check fails (a step such as `npm test`, `pytest`, `tsc` or `scripts/check-x.sh` exits with an error; text inside a heredoc never counts) |
 | `pushed` | `git push` goes through |
 | `compacted` | The conversation is compacted |
+| `mcp` | An MCP tool runs, at most every 5 minutes. Off until you turn it on (`/sounds mcp aoe` fires a trebuchet) |
 
 At most one sound every 2.5 seconds across all your terminals, so a handful of subagents finishing
 together give one sound, not a choir. The same clip never plays twice in a row for a moment. A pack
@@ -73,16 +79,25 @@ same terms.
 
 | Command | Effect |
 |---|---|
-| `/sounds` | This terminal's pack, the default for new terminals, the settings and every pack |
+| `/sounds` | This terminal's pack, the default for new terminals, the settings, what every moment plays, every command and every pack |
 | `/sounds <pack>` | Switch this terminal only |
 | `/sounds default <pack>` | The pack every new terminal starts with |
-| `/sounds test [pack]` | Play every sound of a pack once, whatever the settings |
+| `/sounds <moment> <pack>` | One moment plays another pack's clips, e.g. `/sounds pushed aoe-turk`: each push plays one of that pack's push clips |
+| `/sounds <moment> <pack> <clip>` | Always the same clip, e.g. `/sounds pushed aoe-turk allah-allah` |
+| `/sounds <moment> <pack> <pack>` | Mix two or more packs' clips for that moment |
+| `/sounds <moment> random` | Each time a clip from any pack |
+| `/sounds <moment> off`, `/sounds <moment> reset` | Silence one moment, or give it back to the terminal's pack |
+| `/sounds <moment>` | What that moment plays now and the names of its clips |
+| `/sounds test [pack] [moment]` | Play every sound of a pack once, or only one moment of it (`/sounds test aoe-turk pushed`), whatever the settings |
 | `/sounds off`, `/sounds on` | Mute, unmute |
 | `/sounds away`, `/sounds always` | Play only while no terminal or editor is the front app, or always (the default). The prompt answer still plays in away mode: you are at the keyboard |
 | `/sounds night off`, `/sounds night on` | Quiet hours from 23:00 to 07:00, on by default |
 
-Install asks nothing. The first session shows one notice naming the pack and `/sounds`. Settings
-are kept in the plugin's store, per Claude Code config directory.
+Every change answers with one line saying what changed, and a mistyped pack or clip name gets the
+one it meant ("Did you mean aoe-turk?"). Moment names are typed in lowercase (`/sounds needsyou`).
+
+Install asks nothing. The first session shows one notice naming the pack and `/sounds`. Settings,
+moment rules included, are kept in the plugin's store, per Claude Code config directory.
 
 ## Your own packs
 

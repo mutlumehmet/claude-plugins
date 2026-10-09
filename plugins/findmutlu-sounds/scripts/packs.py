@@ -14,7 +14,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 MODULE = ROOT / "hooks" / "register.js"
-MOMENTS = ["ordered", "needsYou", "longDone", "subagent", "failed", "pushed", "compacted"]
+MOMENTS = ["ordered", "needsYou", "longDone", "subagentStart", "subagent", "failed", "pushed", "compacted", "mcp"]
 START = "// FILE_PACKS_START"
 END = "// FILE_PACKS_END"
 

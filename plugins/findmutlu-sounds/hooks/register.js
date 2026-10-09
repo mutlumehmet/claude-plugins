@@ -5,10 +5,15 @@
 //   needsYou     Claude waits for you: a permission prompt,   classic.Notification,
 //                a question, a plan to approve                tool.call (AskUserQuestion, ExitPlanMode)
 //   longDone     a turn of 60 s or more answered              turn.complete (main loop)
+//   subagentStart a subagent started                          classic.SubagentStart
 //   subagent     a subagent finished                          classic.SubagentStop
 //   failed       a test, build, lint or type check failed     tool.call (Bash, isError; the step run, not heredoc text)
 //   pushed       git push went through                        tool.call (Bash)
 //   compacted    the conversation was compacted               classic.PostCompact
+//   mcp          an MCP tool ran (off unless you turn it on)  tool.call (mcp__*, rests 5 minutes)
+//
+// Each moment plays the terminal's pack unless /sounds <moment> gave it its own rule: other packs,
+// one clip, random or off (kept in the plugin store as settings.moments)
 //
 // Three kinds of pack:
 //   file packs   clips in ../sounds/<pack>/ (source and rights holder in each CREDITS.md)
@@ -44,7 +49,28 @@ const PUSH_COMMAND = /\bgit\s+push\b/
 // Tools that stop and wait for your answer
 const ASKING_TOOLS = ['AskUserQuestion', 'ExitPlanMode']
 
-const MOMENTS = ['ordered', 'needsYou', 'longDone', 'subagent', 'failed', 'pushed', 'compacted']
+const MOMENTS = ['ordered', 'needsYou', 'longDone', 'subagentStart', 'subagent', 'failed', 'pushed', 'compacted', 'mcp']
+
+// What each moment means, for /sounds and its replies
+const MOMENT_INFO = {
+  ordered: 'you send a prompt (after 5 quiet minutes)',
+  needsYou: 'Claude waits for your OK or answer',
+  longDone: 'a turn of 60 s or more finishes',
+  subagentStart: 'a subagent starts',
+  subagent: 'a subagent finishes',
+  failed: 'a test, build or lint fails',
+  pushed: 'git push goes through',
+  compacted: 'the conversation is compacted',
+  mcp: 'an MCP tool runs (at most every 5 minutes)',
+}
+
+// Moments few packs carry start with a rule of their own: a villager is made when a subagent
+// starts; the MCP trebuchet is off until you turn it on (MCP tools run often)
+const DEFAULT_MOMENTS = { subagentStart: { packs: ['aoe'] }, mcp: { off: true } }
+
+// Moment names are typed in lowercase (/sounds needsyou)
+const MOMENT_BY_WORD = Object.fromEntries(MOMENTS.map((m) => [m.toLowerCase(), m]))
+const MCP_REST_MS = 5 * 60000
 
 // FILE_PACKS_START (generated from sounds/*/pack.json by scripts/packs.py; edit those, not this)
 const FILE_PACKS = {
@@ -62,6 +88,7 @@ const FILE_PACKS = {
       "evolution-00.m4a",
       "evolution-01.m4a"
     ],
+    "subagentStart": [],
     "subagent": [
       "brutalisk.m4a",
       "thanks-02.m4a"
@@ -75,7 +102,8 @@ const FILE_PACKS = {
     ],
     "compacted": [
       "brutalisk-reminder.m4a"
-    ]
+    ],
+    "mcp": []
   },
   "aoe": {
     "label": "Age of Empires II: wololo, the horn and the taunts (Microsoft Game Content Usage Rules)",
@@ -94,6 +122,10 @@ const FILE_PACKS = {
       "long-time-no-siege.mp3",
       "good-to-be-the-king.mp3",
       "nice-town.mp3"
+    ],
+    "subagentStart": [
+      "villager-created.mp3",
+      "military-created.mp3"
     ],
     "subagent": [
       "horn.mp3",
@@ -115,6 +147,10 @@ const FILE_PACKS = {
     "compacted": [
       "wololo.mp3",
       "give-me-your-extra-resources.mp3"
+    ],
+    "mcp": [
+      "trebuchet-fire.mp3",
+      "mangonel-fire.mp3"
     ]
   },
   "aoe-turk": {
@@ -143,6 +179,7 @@ const FILE_PACKS = {
       "victory.mp3",
       "wonder.mp3"
     ],
+    "subagentStart": [],
     "subagent": [
       "oduncu.m4a",
       "oduncu-f.m4a",
@@ -175,7 +212,8 @@ const FILE_PACKS = {
       "usta.m4a",
       "usta-f.m4a",
       "castle.mp3"
-    ]
+    ],
+    "mcp": []
   },
   "blood": {
     "label": "Blood: Caleb laughs, quotes and boomsticks (fan use)",
@@ -191,6 +229,7 @@ const FILE_PACKS = {
       "i-won.mp3",
       "did-it.mp3"
     ],
+    "subagentStart": [],
     "subagent": [
       "laughing.mp3",
       "yeah.mp3"
@@ -207,7 +246,8 @@ const FILE_PACKS = {
     "compacted": [
       "live-again.mp3",
       "nevermore.mp3"
-    ]
+    ],
+    "mcp": []
   },
   "cabal": {
     "label": "Tiberian Sun: CABAL, the Nod AI (fan use)",
@@ -225,6 +265,7 @@ const FILE_PACKS = {
       "primary-objective-achieved.m4a",
       "mission-accomplished.m4a"
     ],
+    "subagentStart": [],
     "subagent": [
       "reinforcements-have-arrived.m4a",
       "objective-complete.m4a"
@@ -242,7 +283,8 @@ const FILE_PACKS = {
       "construct-more-power-plants.m4a",
       "low-power.m4a",
       "silos-needed.m4a"
-    ]
+    ],
+    "mcp": []
   },
   "counterstrike": {
     "label": "Counter-Strike: the radio calls (fan use)",
@@ -258,6 +300,7 @@ const FILE_PACKS = {
     "longDone": [
       "area-clear.m4a"
     ],
+    "subagentStart": [],
     "subagent": [
       "moving-out.m4a",
       "you-take-the-point.m4a"
@@ -273,7 +316,8 @@ const FILE_PACKS = {
       "fall-back.m4a",
       "stick-together.m4a",
       "hold-your-position.m4a"
-    ]
+    ],
+    "mcp": []
   },
   "diablo": {
     "label": "Diablo II effects: level up, quest done, gold, a portal opens (Blizzard, fan use)",
@@ -289,6 +333,7 @@ const FILE_PACKS = {
       "level-up.mp3",
       "quest-done.mp3"
     ],
+    "subagentStart": [],
     "subagent": [
       "gold.mp3",
       "rune.mp3"
@@ -304,7 +349,8 @@ const FILE_PACKS = {
     "compacted": [
       "identify.mp3",
       "scroll.mp3"
-    ]
+    ],
+    "mcp": []
   },
   "duke": {
     "label": "Duke Nukem 3D: come get some, hail to the king, baby (fan use)",
@@ -320,6 +366,7 @@ const FILE_PACKS = {
       "damn-im-good.mp3",
       "piece-of-cake.mp3"
     ],
+    "subagentStart": [],
     "subagent": [
       "groovy.mp3",
       "back-to-work.mp3"
@@ -336,7 +383,8 @@ const FILE_PACKS = {
     "compacted": [
       "much-better.mp3",
       "needed-that.mp3"
-    ]
+    ],
+    "mcp": []
   },
   "engineer": {
     "label": "Team Fortress 2: the Engineer (fan use)",
@@ -353,6 +401,7 @@ const FILE_PACKS = {
       "done-and-done.mp3",
       "knife-fight-in-a-phonebooth.mp3"
     ],
+    "subagentStart": [],
     "subagent": [
       "another-satisfied-customer.mp3",
       "nice-work.mp3"
@@ -369,7 +418,8 @@ const FILE_PACKS = {
     "compacted": [
       "good-night-irene.mp3",
       "now-ive-seen-everything.mp3"
-    ]
+    ],
+    "mcp": []
   },
   "lebowski": {
     "label": "The Big Lebowski: the Dude, Walter, Donny and friends, clean lines (fan use)",
@@ -387,6 +437,7 @@ const FILE_PACKS = {
       "rug-tied-the-room-together.mp3",
       "goodnight-sweet-prince.mp3"
     ],
+    "subagentStart": [],
     "subagent": [
       "i-like-your-style.mp3",
       "ive-got-information.mp3"
@@ -404,7 +455,8 @@ const FILE_PACKS = {
     "compacted": [
       "just-take-it-easy.mp3",
       "strikes-and-gutters.mp3"
-    ]
+    ],
+    "mcp": []
   },
   "lich": {
     "label": "Warcraft III: the Lich and Kel'Thuzad (fan use)",
@@ -422,6 +474,7 @@ const FILE_PACKS = {
       "thy-will-be-done.m4a",
       "the-ancient-evil-survives.m4a"
     ],
+    "subagentStart": [],
     "subagent": [
       "for-the-lich-king.m4a",
       "it-is-destined.m4a"
@@ -437,7 +490,8 @@ const FILE_PACKS = {
     "compacted": [
       "the-scourge-will-consume-all.m4a",
       "bone-to-pick.m4a"
-    ]
+    ],
+    "mcp": []
   },
   "meeseeks": {
     "label": "Rick and Morty: Mr. Meeseeks, look at me! (fan use)",
@@ -456,6 +510,7 @@ const FILE_PACKS = {
       "all-done.mp3",
       "exist-this-long.mp3"
     ],
+    "subagentStart": [],
     "subagent": [
       "im-mr-meeseeks.mp3",
       "look-at-me.mp3",
@@ -474,7 +529,8 @@ const FILE_PACKS = {
     "compacted": [
       "gotta-relax.mp3",
       "let-me-try.mp3"
-    ]
+    ],
+    "mcp": []
   },
   "nasa": {
     "label": "NASA radio: the Eagle has landed, liftoff, we have had a problem (public domain)",
@@ -490,6 +546,7 @@ const FILE_PACKS = {
       "eagle-landed.m4a",
       "wheels-stop.m4a"
     ],
+    "subagentStart": [],
     "subagent": [
       "go-for-deploy.m4a",
       "go-at-throttle-up.m4a"
@@ -503,7 +560,8 @@ const FILE_PACKS = {
     ],
     "compacted": [
       "vector-transfer.m4a"
-    ]
+    ],
+    "mcp": []
   },
   "necromancer": {
     "label": "Diablo II Necromancer: raise skeleton, not enough mana, I cannot carry any more (Blizzard, fan use)",
@@ -522,6 +580,7 @@ const FILE_PACKS = {
       "baal-defeated.mp3",
       "andariel-done.mp3"
     ],
+    "subagentStart": [],
     "subagent": [
       "raise-skeleton.mp3",
       "golem.mp3",
@@ -540,7 +599,8 @@ const FILE_PACKS = {
     "compacted": [
       "cant-carry.mp3",
       "need-mana.mp3"
-    ]
+    ],
+    "mcp": []
   },
   "peon": {
     "label": "Warcraft III peon: work work, zug zug, something need doing? (Blizzard, fan use)",
@@ -558,6 +618,7 @@ const FILE_PACKS = {
     "longDone": [
       "zug-zug.mp3"
     ],
+    "subagentStart": [],
     "subagent": [
       "me-busy.mp3",
       "yes.mp3",
@@ -575,7 +636,8 @@ const FILE_PACKS = {
     "compacted": [
       "leave-me-alone.mp3",
       "no-time-for-play.mp3"
-    ]
+    ],
+    "mcp": []
   },
   "protoss": {
     "label": "StarCraft Protoss: construct additional pylons, my life for Aiur (Blizzard, fan use)",
@@ -589,6 +651,7 @@ const FILE_PACKS = {
       "upgrade-complete.mp3",
       "research.mp3"
     ],
+    "subagentStart": [],
     "subagent": [
       "upgrade.mp3",
       "systems-functional.mp3"
@@ -603,7 +666,8 @@ const FILE_PACKS = {
     ],
     "compacted": [
       "vespene-gas.mp3"
-    ]
+    ],
+    "mcp": []
   },
   "red-alert": {
     "label": "Red Alert 2: Kirov reporting, for mother Russia (EA, fan use)",
@@ -621,6 +685,7 @@ const FILE_PACKS = {
       "kirov-reporting.mp3",
       "cha-ching.mp3"
     ],
+    "subagentStart": [],
     "subagent": [
       "unit-reporting.mp3",
       "agent-ready.mp3"
@@ -636,7 +701,8 @@ const FILE_PACKS = {
     "compacted": [
       "your-mind-is-clear.mp3",
       "deconstructing.mp3"
-    ]
+    ],
+    "mcp": []
   },
   "rick-and-morty": {
     "label": "Rick and Morty: family-friendly lines from Rick and the crew (fan use)",
@@ -655,6 +721,7 @@ const FILE_PACKS = {
       "pickle-rick.mp3",
       "pure-luck.mp3"
     ],
+    "subagentStart": [],
     "subagent": [
       "what-is-my-purpose.mp3",
       "everything-you-want.mp3",
@@ -672,7 +739,8 @@ const FILE_PACKS = {
     "compacted": [
       "brain-functionality.mp3",
       "super-intelligence.mp3"
-    ]
+    ],
+    "mcp": []
   },
   "rick-and-morty-uncut": {
     "label": "Rick and Morty, uncut: the swearing lines (explicit language, fan use)",
@@ -688,6 +756,7 @@ const FILE_PACKS = {
     "longDone": [
       "having-a-party.mp3"
     ],
+    "subagentStart": [],
     "subagent": [
       "god-damn-it.mp3"
     ],
@@ -702,7 +771,8 @@ const FILE_PACKS = {
     "compacted": [
       "traumatized-for-breakfast.mp3",
       "take-a-shit.mp3"
-    ]
+    ],
+    "mcp": []
   },
   "sheogorath": {
     "label": "The Elder Scrolls IV: Sheogorath, Prince of Madness (fan use)",
@@ -718,6 +788,7 @@ const FILE_PACKS = {
     "longDone": [
       "cheese-for-everyone.m4a"
     ],
+    "subagentStart": [],
     "subagent": [
       "congratulations.m4a",
       "but-youre-not-done-yet.m4a"
@@ -734,7 +805,8 @@ const FILE_PACKS = {
     "compacted": [
       "a-little-busy-here.m4a",
       "niggling-little-details.m4a"
-    ]
+    ],
+    "mcp": []
   },
   "stronghold": {
     "label": "Stronghold Crusader: the AI lords (fan use)",
@@ -753,6 +825,7 @@ const FILE_PACKS = {
       "abbot-victory-for-me.mp3",
       "pig-no-one-beats-the-pig.mp3"
     ],
+    "subagentStart": [],
     "subagent": [
       "rat-plans-worked-perfectly.mp3",
       "saladin-another-has-fallen.mp3",
@@ -771,7 +844,8 @@ const FILE_PACKS = {
     "compacted": [
       "sheriff-not-father-christmas.mp3",
       "richard-lean-times.mp3"
-    ]
+    ],
+    "mcp": []
   },
   "tauren": {
     "label": "World of Warcraft: the Tauren (fan use)",
@@ -788,6 +862,7 @@ const FILE_PACKS = {
       "fate-smiles-upon-you.m4a",
       "our-ancestors-be-praised.m4a"
     ],
+    "subagentStart": [],
     "subagent": [
       "well-done.m4a",
       "pleasure-doing-business.m4a"
@@ -804,7 +879,8 @@ const FILE_PACKS = {
       "my-inventory-is-full.m4a",
       "i-cannot-carry-more.m4a",
       "moo.m4a"
-    ]
+    ],
+    "mcp": []
   },
   "terran": {
     "label": "StarCraft Terran: SCV good to go, nuclear launch detected (Blizzard, fan use)",
@@ -819,6 +895,7 @@ const FILE_PACKS = {
     "longDone": [
       "battlecruiser-operational.mp3"
     ],
+    "subagentStart": [],
     "subagent": [
       "research-complete.mp3",
       "upgrade-complete.mp3"
@@ -833,7 +910,8 @@ const FILE_PACKS = {
     "compacted": [
       "not-enough-minerals.mp3",
       "vespene-gas.mp3"
-    ]
+    ],
+    "mcp": []
   },
   "yuri": {
     "label": "Red Alert 2: Yuri's Revenge: Yuri (fan use)",
@@ -851,6 +929,7 @@ const FILE_PACKS = {
       "yes-my-exquisite-mind.m4a",
       "they-will-obey.m4a"
     ],
+    "subagentStart": [],
     "subagent": [
       "another-pawn-joins-us.m4a",
       "he-shall-serve-me-well.m4a"
@@ -866,7 +945,8 @@ const FILE_PACKS = {
     "compacted": [
       "all-in-the-mind.m4a",
       "i-cannot-be-overcome.m4a"
-    ]
+    ],
+    "mcp": []
   }
 }
 // FILE_PACKS_END
@@ -883,8 +963,8 @@ export function register(on) {
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'sounds',
-      description: 'Sound packs for the moments that need you: /sounds to list, /sounds <pack>, default <pack>, on, off, test',
-      argumentHint: '[<pack>|default <pack>|on|off|always|away|night on|night off|test [pack]]',
+      description: 'Sound packs for the moments that need you: /sounds to see every moment and command, /sounds <pack>, /sounds <moment> <pack>, test',
+      argumentHint: '[<pack>|default <pack>|<moment> <pack> [clip]|<moment> random|off|reset|on|off|test [pack] [moment]]',
     })
     here.yourPacks = await loadYourPacks($)
     // Said once, so the way to change the pack is never a secret
@@ -906,16 +986,22 @@ export function register(on) {
     const current = currentPack(settings)
 
     if (args[0] === 'test') {
-      const name = args[1] ?? current
+      // /sounds test [pack] [moment], either may be left out
+      const words = args.slice(1)
+      const moment = MOMENT_BY_WORD[words[words.length - 1]]
+      if (moment) words.pop()
+      const name = words[0] ?? current
       if (!packOf(name)) {
         const meant = closestPack(name)
-        return { text: 'No pack named ' + name + (meant ? '. Did you mean ' + meant + '? /sounds test ' + meant : '\n' + listing()) }
+        return { text: 'No pack named ' + name + (meant ? '. Did you mean ' + meant + '? /sounds test ' + meant + (moment ? ' ' + moment.toLowerCase() : '') : '\n' + listing()) }
       }
-      const count = await playAll($, name)
-      return { text: 'Played ' + count + ' sounds of ' + name }
+      const count = await playAll($, name, moment)
+      return { text: 'Played ' + count + ' sounds of ' + name + (moment ? ' for ' + moment : '') }
     }
     // No word: where things stand, then every command and pack
     if (!args.length) return { text: describe(settings) }
+    // /sounds <moment> ...: that moment's own rule
+    if (MOMENT_BY_WORD[args[0]]) return momentCommand($, settings, MOMENT_BY_WORD[args[0]], args.slice(1))
     // A change answers with one line saying what changed, not the whole list again
     if (packOf(args[0]) && args.length === 1) {
       here.pack = args[0]
@@ -953,6 +1039,11 @@ export function register(on) {
     return next(e)
   })
 
+  on('classic.SubagentStart', async ($, e, next) => {
+    await cue($, 'subagentStart').catch(() => {})
+    return next(e)
+  })
+
   on('classic.SubagentStop', async ($, e, next) => {
     await cue($, 'subagent')
     return next(e)
@@ -970,12 +1061,18 @@ export function register(on) {
   })
 
   // One hook for the tools: a plugin gets one hook per event
-  on('tool.call', { tool: ['Bash', ...ASKING_TOOLS] }, async ($, e, next) => {
+  on('tool.call', async ($, e, next) => {
     // A question waits for you, so the sound goes before the answer, not after it
     if (ASKING_TOOLS.includes(e.tool)) {
       await cue($, 'needsYou')
       return next(e)
     }
+    if (String(e.tool).startsWith('mcp__')) {
+      const out = await next(e)
+      if (out.deny === undefined && !out.isError) await cue($, 'mcp', { restMs: MCP_REST_MS })
+      return out
+    }
+    if (e.tool !== 'Bash') return next(e)
     const out = await next(e)
     const command = String(e.command ?? '')
     if (out.deny === undefined) {
@@ -991,8 +1088,7 @@ async function cue($, moment, opts = {}) {
   try {
     const settings = await readSettings($)
     if (!settings.isOn) return
-    const pack = packOf(currentPack(settings))
-    const choices = pack[moment] ?? []
+    const choices = choicesFor(settings, moment)
     if (!choices.length) return
     const now = await $.clock.now()
     const last = Math.max(here.playedAt, await sharedPlayedAt($))
@@ -1002,7 +1098,8 @@ async function cue($, moment, opts = {}) {
     here.playedAt = now
     await sharePlayedAt($, now)
     // Not awaited: the sound plays while the session goes on
-    sound($, pack, pick(choices, here.lastClip, pack.name + '/' + moment, now)).catch(() => {})
+    const [name, item] = pick(choices.map((c) => c.pack + '/' + c.item), here.lastClip, moment, now).split(/\/(.*)/s)
+    sound($, packOf(name), item).catch(() => {})
   } catch {
     // A sound is never worth an error line
   }
@@ -1086,9 +1183,9 @@ function runsCheck(command) {
     })
 }
 
-async function playAll($, name) {
+async function playAll($, name, moment) {
   const pack = packOf(name)
-  const items = [...new Set(MOMENTS.flatMap((m) => pack[m] ?? []))]
+  const items = [...new Set((moment ? [moment] : MOMENTS).flatMap((m) => pack[m] ?? []))]
   for (const item of items) {
     await sound($, pack, item).catch(() => {})
   }
@@ -1219,6 +1316,93 @@ function distance(a, b) {
   return d[a.length][b.length]
 }
 
+// The clips a moment can play now, as { pack, item }: its own rule, else the terminal's pack
+function choicesFor(settings, moment) {
+  const rule = ruleOf(settings, moment)
+  const clipsOf = (name) => (packOf(name)?.[moment] ?? []).map((item) => ({ pack: name, item }))
+  if (rule?.off) return []
+  if (rule?.random) return allPacks().flatMap(clipsOf)
+  if (rule?.packs) {
+    const packs = rule.packs.filter((n) => packOf(n))
+    if (rule.clip && packs[0]) {
+      const item = clipNamed(packs[0], rule.clip)
+      return item ? [{ pack: packs[0], item }] : []
+    }
+    return packs.flatMap(clipsOf)
+  }
+  return clipsOf(currentPack(settings))
+}
+
+function ruleOf(settings, moment) {
+  return settings.moments?.[moment] ?? DEFAULT_MOMENTS[moment]
+}
+
+// A clip of a pack by its name without the extension, from any of the pack's moments
+function clipNamed(name, clip) {
+  const pack = packOf(name)
+  return [...new Set(MOMENTS.flatMap((m) => pack?.[m] ?? []))].find((item) => item.replace(/\.[^.]+$/, '') === clip)
+}
+
+function clipNames(name) {
+  const pack = packOf(name)
+  return [...new Set(MOMENTS.flatMap((m) => pack?.[m] ?? []))].map((item) => item.replace(/\.[^.]+$/, ''))
+}
+
+// What a moment plays, in a few words: "terran", "aoe-turk (5 clips, random)", "off"
+function ruleText(settings, moment) {
+  const rule = ruleOf(settings, moment)
+  const count = choicesFor(settings, moment).length
+  const many = count > 1 ? ' (' + count + ' clips, random)' : ''
+  if (rule?.off) return 'off'
+  if (rule?.random) return 'random pack' + many
+  if (rule?.packs && rule.clip) return rule.packs[0] + ', always ' + rule.clip
+  if (rule?.packs) return rule.packs.join(' + ') + many
+  return currentPack(settings) + (count ? many : ' (no clips: silent)')
+}
+
+// /sounds <moment> [off|random|reset|<pack> [<clip>]|<pack> <pack> ...]
+async function momentCommand($, settings, moment, words) {
+  const word = moment.toLowerCase()
+  if (!words.length) {
+    const choices = choicesFor(settings, moment)
+    const lines = choices.map((c) => '  ' + (new Set(choices.map((x) => x.pack)).size > 1 ? c.pack + ' ' : '') + c.item.replace(/\.[^.]+$/, ''))
+    const pack = choices[0]?.pack ?? currentPack(settings)
+    return {
+      text: [moment + ': ' + MOMENT_INFO[moment] + ' → ' + ruleText(settings, moment), ...lines,
+        'Try: /sounds test ' + pack + ' ' + word + ', or /sounds ' + word + ' <pack> to change it'].join('\n'),
+    }
+  }
+  let rule
+  if (words[0] === 'reset') rule = undefined
+  else if (words[0] === 'off') rule = { off: true }
+  else if (words[0] === 'random') rule = { random: true }
+  else {
+    const missing = words.find((w, i) => !packOf(w) && !(i === 1 && words.length === 2 && packOf(words[0])))
+    if (missing) {
+      const meant = closestPack(missing)
+      return { text: 'No pack named ' + missing + (meant ? '. Did you mean ' + meant + '? /sounds ' + word + ' ' + words.map((w) => (w === missing ? meant : w)).join(' ') : '\n' + listing()) }
+    }
+    if (words.length === 2 && !packOf(words[1])) {
+      const item = clipNamed(words[0], words[1])
+      if (!item) {
+        const names = clipNames(words[0])
+        const meant = names.find((n) => distance(words[1], n) <= 2)
+        return {
+          text: words[0] + ' has no clip named ' + words[1] + (meant ? '. Did you mean ' + meant + '? /sounds ' + word + ' ' + words[0] + ' ' + meant : '\nIts clips: ' + names.join(', ')),
+        }
+      }
+      rule = { packs: [words[0]], clip: words[1] }
+    } else rule = { packs: [...new Set(words)] }
+  }
+  const moments = { ...(settings.moments ?? {}) }
+  if (rule) moments[moment] = rule
+  else delete moments[moment]
+  const updated = { ...settings, moments }
+  await $.store.set('settings', updated)
+  if (!rule) return { text: moment + ' back to its usual: ' + ruleText(updated, moment) }
+  return { text: moment + ' now plays: ' + ruleText(updated, moment) }
+}
+
 function defaultOf(s) {
   return packOf(s.defaultPack) ? s.defaultPack : DEFAULT_PACK
 }
@@ -1231,6 +1415,8 @@ function describe(s) {
     'New terminals: ' + def,
     'Sound: ' + (s.isOn ? 'on' : 'off') + ', ' + (s.mode === 'away' ? 'only when no terminal or editor is in front' : 'always') +
       ', quiet 23:00 to 07:00 ' + (s.isNightQuiet ? 'on' : 'off'),
+    'Moments (what plays when):',
+    ...MOMENTS.map((m) => '  ' + m + ': ' + MOMENT_INFO[m] + ' → ' + ruleText(s, m)),
     commands(),
     listing(),
   ].join('\n')
@@ -1240,7 +1426,14 @@ function describe(s) {
 const COMMANDS = [
   ['/sounds <pack>', 'switch this terminal to a pack'],
   ['/sounds default <pack>', 'the pack every new terminal starts with'],
-  ['/sounds test [pack]', 'play every sound of a pack once'],
+  ['/sounds <moment> <pack>', 'one moment plays another pack, e.g. /sounds pushed aoe-turk'],
+  ['/sounds <moment> <pack> <clip>', 'always the same clip, e.g. /sounds pushed aoe-turk allah-allah'],
+  ['/sounds <moment> <pack> <pack>', "mix two packs' clips for that moment"],
+  ['/sounds <moment> random', 'a random pack each time'],
+  ['/sounds <moment> off', 'silence one moment'],
+  ['/sounds <moment> reset', 'back to the usual (the terminal pack)'],
+  ['/sounds <moment>', 'list the clips that moment can play'],
+  ['/sounds test [pack] [moment]', 'play a pack, or one moment of it, once'],
   ['/sounds off', 'mute'],
   ['/sounds on', 'unmute'],
   ['/sounds away', 'play only while no terminal or editor is in front'],

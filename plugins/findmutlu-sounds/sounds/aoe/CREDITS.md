@@ -38,3 +38,12 @@ The taunts below are the original MP3s from the openpeon pack "Age of Empires II
 Edges smoothed on drum-fanfare, herb-laugh, no, roggan, the-wonder-no, viking-horn, wololo, yes: an 8 ms fade in, a 60 ms fade out and 150 ms of silence after, because the source cut them mid-sound and they clicked. Re-encoded once at the source's bit rate; the lines are otherwise untouched.
 
 A 0.15 s 101soundboards beep cut from the start of sssh-ho, with an 8 ms fade in and a 60 ms fade out; re-encoded once.
+
+The unit created and siege sounds are the original MP3s from https://www.101soundboards.com/boards/1632796-age-of-empires-ii-pc-animals-cheat-generic-battles-of-the-conquerors-ambience (no intro on this board), unchanged.
+
+| File | Moment | Line | Source file |
+| :- | :- | :- | :- |
+| villager-created.mp3 | subagentStart | a villager is created | https://hoovers.101soundboards.com/sb/board_sounds/egddelzn.mp3 (Interface - villager_spawn) |
+| military-created.mp3 | subagentStart | a soldier is created | https://hoovers.101soundboards.com/sb/board_sounds/egddewol.mp3 (Interface - military_spawn) |
+| trebuchet-fire.mp3 | mcp | a trebuchet fires | https://hoovers.101soundboards.com/sb/board_sounds/rnkdokwj.mp3 (Generic - trebuchet_fire1) |
+| mangonel-fire.mp3 | mcp | a mangonel fires | https://hoovers.101soundboards.com/sb/board_sounds/bjzzwngx.mp3 (Generic - mangonel_fire1) |
