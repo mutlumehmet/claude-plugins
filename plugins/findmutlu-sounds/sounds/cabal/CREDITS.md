@@ -2,7 +2,7 @@
 
 Sounds from Command & Conquer: Tiberian Sun © Electronic Arts Inc.. Not licensed: shared as non-commercial fan use, not endorsed by or affiliated with the rights holder. If you hold the rights and want them removed, open an issue and the pack goes.
 
-Clips from the openpeon pack "Tiberian Sun Cabal" by Gus El Khoury Seoane (https://openpeon.com/packs/tiberian-sun-cabal, repository https://github.com/gustakasn0v/openpeon-tiberian-sun-cabal, tag v1.0.1), listed there as CC-BY-NC-4.0. The originals are WAV files, converted here to M4A (AAC, 128 kbps) to keep the download small and renamed; the source file column links the original WAV; the recordings belong to the rights holder above.
+Clips from the openpeon pack "Tiberian Sun Cabal" by Gus El Khoury Seoane (https://openpeon.com/packs/tiberian-sun-cabal, repository https://github.com/gustakasn0v/openpeon-tiberian-sun-cabal, tag v1.0.1), listed there as CC-BY-NC-4.0. The originals are WAV files, converted here to M4A (AAC, 128 kbps) to keep the download small, with an 8 ms fade in, a 60 ms fade out and 150 ms of silence added, because the source cuts end mid-sound and clicked and renamed; the source file column links the original WAV; the recordings belong to the rights holder above.
 
 | File | Moment | Line | Source file |
 | :- | :- | :- | :- |
