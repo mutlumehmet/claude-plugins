@@ -51,30 +51,30 @@ const FILE_PACKS = {
   "abathur": {
     "label": "StarCraft II: Abathur, the Zerg evolution master (fan use)",
     "ordered": [
-      "thanks-00.ogg",
-      "thanks-01.ogg"
+      "thanks-00.m4a",
+      "thanks-01.m4a"
     ],
     "needsYou": [
-      "idle.ogg",
-      "help-me.ogg"
+      "idle.m4a",
+      "help-me.m4a"
     ],
     "longDone": [
-      "evolution-00.ogg",
-      "evolution-01.ogg"
+      "evolution-00.m4a",
+      "evolution-01.m4a"
     ],
     "subagent": [
-      "brutalisk.ogg",
-      "thanks-02.ogg"
+      "brutalisk.m4a",
+      "thanks-02.m4a"
     ],
     "failed": [
-      "units-lost.ogg"
+      "units-lost.m4a"
     ],
     "pushed": [
-      "positive.ogg",
-      "generic.ogg"
+      "positive.m4a",
+      "generic.m4a"
     ],
     "compacted": [
-      "brutalisk-reminder.ogg"
+      "brutalisk-reminder.m4a"
     ]
   },
   "aoe": {
@@ -120,36 +120,36 @@ const FILE_PACKS = {
   "aoe-turk": {
     "label": "Age of Empires II: the Turkish villager, male (Microsoft Game Content Usage Rules)",
     "ordered": [
-      "tamam.ogg",
-      "evet.ogg",
-      "dogru.ogg",
-      "yapacagim.ogg"
+      "tamam.m4a",
+      "evet.m4a",
+      "dogru.m4a",
+      "yapacagim.m4a"
     ],
     "needsYou": [
-      "efendim.ogg",
-      "emrin.ogg",
-      "evet-question.ogg"
+      "efendim.m4a",
+      "emrin.m4a",
+      "evet-question.m4a"
     ],
     "longDone": [
-      "hazir.ogg"
+      "hazir.m4a"
     ],
     "subagent": [
-      "oduncu.ogg",
-      "ciftci.ogg",
-      "madenci.ogg",
-      "balikci.ogg",
-      "avci.ogg",
-      "seyis.ogg"
+      "oduncu.m4a",
+      "ciftci.m4a",
+      "madenci.m4a",
+      "balikci.m4a",
+      "avci.m4a",
+      "seyis.m4a"
     ],
     "failed": [
-      "villager-death.ogg",
-      "tamirci.ogg"
+      "villager-death.m4a",
+      "tamirci.m4a"
     ],
     "pushed": [
-      "saldir.ogg"
+      "saldir.m4a"
     ],
     "compacted": [
-      "usta.ogg"
+      "usta.m4a"
     ]
   },
   "blood": {
@@ -751,34 +751,34 @@ const FILE_PACKS = {
   "tauren": {
     "label": "World of Warcraft: the Tauren (fan use)",
     "ordered": [
-      "peace-and-patience.ogg",
-      "indeed.ogg",
-      "it-is-so.ogg"
+      "peace-and-patience.m4a",
+      "indeed.m4a",
+      "it-is-so.m4a"
     ],
     "needsYou": [
-      "i-need-assistance.ogg",
-      "wont-you-help.ogg"
+      "i-need-assistance.m4a",
+      "wont-you-help.m4a"
     ],
     "longDone": [
-      "fate-smiles-upon-you.ogg",
-      "our-ancestors-be-praised.ogg"
+      "fate-smiles-upon-you.m4a",
+      "our-ancestors-be-praised.m4a"
     ],
     "subagent": [
-      "well-done.ogg",
-      "pleasure-doing-business.ogg"
+      "well-done.m4a",
+      "pleasure-doing-business.m4a"
     ],
     "failed": [
-      "impermissible.ogg",
-      "i-cannot-do-that.ogg"
+      "impermissible.m4a",
+      "i-cannot-do-that.m4a"
     ],
     "pushed": [
-      "for-the-horde.ogg",
-      "ride-the-winds.ogg"
+      "for-the-horde.m4a",
+      "ride-the-winds.m4a"
     ],
     "compacted": [
-      "my-inventory-is-full.ogg",
-      "i-cannot-carry-more.ogg",
-      "moo.ogg"
+      "my-inventory-is-full.m4a",
+      "i-cannot-carry-more.m4a",
+      "moo.m4a"
     ]
   },
   "terran": {

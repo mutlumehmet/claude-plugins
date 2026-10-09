@@ -1,35 +1,35 @@
 {
   "label": "Age of Empires II: the Turkish villager, male (Microsoft Game Content Usage Rules)",
   "ordered": [
-    "tamam.ogg",
-    "evet.ogg",
-    "dogru.ogg",
-    "yapacagim.ogg"
+    "tamam.m4a",
+    "evet.m4a",
+    "dogru.m4a",
+    "yapacagim.m4a"
   ],
   "needsYou": [
-    "efendim.ogg",
-    "emrin.ogg",
-    "evet-question.ogg"
+    "efendim.m4a",
+    "emrin.m4a",
+    "evet-question.m4a"
   ],
   "longDone": [
-    "hazir.ogg"
+    "hazir.m4a"
   ],
   "subagent": [
-    "oduncu.ogg",
-    "ciftci.ogg",
-    "madenci.ogg",
-    "balikci.ogg",
-    "avci.ogg",
-    "seyis.ogg"
+    "oduncu.m4a",
+    "ciftci.m4a",
+    "madenci.m4a",
+    "balikci.m4a",
+    "avci.m4a",
+    "seyis.m4a"
   ],
   "failed": [
-    "villager-death.ogg",
-    "tamirci.ogg"
+    "villager-death.m4a",
+    "tamirci.m4a"
   ],
   "pushed": [
-    "saldir.ogg"
+    "saldir.m4a"
   ],
   "compacted": [
-    "usta.ogg"
+    "usta.m4a"
   ]
 }
