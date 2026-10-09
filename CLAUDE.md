@@ -84,6 +84,11 @@ when a task calls for them) or one mod (a hooks module that runs inside Claude C
   the controls sit in the mod's own UI (small `plain` Buttons, at the top of a band tree because a
   short terminal scrolls the band and cuts the bottom), and the default is a choice someone made,
   not `random`.
+- **A mod's command talks back.** Decided 9 October 2026 (the sounds mod, 0.1.2). The bare command
+  (`/<mod>`) shows where things stand, then every command as `/<mod> <word>: what it does`, one per
+  line, then the choices (packs, games). Every change answers with one line naming what changed
+  ("Default changed: new terminals now start with stronghold"), or "already" when nothing did,
+  never the whole list again. An unknown word gets "Unknown: <word>" and the list.
 - **Updates are found for people, installed only on press.** Claude Code does not auto-update this
   marketplace unless the user turns it on, so a mod that changes often offers an update on press
   (the Arcade's ⟳ runs `claude plugin update <bare name>`). Since 0.10.2 (8 October 2026) the Arcade
