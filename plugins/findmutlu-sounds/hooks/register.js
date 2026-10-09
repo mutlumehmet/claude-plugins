@@ -882,7 +882,10 @@ export function register(on) {
 
     if (args[0] === 'test') {
       const name = args[1] ?? current
-      if (!packOf(name)) return { text: 'No pack named ' + name + '\n' + listing() }
+      if (!packOf(name)) {
+        const meant = closestPack(name)
+        return { text: 'No pack named ' + name + (meant ? '. Did you mean ' + meant + '? /sounds test ' + meant : '\n' + listing()) }
+      }
       const count = await playAll($, name)
       return { text: 'Played ' + count + ' sounds of ' + name }
     }
@@ -898,10 +901,17 @@ export function register(on) {
       }
     }
     if (args[0] === 'default' && !packOf(args[1])) {
+      const meant = args[1] && closestPack(args[1])
+      if (meant) return { text: 'No pack named ' + args[1] + '. Did you mean ' + meant + '? /sounds default ' + meant }
       return { text: (args[1] ? 'No pack named ' + args[1] : 'Which pack? /sounds default <pack>') + '\n' + listing() }
     }
     const change = CHANGES.find((c) => c.matches(args))
-    if (!change) return { text: 'Unknown: ' + args.join(' ') + '\n' + commands() + '\n' + listing() }
+    if (!change) {
+      // A typo of a pack name (aeo-turk) gets the pack it meant, not just the list
+      const meant = closestPack(args[args.length - 1])
+      if (meant) return { text: 'No pack named ' + args[args.length - 1] + '. Did you mean ' + meant + '? /sounds ' + (args[0] === 'default' ? 'default ' : '') + meant }
+      return { text: 'Unknown: ' + args.join(' ') + '\n' + commands() + '\n' + listing() }
+    }
     const updated = change.apply({ ...settings }, args)
     await $.store.set('settings', updated)
     return { text: change.said(updated, args, settings) }
@@ -1158,6 +1168,31 @@ const CHANGES = [
     said: (s) => (s.isNightQuiet ? 'Quiet hours on: no clips from 23:00 to 07:00' : 'Quiet hours off: clips play at night too'),
   },
 ]
+
+// The pack a mistyped name most likely meant: at most two letters off
+function closestPack(word) {
+  if (!word) return undefined
+  let best
+  let bestDistance = 3
+  for (const name of allPacks()) {
+    const d = distance(word, name)
+    if (d < bestDistance) [best, bestDistance] = [name, d]
+  }
+  return best
+}
+
+// Letters to change, add or remove to turn a into b; a swap of two letters counts as one
+function distance(a, b) {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)])
+  for (let j = 1; j <= b.length; j++) d[0][j] = j
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1))
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1)
+    }
+  }
+  return d[a.length][b.length]
+}
 
 function defaultOf(s) {
   return packOf(s.defaultPack) ? s.defaultPack : DEFAULT_PACK

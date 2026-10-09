@@ -225,3 +225,13 @@ test('/sounds lists the commands as well as the packs', async ($, on) => {
   expect(out.text).toContain('  /sounds night off: ')
   expect(out.text.indexOf('Commands:')).toBeLessThan(out.text.indexOf('Packs:'))
 })
+
+test('a mistyped pack name gets the pack it meant', async ($, on) => {
+  engine(on)
+  const typo = await $.command.run({ command: 'sounds', args: 'aeo-turk' })
+  expect(typo.text).toBe('No pack named aeo-turk. Did you mean aoe-turk? /sounds aoe-turk')
+  const def = await $.command.run({ command: 'sounds', args: 'default protos' })
+  expect(def.text).toBe('No pack named protos. Did you mean protoss? /sounds default protoss')
+  const test = await $.command.run({ command: 'sounds', args: 'test protos' })
+  expect(test.text).toBe('No pack named protos. Did you mean protoss? /sounds test protoss')
+})
