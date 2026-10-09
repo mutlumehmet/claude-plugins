@@ -2,7 +2,7 @@
 
 Sounds from StarCraft © Blizzard Entertainment, Inc.. Not licensed: shared as non-commercial fan use, not endorsed by or affiliated with the rights holder. If you hold the rights and want them removed, open an issue and the pack goes.
 
-Every clip is the original MP3 as uploaded to the soundboard https://www.101soundboards.com/boards/162808-protoss-soundboard (research: https://www.101soundboards.com/boards/147499-advisor-soundboard), unchanged.
+Every clip is the original MP3 as uploaded to the soundboard https://www.101soundboards.com/boards/162808-protoss-soundboard (research: https://www.101soundboards.com/boards/147499-advisor-soundboard), with the site's own intro cut off where it ends (adun-toridas, life-for-aiur, power-overwhelming, pylons-2, pylons, research, systems-functional, transmission, upgrade, vespene-gas; this board records no skip value, so the end was measured against the same intro on other 101soundboards files); nothing else is changed.
 
 | File | Moment | Source file |
 | :- | :- | :- |

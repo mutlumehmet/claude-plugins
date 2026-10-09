@@ -2,7 +2,7 @@
 
 Sounds from Diablo II: Lord of Destruction © Blizzard Entertainment, Inc. Not licensed: shared as non-commercial fan use, not endorsed by or affiliated with the rights holder. If you hold the rights and want them removed, open an issue and the pack goes.
 
-Every clip is the original MP3 as uploaded to the soundboard https://www.101soundboards.com/boards/1631303-diablo-2-diablo-2-lord-of-destruction-pc-necromancer-voice, unchanged.
+Every clip is the original MP3 as uploaded to the soundboard https://www.101soundboards.com/boards/1631303-diablo-2-diablo-2-lord-of-destruction-pc-necromancer-voice, with the site's own intro cut off (the board records how much to skip as `sound_skip`, in tenths of a second), on corpse-explosion, diablo-killed, golem, ok, raise-skeleton; nothing else is changed.
 
 | File | Moment | Source file |
 | :- | :- | :- |

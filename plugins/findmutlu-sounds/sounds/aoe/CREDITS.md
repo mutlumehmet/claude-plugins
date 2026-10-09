@@ -2,7 +2,7 @@
 
 Age of Empires II © Microsoft Corporation. This pack was created under Microsoft's "Game Content Usage Rules" (https://www.xbox.com/en-US/developers/rules) using assets from Age of Empires II, and it is not endorsed by or affiliated with Microsoft. Free, non-commercial use only.
 
-Every clip is the original MP3 as uploaded to the soundboard https://www.101soundboards.com/boards/172802-aoe2-soundboard, unchanged.
+Every clip is the original MP3 as uploaded to the soundboard https://www.101soundboards.com/boards/172802-aoe2-soundboard, with the site's own intro cut off where it ends (conversion-warning, converted, drum-fanfare, herb-laugh, horn, no, viking-horn, wololo, yes; this board records no skip value, so the end was measured against the same intro on other 101soundboards files); nothing else is changed.
 
 | File | Moment | Source file |
 | :- | :- | :- |

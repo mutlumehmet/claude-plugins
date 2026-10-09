@@ -2,7 +2,7 @@
 
 Sounds from Command & Conquer: Red Alert 2 © Electronic Arts Inc.. Not licensed: shared as non-commercial fan use, not endorsed by or affiliated with the rights holder. If you hold the rights and want them removed, open an issue and the pack goes.
 
-Every clip is the original MP3 as uploaded to the soundboard https://www.101soundboards.com/boards/22412-red-alert-2-soundboard, unchanged.
+Every clip is the original MP3 as uploaded to the soundboard https://www.101soundboards.com/boards/22412-red-alert-2-soundboard, with the site's own intro cut off (the board records how much to skip as `sound_skip`, in tenths of a second); nothing else is changed.
 
 | File | Moment | Source file |
 | :- | :- | :- |
