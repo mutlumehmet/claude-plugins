@@ -88,7 +88,10 @@ when a task calls for them) or one mod (a hooks module that runs inside Claude C
   (`/<mod>`) shows where things stand, then every command as `/<mod> <word>: what it does`, one per
   line, then the choices (packs, games). Every change answers with one line naming what changed
   ("Default changed: new terminals now start with stronghold"), or "already" when nothing did,
-  never the whole list again. An unknown word gets "Unknown: <word>" and the list.
+  never the whole list again. An unknown word gets "Unknown: <word>" and the list; a mistyped
+  name (at most two letters off) gets the one it meant ("Did you mean aoe-turk? /sounds aoe-turk").
+  The same holds for a skill that takes words of its own (a mode, a target): it lists them when
+  called bare and confirms what it did in one line.
 - **Updates are found for people, installed only on press.** Claude Code does not auto-update this
   marketplace unless the user turns it on, so a mod that changes often offers an update on press
   (the Arcade's ⟳ runs `claude plugin update <bare name>`). Since 0.10.2 (8 October 2026) the Arcade
