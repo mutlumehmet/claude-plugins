@@ -15,16 +15,17 @@ radio. Part of [claude-plugins](../../README.md).
 
 | Moment | When |
 |---|---|
-| `ordered` | You send a prompt (an order given) |
-| `needsYou` | Claude waits for you: a permission prompt or a question |
+| `ordered` | You send a prompt after 5 quiet minutes (an order given, back at work) |
+| `needsYou` | Claude waits for you: a permission prompt, a question for you or a plan to approve |
 | `longDone` | A turn that took 60 seconds or more is answered |
 | `subagent` | A subagent finishes |
-| `failed` | A test, build, lint or type check fails (a Bash command with one of those words exits with an error) |
+| `failed` | A test, build, lint or type check fails (a step such as `npm test`, `pytest`, `tsc` or `scripts/check-x.sh` exits with an error; text inside a heredoc never counts) |
 | `pushed` | `git push` goes through |
 | `compacted` | The conversation is compacted |
 
-At most one sound every 2.5 seconds, so a handful of subagents finishing together give one sound,
-not a choir. A pack may leave a moment silent.
+At most one sound every 2.5 seconds across all your terminals, so a handful of subagents finishing
+together give one sound, not a choir. The same clip never plays twice in a row for a moment. A pack
+may leave a moment silent.
 
 ## The packs
 
@@ -110,12 +111,15 @@ scripts/packs.py`, which writes the table in `hooks/register.js` (CI checks it i
 ## What it reads and does
 
 - **Reads**: when a turn starts and ends, Bash commands and whether they failed, permission
-  notifications, subagent and compaction events, and your packs folder at session start. In away
-  mode, the name of the front app (`lsappinfo`, no permission needed).
+  notifications, questions and plans waiting for you, subagent and compaction events, and your
+  packs folder at session start. In away mode, the name of the front app (`lsappinfo`, no
+  permission needed).
 - **Does**: plays a clip (`afplay` underneath), never waiting for it, so
-  nothing slows down. Answers its own `/sounds` command and no other.
-- **Hooks**: `tool.call` (Bash) only looks at the result after the command ran; it never changes
-  or blocks a call. `prompt.submit`, `turn.complete` and the notification, subagent and compaction
+  nothing slows down. Answers its own `/sounds` command and no other. Writes one file,
+  `~/.config/findmutlu-sounds/last-played` (the time of the last sound), so your terminals take
+  turns instead of talking over each other.
+- **Hooks**: `tool.call` (Bash, AskUserQuestion, ExitPlanMode) plays a sound and passes the
+  call on; it never changes or blocks a call. `prompt.submit`, `turn.complete` and the notification, subagent and compaction
   events pass through unchanged.
 - **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
 - **Never**: sends anything anywhere (no network calls, no telemetry).
@@ -135,8 +139,9 @@ A mod runs inside Claude Code with your permissions. Read the code before you in
 
 - macOS only: Claude Code plays clips with `afplay`. On Linux and Windows the
   mod loads and stays silent.
-- `failed` matches by command words (test, build, lint, tsc, jest, vitest, pytest, playwright,
-  typecheck, check), so a failing script with none of those words stays silent.
+- `failed` knows check steps by name (npm, pnpm, yarn, make, cargo or go with test, build, lint,
+  typecheck or check; pytest, jest, vitest, tsc, playwright, eslint; scripts named check-, test-
+  or lint-), so a failing script with another name stays silent.
 - Your choice of pack for one terminal (`/sounds <pack>`) resets when the plugin reloads; the
   default does not.
 

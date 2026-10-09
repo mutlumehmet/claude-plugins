@@ -8,6 +8,8 @@ const LONG = { answer: 'x', durationMs: 90000, isAborted: false, turnId: 't', re
 // speaker and a voice that record what they were asked to play
 function engine(on, opts: { now?: number; front?: string; settings?: object; yours?: boolean; voices?: string[] } = {}) {
   const played: string[] = []
+  // Files the mod writes (the shared last-played time), readable back like on disk
+  const files: Record<string, string> = {}
   const spoken: { text: string; voice?: string }[] = []
   const clock = { now: opts.now ?? NOON }
   on('clock.now', () => ({ value: clock.now }))
@@ -19,11 +21,17 @@ function engine(on, opts: { now?: number; front?: string; settings?: object; you
   // The packs folder is named after the plugin: ~/.config/<plugin>/packs
   on('fs.exists', ($, e) => ({ value: !!opts.yours && /^\/home\/test\/\.config\/[a-z-]+\/packs$/.test(e.path) }))
   on('fs.list', () => ({ value: [{ name: 'office', kind: 'dir', size: 0, mtimeMs: 0, isLink: false }] }))
-  on('fs.read', ($, e) =>
-    e.path.endsWith('pack.json')
+  on('fs.read', ($, e) => {
+    if (e.path in files) return { value: files[e.path] }
+    if (e.path.endsWith('last-played')) throw new Error('missing')
+    return e.path.endsWith('pack.json')
       ? { value: JSON.stringify({ label: 'my office', failed: ['sigh.wav'], pushed: ['cheer.mp3'] }) }
-      : { value: { base64: 'AAAA' } },
-  )
+      : { value: { base64: 'AAAA' } }
+  })
+  on('fs.write', ($, e) => {
+    files[e.path] = e.text
+    return { value: undefined }
+  })
   on('audio.play', ($, e) => {
     played.push(e.clip.asset ?? e.clip.mime)
     return { value: undefined }
@@ -36,11 +44,12 @@ function engine(on, opts: { now?: number; front?: string; settings?: object; you
   on('tool.call', { tool: 'Bash' }, ($, e) =>
     e.command.includes('fail') ? { result: {}, text: 'exit 1', isError: true } : { result: {}, text: 'ok' },
   )
+  on('tool.call', { tool: 'AskUserQuestion' }, () => ({ result: {}, text: 'answered' }))
   on('turn.complete', () => ({ text: '' }))
   on('prompt.submit', ($, e) => ({ text: e.text }))
   on('command.register', () => ({ value: undefined }))
   on('session.start', () => ({ cwd: '/repo' }))
-  return { played, spoken, clock }
+  return { played, spoken, clock, files }
 }
 
 // Lets the unawaited play settle
@@ -123,4 +132,80 @@ test('/sounds test plays every sound of a pack', async ($, on) => {
   const out = await $.command.run({ command: 'sounds', args: 'test blood' })
   expect(out.text).toMatch(/^Played \d+ sounds of blood$/)
   expect(played.length).toBeGreaterThan(8)
+})
+
+test('a prompt plays only after five quiet minutes', async ($, on) => {
+  const { played, clock } = engine(on)
+  await $.prompt.submit({ text: 'go' } as any)
+  await settle()
+  clock.now += 60000
+  await $.prompt.submit({ text: 'and this' } as any)
+  await settle()
+  expect(played.length).toBe(1)
+  clock.now += 5 * 60000
+  await $.prompt.submit({ text: 'back again' } as any)
+  await settle()
+  expect(played.length).toBe(2)
+})
+
+test('a question for you plays its moment before the answer', async ($, on) => {
+  const { played } = engine(on, { settings: { defaultPack: 'terran' } })
+  await $.tool.call({ tool: 'AskUserQuestion', questions: [] } as any)
+  await settle()
+  expect(played.length).toBe(1)
+  expect(played[0]).toMatch(/^sounds\/terran\/(piece-of-me|supply-depots)\.mp3$/)
+})
+
+test('failed means a check step failed, not a script that mentions one', async ($, on) => {
+  const { played, clock } = engine(on, { settings: { defaultPack: 'terran' } })
+  const failing = [
+    "python3 - <<'EOF'\nprint('test build check')\nfail\nEOF",
+    'cat tests/fail.txt',
+    'grep -rn check src fail',
+  ]
+  for (const command of failing) {
+    await $.tool.call({ tool: 'Bash', command })
+    clock.now += 5000
+  }
+  await settle()
+  expect(played).toEqual([])
+  const checks = ['cd app && npm run build fail', 'claude plugin test plugins/x fail', 'scripts/check-personal.sh --all fail', 'uv run pytest -q fail']
+  for (const command of checks) {
+    await $.tool.call({ tool: 'Bash', command })
+    await settle()
+    clock.now += 5000
+  }
+  expect(played.length).toBe(checks.length)
+})
+
+test('another terminal that just played keeps this one quiet', async ($, on) => {
+  const { played, files, clock } = engine(on)
+  // The file is named after the plugin: ~/.config/<plugin>/last-played
+  const shared = () => Object.keys(files).find((path) => path.endsWith('/last-played'))
+  await $.turn.complete(LONG)
+  await settle()
+  const path = shared()!
+  expect(path).toMatch(/^\/home\/test\/\.config\/[a-z-]+\/last-played$/)
+  played.length = 0
+  clock.now += 5000
+  files[path] = String(clock.now - 1000)
+  await $.turn.complete(LONG)
+  await settle()
+  expect(played).toEqual([])
+  clock.now += 5000
+  await $.turn.complete(LONG)
+  await settle()
+  expect(played.length).toBe(1)
+  expect(files[path]).toBe(String(clock.now))
+})
+
+test('the same clip never plays twice in a row for a moment', async ($, on) => {
+  const { played, clock } = engine(on)
+  for (let i = 0; i < 6; i++) {
+    await $.turn.complete(LONG)
+    await settle()
+    clock.now += 4000
+  }
+  expect(played.length).toBe(6)
+  for (let i = 1; i < played.length; i++) expect(played[i]).not.toBe(played[i - 1])
 })

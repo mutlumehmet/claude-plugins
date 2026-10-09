@@ -1,11 +1,12 @@
 // Sound packs for the moments that need you, and no others.
 //
 //   moment       when                                         event
-//   ordered      you sent a prompt (an order given)           prompt.submit
-//   needsYou     Claude waits for you (a permission prompt)   classic.Notification
+//   ordered      you sent a prompt after 5 quiet minutes      prompt.submit
+//   needsYou     Claude waits for you: a permission prompt,   classic.Notification,
+//                a question, a plan to approve                tool.call (AskUserQuestion, ExitPlanMode)
 //   longDone     a turn of 60 s or more answered              turn.complete (main loop)
 //   subagent     a subagent finished                          classic.SubagentStop
-//   failed       a test, build, lint or type check failed     tool.call (Bash, isError)
+//   failed       a test, build, lint or type check failed     tool.call (Bash, isError; the step run, not heredoc text)
 //   pushed       git push went through                        tool.call (Bash)
 //   compacted    the conversation was compacted               classic.PostCompact
 //
@@ -22,8 +23,11 @@ const DEFAULT_PACK = 'aoe'
 const LONG_TURN_MS = 60000
 const QUIET_FROM = 23
 const QUIET_TO = 7
-// One sound at a time: several subagents finishing together give one clip, not ten
+// One sound at a time: several subagents finishing together give one clip, not ten. The last
+// play time is shared by every terminal through a small file beside your packs folder
 const GAP_MS = 2500
+// A prompt plays only after a quiet spell, so typing away is not a clip every message
+const ORDERED_REST_MS = 5 * 60000
 
 // Front apps that mean you are already looking at Claude Code (away mode)
 const HERE_APPS = ['Terminal', 'iTerm2', 'Code', 'Visual Studio Code', 'Cursor', 'Ghostty', 'Warp', 'Claude']
@@ -31,8 +35,14 @@ const HERE_APPS = ['Terminal', 'iTerm2', 'Code', 'Visual Studio Code', 'Cursor',
 // Notification types that are only information, not a wait on you
 const QUIET_NOTIFICATIONS = ['idle_prompt', 'auth_success']
 
-const CHECK_COMMAND = /\b(test|tests|build|lint|tsc|jest|vitest|pytest|playwright|typecheck|check)\b/
+// Checked against each step a command runs (heredoc bodies dropped), never against file text
+const CHECK_TOOL = /^(pytest|jest|vitest|tsc|playwright|eslint|mypy|ruff|shellcheck|biome)$/
+const CHECK_WORD = /^(test|tests|build|lint|typecheck|type-check|check|validate)(:.*)?$/
+const CHECK_RUNNER = /^(npm|pnpm|yarn|bun|npx|bunx|make|cargo|go|deno|gradle|mvn|swift|turbo|nx)$/
+const CHECK_SCRIPT = /(^|\/)(check|test|lint)[\w.-]*\.(sh|py|js|ts|mjs)$/
 const PUSH_COMMAND = /\bgit\s+push\b/
+// Tools that stop and wait for your answer
+const ASKING_TOOLS = ['AskUserQuestion', 'ExitPlanMode']
 
 const MOMENTS = ['ordered', 'needsYou', 'longDone', 'subagent', 'failed', 'pushed', 'compacted']
 
@@ -840,7 +850,7 @@ const VOICE_PACKS = {}
 
 // Module variables are this terminal's: each terminal is its own process. A plugin reload
 // starts them over, which only costs this terminal's /sounds <pack> choice.
-const here = { pack: undefined, playedAt: 0, yourPacks: {} }
+const here = { pack: undefined, playedAt: 0, yourPacks: {}, lastClip: {} }
 
 const DEFAULTS = { isOn: true, defaultPack: DEFAULT_PACK, mode: 'always', isNightQuiet: true }
 
@@ -893,7 +903,7 @@ export function register(on) {
 
   // An order given: the unit answers. You are at the keyboard, so away mode does not apply
   on('prompt.submit', async ($, e, next) => {
-    await cue($, 'ordered', { isPresent: true })
+    await cue($, 'ordered', { isPresent: true, restMs: ORDERED_REST_MS })
     return next(e)
   })
 
@@ -918,11 +928,17 @@ export function register(on) {
     return out
   })
 
-  on('tool.call', { tool: 'Bash' }, async ($, e, next) => {
+  // One hook for the tools: a plugin gets one hook per event
+  on('tool.call', { tool: ['Bash', ...ASKING_TOOLS] }, async ($, e, next) => {
+    // A question waits for you, so the sound goes before the answer, not after it
+    if (ASKING_TOOLS.includes(e.tool)) {
+      await cue($, 'needsYou')
+      return next(e)
+    }
     const out = await next(e)
     const command = String(e.command ?? '')
     if (out.deny === undefined) {
-      if (out.isError && CHECK_COMMAND.test(command)) await cue($, 'failed')
+      if (out.isError && runsCheck(command)) await cue($, 'failed')
       else if (!out.isError && PUSH_COMMAND.test(command)) await cue($, 'pushed')
     }
     return out
@@ -938,12 +954,14 @@ async function cue($, moment, opts = {}) {
     const choices = pack[moment] ?? []
     if (!choices.length) return
     const now = await $.clock.now()
-    if (now - here.playedAt < GAP_MS) return
+    const last = Math.max(here.playedAt, await sharedPlayedAt($))
+    if (now - last < Math.max(GAP_MS, opts.restMs ?? 0)) return
     if (settings.isNightQuiet && isQuietHour(new Date(now).getHours())) return
     if (!opts.isPresent && settings.mode === 'away' && (await isHere($))) return
     here.playedAt = now
+    await sharePlayedAt($, now)
     // Not awaited: the sound plays while the session goes on
-    sound($, pack, choices[Math.floor(now / 1000) % choices.length]).catch(() => {})
+    sound($, pack, pick(choices, here.lastClip, pack.name + '/' + moment, now)).catch(() => {})
   } catch {
     // A sound is never worth an error line
   }
@@ -964,6 +982,67 @@ async function sound($, pack, item) {
   } else {
     await $.audio.play({ asset: 'sounds/' + pack.name + '/' + item })
   }
+}
+
+// A clip of the moment, never the one this terminal played last for it
+function pick(choices, lastClip, key, now) {
+  let i = Math.floor(now / 1000) % choices.length
+  if (choices.length > 1 && choices[i] === lastClip[key]) i = (i + 1) % choices.length
+  lastClip[key] = choices[i]
+  return choices[i]
+}
+
+// The file every terminal reads and writes the last play time through
+async function playedAtFile($) {
+  return (await $.env.get('HOME')) + '/.config/' + $.plugin.name + '/last-played'
+}
+
+async function sharedPlayedAt($) {
+  try {
+    return Number(await $.fs.read(await playedAtFile($))) || 0
+  } catch {
+    // No file yet, or unreadable: this terminal's own time still holds
+    return 0
+  }
+}
+
+async function sharePlayedAt($, now) {
+  try {
+    await $.fs.write(await playedAtFile($), String(now))
+  } catch {
+    // Not shared this time; this terminal still keeps its own gap
+  }
+}
+
+// Whether a command runs a test, build, lint or type check as one of its steps. Heredoc
+// bodies are dropped first: a script that mentions "test" in its text runs nothing
+function runsCheck(command) {
+  const lines = []
+  let end
+  for (const line of command.split('\n')) {
+    if (end !== undefined) {
+      if (line.trim() === end) end = undefined
+      continue
+    }
+    lines.push(line)
+    const heredoc = line.match(/<<-?\s*['"]?([A-Za-z_]\w*)['"]?/)
+    if (heredoc) end = heredoc[1]
+  }
+  return lines
+    .join('\n')
+    .split(/&&|\|\||[;|\n]/)
+    .some((step) => {
+      const words = step.trim().split(/\s+/).filter((w) => !/^\w+=/.test(w))
+      let [first, second, third] = words
+      if (first === 'uv' && second === 'run') [first, second, third] = words.slice(2)
+      if (/^python3?$/.test(first) && second === '-m') return CHECK_TOOL.test(third ?? '')
+      if (/^(python3?|node|bash|sh|zsh|bun|deno|tsx)$/.test(first)) return CHECK_SCRIPT.test(second ?? '')
+      if (CHECK_TOOL.test(first ?? '') || CHECK_SCRIPT.test(first ?? '')) return true
+      if (first === 'claude' && second === 'plugin') return CHECK_WORD.test(third ?? '')
+      if (!CHECK_RUNNER.test(first ?? '')) return false
+      const verb = second === 'run' ? third : second
+      return CHECK_WORD.test(verb ?? '') || CHECK_TOOL.test(verb ?? '')
+    })
 }
 
 async function playAll($, name) {
