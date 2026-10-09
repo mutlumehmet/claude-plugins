@@ -1,6 +1,6 @@
 # findmutlu-sounds
 
-[![A sound for every moment that needs you. Pick a pack, or bring your own.](../../docs/images/findmutlu-sounds-banner.png)](../../docs/videos/findmutlu-sounds-how.mp4)
+[![Funny sounds for Claude Code agent notifications. Pick a pack, or bring your own.](../../docs/images/findmutlu-sounds-banner.png)](../../docs/videos/findmutlu-sounds-how.mp4)
 
 A Claude Code mod that plays a short sound at the moments that need you, and at no other time:
 Claude asks for your OK, a long job finishes, a test fails, a push goes through. Pick a Terran
@@ -9,9 +9,9 @@ radio. Part of [claude-plugins](../../README.md).
 
 ## How it works
 
-[![The how it works film: a Claude session, drawn as a Fat Invader at its laptop, sends each moment to a speaker, and the speaker plays that moment's sound. Turn the sound on.](../../docs/images/findmutlu-sounds-how.png)](../../docs/videos/findmutlu-sounds-how.mp4)
+[![The how it works film: it opens on the pack logos, then a Claude session, drawn as a Fat Invader at its laptop, sends each moment to a speaker, and the speaker plays that moment's sound. Turn the sound on.](../../docs/images/findmutlu-sounds-how.png)](../../docs/videos/findmutlu-sounds-how.mp4)
 
-**[Watch it with sound](../../docs/videos/findmutlu-sounds-how.mp4)** (31 seconds, a famous line from a different pack at each moment: peon, terran, protoss, red-alert, rick-and-morty, duke, aoe).
+**[Watch it with sound](../../docs/videos/findmutlu-sounds-how.mp4)** (33 seconds, a famous line from a different pack at each moment: peon, terran, protoss, red-alert, rick-and-morty, duke, aoe).
 
 | Moment | When |
 |---|---|
