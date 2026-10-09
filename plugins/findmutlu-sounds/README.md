@@ -9,7 +9,7 @@ radio. Part of [claude-plugins](../../README.md).
 
 ## How it works
 
-[![The how it works film: a Claude session sends each moment to a speaker, and the speaker plays that moment's sound. Turn the sound on.](../../docs/images/findmutlu-sounds-how.png)](../../docs/videos/findmutlu-sounds-how.mp4)
+[![The how it works film: a Claude session, drawn as a Fat Invader at its laptop, sends each moment to a speaker, and the speaker plays that moment's sound. Turn the sound on.](../../docs/images/findmutlu-sounds-how.png)](../../docs/videos/findmutlu-sounds-how.mp4)
 
 **[Watch it with sound](../../docs/videos/findmutlu-sounds-how.mp4)** (30 seconds, the aoe pack).
 
@@ -29,9 +29,9 @@ may leave a moment silent.
 
 ## The packs
 
-[![The pack tour: each pack in turn lifts its card and plays its best known line. Turn the sound on.](../../docs/images/findmutlu-sounds-tour.png)](../../docs/videos/findmutlu-sounds-tour.mp4)
+[![The pack tour: every pack on one grid, and the best known ones lift their card in turn and play their famous line. Turn the sound on.](../../docs/images/findmutlu-sounds-tour.png)](../../docs/videos/findmutlu-sounds-tour.mp4)
 
-**[Hear the packs](../../docs/videos/findmutlu-sounds-tour.mp4)** (43 seconds).
+**[Hear the packs](../../docs/videos/findmutlu-sounds-tour.mp4)** (41 seconds).
 
 | Pack | What it sounds like | Source |
 |---|---|---|
