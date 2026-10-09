@@ -118,7 +118,7 @@ const FILE_PACKS = {
     ]
   },
   "aoe-turk": {
-    "label": "Age of Empires II: the Turkish villager, male and female (Microsoft Game Content Usage Rules)",
+    "label": "Age of Empires II: the Turks, villagers male and female, the war cry, swords and fanfares (Microsoft Game Content Usage Rules)",
     "ordered": [
       "tamam.m4a",
       "tamam-f.m4a",
@@ -139,7 +139,9 @@ const FILE_PACKS = {
     ],
     "longDone": [
       "hazir.m4a",
-      "hazir-f.m4a"
+      "hazir-f.m4a",
+      "victory.mp3",
+      "wonder.mp3"
     ],
     "subagent": [
       "oduncu.m4a",
@@ -159,15 +161,20 @@ const FILE_PACKS = {
       "villager-death.m4a",
       "villager-death-f.m4a",
       "tamirci.m4a",
-      "tamirci-f.m4a"
+      "tamirci-f.m4a",
+      "sword-hit.mp3"
     ],
     "pushed": [
       "saldir.m4a",
-      "saldir-f.m4a"
+      "saldir-f.m4a",
+      "allah-allah.mp3",
+      "ileri.mp3",
+      "sword-clash.mp3"
     ],
     "compacted": [
       "usta.m4a",
-      "usta-f.m4a"
+      "usta-f.m4a",
+      "castle.mp3"
     ]
   },
   "blood": {

@@ -49,3 +49,15 @@ The female voice comes from the openpeon pack "aoe2-villager-turkish-female" by 
 | tamirci-f.m4a | failed | Tamirci (repairer), female | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-female/sounds/Tamirci_F.ogg |
 | saldir-f.m4a | pushed | Saldir! (attack!), female | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-female/sounds/Saldir_F.ogg |
 | usta-f.m4a | compacted | Usta (builder), female | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-female/sounds/Usta_F.ogg |
+
+The war cries, swords and fanfares are the original MP3s as uploaded to 101soundboards (these boards add no intro), unchanged. The two war cries were found by matching an older recording of the lines against the board's numbered clips.
+
+| File | Moment | Line | Source file |
+| :- | :- | :- | :- |
+| allah-allah.mp3 | pushed | Allah Allah! (Turkish soldiers) | https://hoovers.101soundboards.com/sb/board_sounds/zvnogprv.mp3 (https://www.101soundboards.com/boards/1632771-age-of-empires-ii-pc-civilizations-sounds, Civilizations - 6299) |
+| ileri.mp3 | pushed | Ileri! (forward, Turkish soldiers) | https://hoovers.101soundboards.com/sb/board_sounds/lydbaxrk.mp3 (https://www.101soundboards.com/boards/1632771-age-of-empires-ii-pc-civilizations-sounds, Civilizations - 6301) |
+| sword-clash.mp3 | pushed | swords clashing | https://hoovers.101soundboards.com/sb/board_sounds/xpgzengn.mp3 (https://www.101soundboards.com/boards/1632796-age-of-empires-ii-pc-animals-cheat-generic-battles-of-the-conquerors-ambience, Generic - sword5) |
+| sword-hit.mp3 | failed | a sword hit | https://hoovers.101soundboards.com/sb/board_sounds/xpgzelvz.mp3 (https://www.101soundboards.com/boards/1632796-age-of-empires-ii-pc-animals-cheat-generic-battles-of-the-conquerors-ambience, Generic - sword3) |
+| victory.mp3 | longDone | the victory fanfare | https://hoovers.101soundboards.com/sb/board_sounds/dazzldgb.mp3 (https://www.101soundboards.com/boards/1632796-age-of-empires-ii-pc-animals-cheat-generic-battles-of-the-conquerors-ambience, Interface - victory) |
+| wonder.mp3 | longDone | a wonder completed | https://hoovers.101soundboards.com/sb/board_sounds/bjzzwloo.mp3 (https://www.101soundboards.com/boards/1632796-age-of-empires-ii-pc-animals-cheat-generic-battles-of-the-conquerors-ambience, Interface - wonder) |
+| castle.mp3 | compacted | a castle completed | https://hoovers.101soundboards.com/sb/board_sounds/gnkkxjgo.mp3 (https://www.101soundboards.com/boards/1632796-age-of-empires-ii-pc-animals-cheat-generic-battles-of-the-conquerors-ambience, Interface - castle) |
