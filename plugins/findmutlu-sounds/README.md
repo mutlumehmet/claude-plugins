@@ -35,9 +35,9 @@ may leave a moment silent.
 
 | Pack | What it sounds like | Source |
 |---|---|---|
-| `aoe` (default) | "Wololo", the horn, the villager's "Yes", and the taunts: "Start the game already!", "What age are you in?", "You played two hours to die like this?" at a failed test, "Raiding party!" on a push | Age of Empires II, under Microsoft's [Game Content Usage Rules](https://www.xbox.com/en-US/developers/rules) |
+| `aoe` | "Wololo", the horn, the villager's "Yes", and the taunts: "Start the game already!", "What age are you in?", "You played two hours to die like this?" at a failed test, "Raiding party!" on a push | Age of Empires II, under Microsoft's [Game Content Usage Rules](https://www.xbox.com/en-US/developers/rules) |
 | `aoe-turk` | The Turkish villager: "Emrin?" (your order?), "Tamam" (OK), "Hazir" (ready), "Saldir!" (attack!) on a push, the job names when a subagent returns | Age of Empires II, under Microsoft's [Game Content Usage Rules](https://www.xbox.com/en-US/developers/rules), via the [openpeon pack](https://openpeon.com/packs/aoe2-villager-turkish-male) by Yusuf Kinatas |
-| `terran` | "SCV good to go, sir", "You want a piece of me, boy?", "Nuclear launch detected", "In the pipe, five by five" | StarCraft, Blizzard Entertainment |
+| `terran` (default) | "SCV good to go, sir", "You want a piece of me, boy?", "Nuclear launch detected", "In the pipe, five by five" | StarCraft, Blizzard Entertainment |
 | `protoss` | "En Taro Adun", "You must construct additional pylons", "My life for Aiur!", "Power overwhelming" | StarCraft, Blizzard Entertainment |
 | `red-alert` | "Kirov reporting", "For mother Russia", "Your mind is clear", "Kaboom" | Command & Conquer: Red Alert 2, Electronic Arts |
 | `peon` | "Work work", "Zug zug", "Something need doing?", "Me not that kind of orc" | Warcraft III: Reign of Chaos, Blizzard Entertainment |

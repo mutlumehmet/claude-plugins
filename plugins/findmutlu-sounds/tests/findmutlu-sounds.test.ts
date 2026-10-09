@@ -55,7 +55,7 @@ function engine(on, opts: { now?: number; front?: string; settings?: object; you
 // Lets the unawaited play settle
 const settle = () => new Promise((r) => setTimeout(r, 0))
 
-test('aoe by default: a long turn plays a clip, a short one nothing', async ($, on) => {
+test('terran by default: a long turn plays a clip, a short one nothing', async ($, on) => {
   const { played } = engine(on)
   await $.turn.complete({ ...LONG, durationMs: 5000 })
   await settle()
@@ -63,7 +63,7 @@ test('aoe by default: a long turn plays a clip, a short one nothing', async ($, 
   await $.turn.complete(LONG)
   await settle()
   expect(played.length).toBe(1)
-  expect(played[0]).toMatch(/^sounds\/aoe\/.+\.mp3$/)
+  expect(played[0]).toMatch(/^sounds\/terran\/.+\.mp3$/)
 })
 
 test('a failed test and a git push each get their moment, other commands nothing', async ($, on) => {
@@ -93,7 +93,7 @@ test('your own pack loads at session start and plays from its bytes', async ($, 
 test('/sounds <pack> changes this terminal, /sounds default <pack> new ones', async ($, on) => {
   engine(on)
   const here = await $.command.run({ command: 'sounds', args: 'protoss' })
-  expect(here.text).toContain('This terminal: protoss (new terminals: aoe)')
+  expect(here.text).toContain('This terminal: protoss (new terminals: terran)')
   const def = await $.command.run({ command: 'sounds', args: 'default red-alert' })
   expect(def.text).toContain('New terminals: red-alert')
 })
@@ -200,7 +200,8 @@ test('another terminal that just played keeps this one quiet', async ($, on) => 
 })
 
 test('the same clip never plays twice in a row for a moment', async ($, on) => {
-  const { played, clock } = engine(on)
+  // A pack with several long-turn clips; one with a single clip has to repeat it
+  const { played, clock } = engine(on, { settings: { defaultPack: 'aoe' } })
   for (let i = 0; i < 6; i++) {
     await $.turn.complete(LONG)
     await settle()

@@ -19,7 +19,7 @@
 // Which pack plays: this terminal's (/sounds <pack>), else your default (/sounds default <pack>,
 // kept in the plugin store), else DEFAULT_PACK.
 
-const DEFAULT_PACK = 'aoe'
+const DEFAULT_PACK = 'terran'
 const LONG_TURN_MS = 60000
 const QUIET_FROM = 23
 const QUIET_TO = 7
