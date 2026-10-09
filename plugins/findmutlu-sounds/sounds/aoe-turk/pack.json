@@ -1,35 +1,53 @@
 {
-  "label": "Age of Empires II: the Turkish villager, male (Microsoft Game Content Usage Rules)",
+  "label": "Age of Empires II: the Turkish villager, male and female (Microsoft Game Content Usage Rules)",
   "ordered": [
     "tamam.m4a",
+    "tamam-f.m4a",
     "evet.m4a",
+    "evet-f.m4a",
     "dogru.m4a",
-    "yapacagim.m4a"
+    "dogru-f.m4a",
+    "yapacagim.m4a",
+    "yapacagim-f.m4a"
   ],
   "needsYou": [
     "efendim.m4a",
+    "efendim-f.m4a",
     "emrin.m4a",
-    "evet-question.m4a"
+    "emrin-f.m4a",
+    "evet-question.m4a",
+    "evet-question-f.m4a"
   ],
   "longDone": [
-    "hazir.m4a"
+    "hazir.m4a",
+    "hazir-f.m4a"
   ],
   "subagent": [
     "oduncu.m4a",
+    "oduncu-f.m4a",
     "ciftci.m4a",
+    "ciftci-f.m4a",
     "madenci.m4a",
+    "madenci-f.m4a",
     "balikci.m4a",
+    "balikci-f.m4a",
     "avci.m4a",
-    "seyis.m4a"
+    "avci-f.m4a",
+    "seyis.m4a",
+    "seyis-f.m4a"
   ],
   "failed": [
     "villager-death.m4a",
-    "tamirci.m4a"
+    "villager-death-f.m4a",
+    "tamirci.m4a",
+    "tamirci-f.m4a"
   ],
   "pushed": [
-    "saldir.m4a"
+    "saldir.m4a",
+    "saldir-f.m4a"
   ],
   "compacted": [
-    "usta.m4a"
+    "usta.m4a",
+    "usta-f.m4a"
   ]
 }

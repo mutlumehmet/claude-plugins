@@ -26,3 +26,26 @@ Every clip comes from the openpeon pack "aoe2-villager-turkish-male" by Yusuf Ki
 | usta.m4a | compacted | Usta (builder) | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-male/sounds/Usta_M.ogg |
 
 Edges smoothed on avci, oduncu: an 8 ms fade in, a 60 ms fade out and 150 ms of silence after, because the source cut them mid-sound and they clicked. Re-encoded once at the source's bit rate; the lines are otherwise untouched.
+
+The female voice comes from the openpeon pack "aoe2-villager-turkish-female" by Yusuf Kinatas (https://openpeon.com/packs/aoe2-villager-turkish-female, same repository and tag, listed as MIT), converted from Ogg to M4A the same way, with an 8 ms fade in and a 60 ms fade out.
+
+| File | Moment | Line | Source file |
+| :- | :- | :- | :- |
+| tamam-f.m4a | ordered | Tamam (OK), female | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-female/sounds/Tamam_F.ogg |
+| evet-f.m4a | ordered | Evet (yes), female | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-female/sounds/Evet2_F.ogg |
+| dogru-f.m4a | ordered | Dogru (right), female | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-female/sounds/Dogru_F.ogg |
+| yapacagim-f.m4a | ordered | Yapacagim (I will do it), female | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-female/sounds/Yapacagim_F.ogg |
+| efendim-f.m4a | needsYou | Efendim? (yes, sir?), female | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-female/sounds/Efendim_F.ogg |
+| emrin-f.m4a | needsYou | Emrin? (your order?), female | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-female/sounds/Emrin_F.ogg |
+| evet-question-f.m4a | needsYou | Evet? (yes?), female | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-female/sounds/Evet_F.ogg |
+| hazir-f.m4a | longDone | Hazir (ready), female | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-female/sounds/Hazir_F.ogg |
+| oduncu-f.m4a | subagent | Oduncu (lumberjack), female | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-female/sounds/Oduncu_F.ogg |
+| ciftci-f.m4a | subagent | Ciftci (farmer), female | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-female/sounds/Ciftci_F.ogg |
+| madenci-f.m4a | subagent | Madenci (miner), female | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-female/sounds/Madenci_F.ogg |
+| balikci-f.m4a | subagent | Balikci (fisherman), female | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-female/sounds/Balikci_F.ogg |
+| avci-f.m4a | subagent | Avci (hunter), female | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-female/sounds/Avci_F.ogg |
+| seyis-f.m4a | subagent | Seyis (herder), female | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-female/sounds/Seyis_F.ogg |
+| villager-death-f.m4a | failed | the villager dying, female | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-female/sounds/VillagerDeath_F.ogg |
+| tamirci-f.m4a | failed | Tamirci (repairer), female | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-female/sounds/Tamirci_F.ogg |
+| saldir-f.m4a | pushed | Saldir! (attack!), female | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-female/sounds/Saldir_F.ogg |
+| usta-f.m4a | compacted | Usta (builder), female | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-female/sounds/Usta_F.ogg |
