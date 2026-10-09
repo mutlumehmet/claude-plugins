@@ -63,7 +63,7 @@ may leave a moment silent.
 Each pack's folder under [`sounds/`](sounds) has a `CREDITS.md` with the source of every clip and
 who holds its rights. The game clips are the original files as shared on
 [101soundboards](https://www.101soundboards.com) and in [openpeon](https://openpeon.com) packs,
-unchanged except that WAV and Ogg originals are stored as M4A (smaller, and macOS `afplay` stops Ogg clips after about a second). They belong to their publishers:
+unchanged except that WAV and Ogg originals are stored as M4A (smaller, and macOS `afplay` stops Ogg clips after about a second), and the short intro 101soundboards puts before some clips is cut where the site's own player skips it. They belong to their publishers:
 this plugin is free fan use, not licensed, not endorsed by any of them, and never sold. If you
 hold the rights to a pack and want it gone, open an issue and it goes.
 

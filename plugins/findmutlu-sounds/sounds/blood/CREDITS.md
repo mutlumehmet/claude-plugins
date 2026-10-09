@@ -2,7 +2,7 @@
 
 Sounds from Blood (Monolith Productions, 1997) © its rights holder (Atari, Inc.). Not licensed: shared as non-commercial fan use, not endorsed by or affiliated with the rights holder. If you hold the rights and want them removed, open an issue and the pack goes.
 
-Every clip is the original MP3 as uploaded to the soundboard https://www.101soundboards.com/boards/10818-caleb-sounds-blood, unchanged.
+Every clip is the original MP3 as uploaded to the soundboard https://www.101soundboards.com/boards/10818-caleb-sounds-blood, with the site's own intro cut off (the board records how much to skip as `sound_skip`, in tenths of a second); nothing else is changed.
 
 | File | Moment | Source file |
 | :- | :- | :- |
