@@ -34,3 +34,5 @@ The taunts below are the original MP3s from the openpeon pack "Age of Empires II
 | being-rushed.mp3 | failed | Ack! Being rushed! | https://raw.githubusercontent.com/PeonPing/og-packs/v1.0.0/aoe2/sounds/12-ack-being-rushed.mp3 |
 | raiding-party.mp3 | pushed | Raiding party! | https://raw.githubusercontent.com/PeonPing/og-packs/v1.0.0/aoe2/sounds/23-raiding-party.mp3 |
 | give-me-your-extra-resources.mp3 | compacted | Give me your extra resources. | https://raw.githubusercontent.com/PeonPing/og-packs/v1.0.0/aoe2/sounds/38-give-me-your-extra-resources.mp3 |
+
+Edges smoothed on drum-fanfare, herb-laugh, no, roggan, the-wonder-no, viking-horn, wololo, yes: an 8 ms fade in, a 60 ms fade out and 150 ms of silence after, because the source cut them mid-sound and they clicked. Re-encoded once at the source's bit rate; the lines are otherwise untouched.

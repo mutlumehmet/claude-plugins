@@ -19,3 +19,5 @@ Every clip is the original MP3 from the openpeon pack "Rick and Morty" (mature e
 | dick-move.mp3 | pushed | In bird culture, this is considered a dick move. | https://raw.githubusercontent.com/Mr3zee/peonping-rick-and-morty/v1.0.0/sounds/in_bird_culture_this_is_considered_a_dick_move.mp3 |
 | traumatized-for-breakfast.mp3 | compacted | Bitch, my generation gets traumatized for breakfast! | https://raw.githubusercontent.com/Mr3zee/peonping-rick-and-morty/v1.0.0/sounds/my_generation_gets_traumatised_for_breakfast.mp3 |
 | take-a-shit.mp3 | compacted | I'm gonna go take a shit. | https://raw.githubusercontent.com/Mr3zee/peonping-rick-and-morty/v1.0.0/sounds/im_gonna_go_take_a_shit.mp3 |
+
+Edges smoothed on dick-move, doctor-who, fuck-the-government, god-damn-it, gonna-fucking-do-it, oh-fuck-me, son-of-a-bitch-im-in, traumatized-for-breakfast: an 8 ms fade in, a 60 ms fade out and 150 ms of silence after, because the source cut them mid-sound and they clicked. Re-encoded once at the source's bit rate; the lines are otherwise untouched.

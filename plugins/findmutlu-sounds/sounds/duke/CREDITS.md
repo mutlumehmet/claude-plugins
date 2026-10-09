@@ -21,3 +21,5 @@ Every clip is the original MP3 as uploaded to the soundboard https://www.101soun
 | bubble-gum.mp3 | pushed | https://hoovers.101soundboards.com/sb/sounds_rendered/ianikcskkq4zx3ky.mp3 |
 | much-better.mp3 | compacted | https://hoovers.101soundboards.com/sb/sounds_rendered/skr4vqw7bdrtddgf.mp3 |
 | needed-that.mp3 | compacted | https://hoovers.101soundboards.com/sb/sounds_rendered/uenpntptgxqxvzk6.mp3 |
+
+Edges smoothed on bubble-gum, come-get-some, game-over, hail-to-the-king, waiting-for-christmas: an 8 ms fade in, a 60 ms fade out and 150 ms of silence after, because the source cut them mid-sound and they clicked. Re-encoded once at the source's bit rate; the lines are otherwise untouched.

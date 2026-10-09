@@ -17,3 +17,5 @@ Every clip is the original MP3 as uploaded to the soundboard https://www.101soun
 | life-for-aiur.mp3 | pushed | https://hoovers.101soundboards.com/sb/board_sounds_rendered/axxvagl.mp3 |
 | power-overwhelming.mp3 | pushed | https://hoovers.101soundboards.com/sb/board_sounds_rendered/xaadnld.mp3 |
 | vespene-gas.mp3 | compacted | https://hoovers.101soundboards.com/sb/board_sounds_rendered/bwwdgxw.mp3 |
+
+Edges smoothed on adun-toridas, systems-functional, transmission, upgrade, vespene-gas: an 8 ms fade in, a 60 ms fade out and 150 ms of silence after, because the source cut them mid-sound and they clicked. Re-encoded once at the source's bit rate; the lines are otherwise untouched.

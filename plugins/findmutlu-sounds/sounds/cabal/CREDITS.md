@@ -24,3 +24,5 @@ Clips from the openpeon pack "Tiberian Sun Cabal" by Gus El Khoury Seoane (https
 | construct-more-power-plants.m4a | compacted | Construct more power plants. | https://raw.githubusercontent.com/gustakasn0v/openpeon-tiberian-sun-cabal/v1.0.1/sounds/construct_more_power_plants.WAV |
 | low-power.m4a | compacted | Low power. | https://raw.githubusercontent.com/gustakasn0v/openpeon-tiberian-sun-cabal/v1.0.1/sounds/low_power.WAV |
 | silos-needed.m4a | compacted | Silos needed. | https://raw.githubusercontent.com/gustakasn0v/openpeon-tiberian-sun-cabal/v1.0.1/sounds/silos_needed.WAV |
+
+Edges smoothed on congratulations-on-your-success: an 8 ms fade in, a 60 ms fade out and 150 ms of silence after, because the source cut them mid-sound and they clicked. Re-encoded once at the source's bit rate; the lines are otherwise untouched.

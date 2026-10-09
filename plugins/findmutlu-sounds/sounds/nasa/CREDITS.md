@@ -16,3 +16,5 @@ Every clip is public domain or CC0. Processing for all: cut, silence trimmed, lo
 | liftoff.m4a | pushed | https://commons.wikimedia.org/wiki/File:Discovery_-_STS-26_Liftoff.mp3 | NASA | Public domain (PD-USGov-NASA) | 4.55s to 6.6s; silence trimmed, 150 ms fade out |
 | liftoff-41d.m4a | pushed | https://commons.wikimedia.org/wiki/File:Discovery_-_STS-41D_Liftoff.mp3 | NASA | Public domain (PD-USGov-NASA) | 0.00s to 2.1s; silence trimmed, 120 ms fade out |
 | vector-transfer.m4a | compacted | https://commons.wikimedia.org/wiki/File:Discovery_-_Vector_transfer.mp3 | NASA | Public domain (PD-USGov-NASA) | 0.00s to end; silence trimmed, 50 ms fade out |
+
+Edges smoothed on liftoff, quindar-beep: an 8 ms fade in, a 60 ms fade out and 150 ms of silence after, because the source cut them mid-sound and they clicked. Re-encoded once at the source's bit rate; the lines are otherwise untouched.

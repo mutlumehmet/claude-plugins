@@ -24,3 +24,5 @@ Clips from the openpeon pack "The Big Lebowski" by Taylan Aydinli (https://openp
 | wave-of-the-future.mp3 | pushed | Wave of the future, Dude. | https://raw.githubusercontent.com/taylan/openpeon-the-big-lebowski/v1.0.1/sounds/216-wave-of-the-future.mp3 |
 | just-take-it-easy.mp3 | compacted | Just take it easy, man. | https://raw.githubusercontent.com/taylan/openpeon-the-big-lebowski/v1.0.1/sounds/023-take-it-easy-man.mp3 |
 | strikes-and-gutters.mp3 | compacted | Strikes and gutters, ups and downs. | https://raw.githubusercontent.com/taylan/openpeon-the-big-lebowski/v1.0.1/sounds/244-strikes-and-gutters-ups-and-downs.mp3 |
+
+Edges smoothed on far-out, goodnight-sweet-prince, just-take-it-easy, mark-it-zero, no-problemo, over-the-line, phones-ringing-dude, this-aggression-will-not-stand, way-to-go-donny, whats-your-point, world-of-pain: an 8 ms fade in, a 60 ms fade out and 150 ms of silence after, because the source cut them mid-sound and they clicked. Re-encoded once at the source's bit rate; the lines are otherwise untouched.

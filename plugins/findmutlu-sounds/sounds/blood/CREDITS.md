@@ -21,3 +21,5 @@ Every clip is the original MP3 as uploaded to the soundboard https://www.101soun
 | napalm.mp3 | pushed | https://hoovers.101soundboards.com/sb/sounds_rendered/y7u05am75ny5dizx.mp3 |
 | live-again.mp3 | compacted | https://hoovers.101soundboards.com/sb/sounds_rendered/galfdn5sirz5glir.mp3 |
 | nevermore.mp3 | compacted | https://hoovers.101soundboards.com/sb/sounds_rendered/xiftd49lgf0d1lhw.mp3 |
+
+Edges smoothed on all-dead, boomstick, come-out, i-won, laughing, lets-go, live-again, nevermore, play-with-me, rip: an 8 ms fade in, a 60 ms fade out and 150 ms of silence after, because the source cut them mid-sound and they clicked. Re-encoded once at the source's bit rate; the lines are otherwise untouched.

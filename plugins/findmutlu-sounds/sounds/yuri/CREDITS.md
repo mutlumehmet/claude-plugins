@@ -22,3 +22,5 @@ Clips from the openpeon pack "RA2 Yuri (Yuri's Revenge)" by PeonPing (https://op
 | yield-to-me.m4a | pushed | Yield to me! | https://raw.githubusercontent.com/testy-cool/openpeon-ra2-yuri/v1.0.0/sounds/iyurate.wav |
 | all-in-the-mind.m4a | compacted | All in the mind | https://raw.githubusercontent.com/testy-cool/openpeon-ra2-yuri/v1.0.0/sounds/iyurat2a.wav |
 | i-cannot-be-overcome.m4a | compacted | I cannot be overcome! | https://raw.githubusercontent.com/testy-cool/openpeon-ra2-yuri/v1.0.0/sounds/iyuprea.wav |
+
+Edges smoothed on a-trivial-matter, all-in-the-mind, another-pawn-joins-us, i-cannot-be-overcome, i-foresaw-this-need, share-your-thoughts, there-is-only-one-yuri, they-will-obey: an 8 ms fade in, a 60 ms fade out and 150 ms of silence after, because the source cut them mid-sound and they clicked. Re-encoded once at the source's bit rate; the lines are otherwise untouched.

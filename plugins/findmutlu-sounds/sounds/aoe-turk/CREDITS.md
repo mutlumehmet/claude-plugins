@@ -24,3 +24,5 @@ Every clip comes from the openpeon pack "aoe2-villager-turkish-male" by Yusuf Ki
 | tamirci.m4a | failed | Tamirci (repairer) | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-male/sounds/Tamirci_M.ogg |
 | saldir.m4a | pushed | Saldir! (attack!) | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-male/sounds/Saldir_M.ogg |
 | usta.m4a | compacted | Usta (builder) | https://raw.githubusercontent.com/yusufkinatas/peon-ping-custom-packs/v1.0.1/aoe2-villager-turkish-male/sounds/Usta_M.ogg |
+
+Edges smoothed on avci, oduncu: an 8 ms fade in, a 60 ms fade out and 150 ms of silence after, because the source cut them mid-sound and they clicked. Re-encoded once at the source's bit rate; the lines are otherwise untouched.

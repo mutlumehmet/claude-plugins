@@ -21,3 +21,5 @@ Clips from the openpeon pack "Sheogorath" by lloydaf (https://openpeon.com/packs
 | dont-get-too-comfortable.m4a | pushed | Don't get too comfortable here, mortal. | https://raw.githubusercontent.com/PeonPing/og-packs/v1.0.0/sheogorath/sounds/complete_7.wav |
 | a-little-busy-here.m4a | compacted | A little busy here. | https://raw.githubusercontent.com/PeonPing/og-packs/v1.0.0/sheogorath/sounds/annoyed_1.wav |
 | niggling-little-details.m4a | compacted | Again, with the niggling little details. | https://raw.githubusercontent.com/PeonPing/og-packs/v1.0.0/sheogorath/sounds/error_8.wav |
+
+Edges smoothed on absolutely-not, congratulations: an 8 ms fade in, a 60 ms fade out and 150 ms of silence after, because the source cut them mid-sound and they clicked. Re-encoded once at the source's bit rate; the lines are otherwise untouched.

@@ -24,3 +24,5 @@ Every clip is the original MP3 as uploaded to the soundboard https://www.101soun
 | why-not.mp3 | pushed | https://hoovers.101soundboards.com/sb/sounds_rendered/aycpzslh1dkks4v3.mp3 |
 | leave-me-alone.mp3 | compacted | https://hoovers.101soundboards.com/sb/sounds_rendered/6tm5efdv1fufyg2p.mp3 |
 | no-time-for-play.mp3 | compacted | https://hoovers.101soundboards.com/sb/sounds_rendered/l4ndhvkizntp0pyu.mp3 |
+
+Edges smoothed on i-can-do-that, kill-them, not-that-kind-of-orc, ok, something-need-doing, splat, tummy-feels-funny, yes, zug-zug: an 8 ms fade in, a 60 ms fade out and 150 ms of silence after, because the source cut them mid-sound and they clicked. Re-encoded once at the source's bit rate; the lines are otherwise untouched.

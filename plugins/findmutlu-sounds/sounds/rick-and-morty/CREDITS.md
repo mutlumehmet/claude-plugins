@@ -25,3 +25,5 @@ Every clip is the original MP3 from the openpeon pack "Rick and Morty" (family-f
 | my-plan-all-along.mp3 | pushed | That was my plan the whole time! | https://raw.githubusercontent.com/Mr3zee/peonping-rick-and-morty-clean/v1.0.0/sounds/that_was_my_plan_the_whole_time.mp3 |
 | brain-functionality.mp3 | compacted | You're also going to lose a significant amount of brain functionality. | https://raw.githubusercontent.com/Mr3zee/peonping-rick-and-morty-clean/v1.0.0/sounds/youre_also_gonna_lose_a_significant_amount_of_brain_functionality.mp3 |
 | super-intelligence.mp3 | compacted | Temporary super intelligence. | https://raw.githubusercontent.com/Mr3zee/peonping-rick-and-morty-clean/v1.0.0/sounds/temporary_superintelligence.mp3 |
+
+Edges smoothed on everything-you-want, here-we-go, my-plan-all-along, not-in-control, oh-jeeze, oh-man, oh-yeah, pure-luck, show-me-what-you-got, super-intelligence, time-for-action: an 8 ms fade in, a 60 ms fade out and 150 ms of silence after, because the source cut them mid-sound and they clicked. Re-encoded once at the source's bit rate; the lines are otherwise untouched.
