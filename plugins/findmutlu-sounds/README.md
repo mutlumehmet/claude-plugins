@@ -94,7 +94,8 @@ same terms.
 | `/sounds night off`, `/sounds night on` | Quiet hours from 23:00 to 07:00, on by default |
 
 Every change answers with one line saying what changed, and a mistyped pack or clip name gets the
-one it meant ("Did you mean aoe-turk?"). Moment names are typed in lowercase (`/sounds needsyou`).
+one it meant ("Did you mean aoe-turk?"). Moment names are typed in lowercase (`/sounds needsyou`);
+`/sounds` lists them, and a short word like `push`, `fail` or `done` gets the moment it means.
 
 Install asks nothing. The first session shows one notice naming the pack and `/sounds`. Settings,
 moment rules included, are kept in the plugin's store, per Claude Code config directory.

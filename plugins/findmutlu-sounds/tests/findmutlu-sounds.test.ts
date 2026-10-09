@@ -221,7 +221,7 @@ test('the same clip never plays twice in a row for a moment', async ($, on) => {
 test('/sounds lists the commands as well as the packs', async ($, on) => {
   engine(on)
   const out = await $.command.run({ command: 'sounds', args: '' })
-  expect(out.text).toContain('Commands:')
+  expect(out.text).toContain('Commands (<moment> is one of: ordered, needsyou, longdone, subagentstart, subagent, failed, pushed, compacted, mcp):')
   expect(out.text).toContain('  /sounds default <pack>: the pack every new terminal starts with')
   expect(out.text).toContain('  /sounds night off: ')
   expect(out.text.indexOf('Commands:')).toBeLessThan(out.text.indexOf('Packs:'))
@@ -293,4 +293,16 @@ test('/sounds shows every moment and what it plays; MCP is off until turned on',
   await $.tool.call({ tool: 'mcp__notes__search', query: 'x' } as any)
   await settle()
   expect(played[0]).toMatch(/^sounds\/aoe\/(trebuchet|mangonel)-fire\.mp3$/)
+})
+
+test('a mistyped or shortened moment gets the moment it meant', async ($, on) => {
+  engine(on)
+  const push = await $.command.run({ command: 'sounds', args: 'push aoe-turk' })
+  expect(push.text).toBe('No moment named push. Did you mean pushed? /sounds pushed aoe-turk')
+  const typo = await $.command.run({ command: 'sounds', args: 'needsyu aoe' })
+  expect(typo.text).toBe('No moment named needsyu. Did you mean needsYou? /sounds needsyou aoe')
+  const start = await $.command.run({ command: 'sounds', args: 'subagentst aoe' })
+  expect(start.text).toBe('No moment named subagentst. Did you mean subagentStart? /sounds subagentstart aoe')
+  const pack = await $.command.run({ command: 'sounds', args: 'aeo-turk' })
+  expect(pack.text).toBe('No pack named aeo-turk. Did you mean aoe-turk? /sounds aoe-turk')
 })

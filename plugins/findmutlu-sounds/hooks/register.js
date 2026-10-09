@@ -70,6 +70,13 @@ const DEFAULT_MOMENTS = { subagentStart: { packs: ['aoe'] }, mcp: { off: true } 
 
 // Moment names are typed in lowercase (/sounds needsyou)
 const MOMENT_BY_WORD = Object.fromEntries(MOMENTS.map((m) => [m.toLowerCase(), m]))
+
+// Words people reach for first, mapped to the moment they mean
+const MOMENT_ALIASES = {
+  push: 'pushed', fail: 'failed', fails: 'failed', error: 'failed', done: 'longDone', long: 'longDone',
+  start: 'subagentStart', spawn: 'subagentStart', agent: 'subagent', compact: 'compacted',
+  prompt: 'ordered', order: 'ordered', wait: 'needsYou', ask: 'needsYou', permission: 'needsYou',
+}
 const MCP_REST_MS = 5 * 60000
 
 // FILE_PACKS_START (generated from sounds/*/pack.json by scripts/packs.py; edit those, not this)
@@ -1017,10 +1024,16 @@ export function register(on) {
       return { text: (args[1] ? 'No pack named ' + args[1] : 'Which pack? /sounds default <pack>') + '\n' + listing() }
     }
     const change = CHANGES.find((c) => c.matches(args))
+    // A moment name mistyped or shortened (push, needsyu) gets the moment it meant
+    const moment = !change && !packOf(args[0]) && closestMoment(args[0])
+    if (moment) {
+      return { text: 'No moment named ' + args[0] + '. Did you mean ' + moment + '? /sounds ' + [moment.toLowerCase(), ...args.slice(1)].join(' ') }
+    }
     if (!change) {
       // A typo of a pack name (aeo-turk) gets the pack it meant, not just the list
-      const meant = closestPack(args[args.length - 1])
-      if (meant) return { text: 'No pack named ' + args[args.length - 1] + '. Did you mean ' + meant + '? /sounds ' + (args[0] === 'default' ? 'default ' : '') + meant }
+      const last = args[args.length - 1]
+      const meant = !packOf(last) && closestPack(last)
+      if (meant) return { text: 'No pack named ' + last + '. Did you mean ' + meant + '? /sounds ' + (args[0] === 'default' ? 'default ' : '') + meant }
       return { text: 'Unknown: ' + args.join(' ') + '\n' + commands() + '\n' + listing() }
     }
     const updated = change.apply({ ...settings }, args)
@@ -1291,6 +1304,22 @@ const CHANGES = [
   },
 ]
 
+// The moment a word most likely meant: a word people use for it, the start of its name, or at
+// most two letters off
+function closestMoment(word) {
+  if (!word) return undefined
+  if (MOMENT_ALIASES[word]) return MOMENT_ALIASES[word]
+  const starts = MOMENTS.filter((m) => word.length >= 3 && m.toLowerCase().startsWith(word))
+  if (starts.length === 1) return starts[0]
+  let best
+  let bestDistance = 3
+  for (const m of MOMENTS) {
+    const d = distance(word, m.toLowerCase())
+    if (d < bestDistance) [best, bestDistance] = [m, d]
+  }
+  return best
+}
+
 // The pack a mistyped name most likely meant: at most two letters off
 function closestPack(word) {
   if (!word) return undefined
@@ -1443,7 +1472,8 @@ const COMMANDS = [
 ]
 
 function commands() {
-  return 'Commands:\n' + COMMANDS.map(([c, d]) => '  ' + c + ': ' + d).join('\n')
+  return 'Commands (<moment> is one of: ' + MOMENTS.map((m) => m.toLowerCase()).join(', ') + '):\n' +
+    COMMANDS.map(([c, d]) => '  ' + c + ': ' + d).join('\n')
 }
 
 function listing() {
