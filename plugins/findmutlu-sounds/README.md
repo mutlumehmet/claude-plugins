@@ -11,7 +11,7 @@ radio. Part of [claude-plugins](../../README.md).
 
 [![The how it works film: a Claude session, drawn as a Fat Invader at its laptop, sends each moment to a speaker, and the speaker plays that moment's sound. Turn the sound on.](../../docs/images/findmutlu-sounds-how.png)](../../docs/videos/findmutlu-sounds-how.mp4)
 
-**[Watch it with sound](../../docs/videos/findmutlu-sounds-how.mp4)** (30 seconds, the aoe pack).
+**[Watch it with sound](../../docs/videos/findmutlu-sounds-how.mp4)** (31 seconds, a famous line from a different pack at each moment: peon, terran, protoss, red-alert, rick-and-morty, duke, aoe).
 
 | Moment | When |
 |---|---|
