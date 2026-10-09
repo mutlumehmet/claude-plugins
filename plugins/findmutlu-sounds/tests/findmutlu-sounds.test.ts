@@ -210,3 +210,12 @@ test('the same clip never plays twice in a row for a moment', async ($, on) => {
   expect(played.length).toBe(6)
   for (let i = 1; i < played.length; i++) expect(played[i]).not.toBe(played[i - 1])
 })
+
+test('/sounds lists the commands as well as the packs', async ($, on) => {
+  engine(on)
+  const out = await $.command.run({ command: 'sounds', args: '' })
+  expect(out.text).toContain('Commands:')
+  expect(out.text).toContain('  /sounds default <pack>: the pack every new terminal starts with')
+  expect(out.text).toContain('  /sounds night off: ')
+  expect(out.text.indexOf('Commands:')).toBeLessThan(out.text.indexOf('Packs:'))
+})

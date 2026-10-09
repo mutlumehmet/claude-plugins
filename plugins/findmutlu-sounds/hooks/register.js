@@ -896,7 +896,7 @@ export function register(on) {
     else if (args[0] === 'off') updated.isOn = false
     else if (args[0] === 'always' || args[0] === 'away') updated.mode = args[0]
     else if (args[0] === 'night' && (args[1] === 'on' || args[1] === 'off')) updated.isNightQuiet = args[1] === 'on'
-    else if (args.length) return { text: 'Unknown: ' + args.join(' ') + '\n' + usage() + '\n' + listing() }
+    else if (args.length) return { text: 'Unknown: ' + args.join(' ') + '\n' + commands() + '\n' + listing() }
     if (args.length) await $.store.set('settings', updated)
     return { text: describe(updated) }
   })
@@ -1133,14 +1133,29 @@ function describe(s) {
     'New terminals: ' + def,
     'Sound: ' + (s.isOn ? 'on' : 'off') + ', ' + (s.mode === 'away' ? 'only when no terminal or editor is in front' : 'always') +
       ', quiet 23:00 to 07:00 ' + (s.isNightQuiet ? 'on' : 'off'),
+    commands(),
     listing(),
   ].join('\n')
+}
+
+// Every command, one per line, the way the packs are listed
+const COMMANDS = [
+  ['/sounds <pack>', 'switch this terminal to a pack'],
+  ['/sounds default <pack>', 'the pack every new terminal starts with'],
+  ['/sounds test [pack]', 'play every sound of a pack once'],
+  ['/sounds off', 'mute'],
+  ['/sounds on', 'unmute'],
+  ['/sounds away', 'play only while no terminal or editor is in front'],
+  ['/sounds always', 'play whatever is in front'],
+  ['/sounds night on', 'quiet from 23:00 to 07:00'],
+  ['/sounds night off', 'play at night too'],
+]
+
+function commands() {
+  return 'Commands:\n' + COMMANDS.map(([c, d]) => '  ' + c + ': ' + d).join('\n')
 }
 
 function listing() {
   return 'Packs:\n' + allPacks().map((n) => '  ' + n + ': ' + packOf(n).label).join('\n')
 }
 
-function usage() {
-  return 'Try /sounds <pack>, default <pack>, on, off, always, away, night on, night off, test [pack]'
-}
