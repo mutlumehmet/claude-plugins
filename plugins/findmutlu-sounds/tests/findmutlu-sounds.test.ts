@@ -93,9 +93,13 @@ test('your own pack loads at session start and plays from its bytes', async ($, 
 test('/sounds <pack> changes this terminal, /sounds default <pack> new ones', async ($, on) => {
   engine(on)
   const here = await $.command.run({ command: 'sounds', args: 'protoss' })
-  expect(here.text).toContain('This terminal: protoss (new terminals: terran)')
+  expect(here.text).toMatch(/^This terminal now plays protoss: .+\nNew terminals still start with terran \(\/sounds default protoss to change that\)$/)
   const def = await $.command.run({ command: 'sounds', args: 'default red-alert' })
-  expect(def.text).toContain('New terminals: red-alert')
+  expect(def.text).toMatch(/^Default changed: new terminals now start with red-alert: /)
+  const status = await $.command.run({ command: 'sounds', args: '' })
+  expect(status.text).toContain('New terminals: red-alert')
+  const again = await $.command.run({ command: 'sounds', args: 'default red-alert' })
+  expect(again.text).toMatch(/^Default is already red-alert/)
 })
 
 test('quiet hours keep it silent', async ($, on) => {
@@ -119,7 +123,9 @@ test('away mode skips while a terminal is in front, but still answers a prompt',
 test('/sounds off mutes and an unknown word lists the packs', async ($, on) => {
   const { played } = engine(on)
   const off = await $.command.run({ command: 'sounds', args: 'off' })
-  expect(off.text).toContain('Sound: off')
+  expect(off.text).toBe('Sound off: no clips until /sounds on')
+  const night = await $.command.run({ command: 'sounds', args: 'night off' })
+  expect(night.text).toBe('Quiet hours off: clips play at night too')
   await $.turn.complete(LONG)
   await settle()
   expect(played).toEqual([])

@@ -886,19 +886,25 @@ export function register(on) {
       const count = await playAll($, name)
       return { text: 'Played ' + count + ' sounds of ' + name }
     }
+    // No word: where things stand, then every command and pack
+    if (!args.length) return { text: describe(settings) }
+    // A change answers with one line saying what changed, not the whole list again
     if (packOf(args[0]) && args.length === 1) {
       here.pack = args[0]
-      return { text: describe(settings) }
+      const def = defaultOf(settings)
+      return {
+        text: 'This terminal now plays ' + args[0] + ': ' + packOf(args[0]).label +
+          (args[0] === def ? '' : '\nNew terminals still start with ' + def + ' (/sounds default ' + args[0] + ' to change that)'),
+      }
     }
-    const updated = { ...settings }
-    if (args[0] === 'default' && packOf(args[1])) updated.defaultPack = args[1]
-    else if (args[0] === 'on') updated.isOn = true
-    else if (args[0] === 'off') updated.isOn = false
-    else if (args[0] === 'always' || args[0] === 'away') updated.mode = args[0]
-    else if (args[0] === 'night' && (args[1] === 'on' || args[1] === 'off')) updated.isNightQuiet = args[1] === 'on'
-    else if (args.length) return { text: 'Unknown: ' + args.join(' ') + '\n' + commands() + '\n' + listing() }
-    if (args.length) await $.store.set('settings', updated)
-    return { text: describe(updated) }
+    if (args[0] === 'default' && !packOf(args[1])) {
+      return { text: (args[1] ? 'No pack named ' + args[1] : 'Which pack? /sounds default <pack>') + '\n' + listing() }
+    }
+    const change = CHANGES.find((c) => c.matches(args))
+    if (!change) return { text: 'Unknown: ' + args.join(' ') + '\n' + commands() + '\n' + listing() }
+    const updated = change.apply({ ...settings }, args)
+    await $.store.set('settings', updated)
+    return { text: change.said(updated, args, settings) }
   })
 
   // An order given: the unit answers. You are at the keyboard, so away mode does not apply
@@ -1125,11 +1131,43 @@ async function isHere($) {
   return HERE_APPS.includes(name)
 }
 
+// The settings a word changes, and the one line that says so
+const CHANGES = [
+  {
+    matches: (a) => a[0] === 'default',
+    apply: (s, a) => ({ ...s, defaultPack: a[1] }),
+    said: (s, a, was) =>
+      (was.defaultPack === a[1] ? 'Default is already ' : 'Default changed: new terminals now start with ') + a[1] + ': ' + packOf(a[1]).label,
+  },
+  {
+    matches: (a) => a.length === 1 && (a[0] === 'on' || a[0] === 'off'),
+    apply: (s, a) => ({ ...s, isOn: a[0] === 'on' }),
+    said: (s) => (s.isOn ? 'Sound on' : 'Sound off: no clips until /sounds on'),
+  },
+  {
+    matches: (a) => a.length === 1 && (a[0] === 'always' || a[0] === 'away'),
+    apply: (s, a) => ({ ...s, mode: a[0] }),
+    said: (s) =>
+      s.mode === 'away'
+        ? 'Away mode: clips play only while no terminal or editor is in front (/sounds always to undo)'
+        : 'Always mode: clips play whatever app is in front',
+  },
+  {
+    matches: (a) => a[0] === 'night' && (a[1] === 'on' || a[1] === 'off'),
+    apply: (s, a) => ({ ...s, isNightQuiet: a[1] === 'on' }),
+    said: (s) => (s.isNightQuiet ? 'Quiet hours on: no clips from 23:00 to 07:00' : 'Quiet hours off: clips play at night too'),
+  },
+]
+
+function defaultOf(s) {
+  return packOf(s.defaultPack) ? s.defaultPack : DEFAULT_PACK
+}
+
 function describe(s) {
   const current = currentPack(s)
-  const def = packOf(s.defaultPack) ? s.defaultPack : DEFAULT_PACK
+  const def = defaultOf(s)
   return [
-    'This terminal: ' + current + (current === def ? '' : ' (new terminals: ' + def + ')'),
+    'This terminal: ' + current,
     'New terminals: ' + def,
     'Sound: ' + (s.isOn ? 'on' : 'off') + ', ' + (s.mode === 'away' ? 'only when no terminal or editor is in front' : 'always') +
       ', quiet 23:00 to 07:00 ' + (s.isNightQuiet ? 'on' : 'off'),
