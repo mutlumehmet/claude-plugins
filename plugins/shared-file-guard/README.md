@@ -44,6 +44,9 @@ Settings are asked for at install, or later with `/plugin configure shared-file-
 
 - Paths built inside a script, and relative paths after a `cd` in the same command, are not seen.
 - It compares date and size, not a hash.
+- It checks then writes, it does not lock. Two sessions that pass the check within the same few
+  milliseconds can still overwrite each other. A hook runs before the command, not around it, so it
+  cannot hold a lock while the shell writes.
 
 ## About
 
