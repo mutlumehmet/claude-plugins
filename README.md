@@ -116,7 +116,7 @@ Small mods for long sessions. Install them all with `/plugin install toolkit@meh
 
 ## Skills
 
-Both come in one plugin, [`project-workflow`](plugins/project-workflow): `/plugin install project-workflow@mehmetmutlu`.
+Skills come grouped in plugins: [`project-workflow`](plugins/project-workflow) for starting and closing work, [`dev-workflow`](plugins/dev-workflow) for shipping code. Install a group with `/plugin install <plugin>@mehmetmutlu`.
 
 <table>
 <tr>
@@ -127,6 +127,14 @@ Both come in one plugin, [`project-workflow`](plugins/project-workflow): `/plugi
 <td valign="top" width="50%">
 <a href="plugins/project-workflow/skills/save-context"><img src="docs/images/save-context-flow.png" width="360" alt="save-context: what a session decided goes to the one place it belongs"></a><br>
 <b><a href="plugins/project-workflow/skills/save-context"><code>save-context</code></a></b>: Saves what a session decided, changed and left open before you close it
+</td>
+</tr>
+<tr>
+<td valign="top" width="50%">
+<a href="plugins/dev-workflow/skills/watch-ci"><img src="docs/images/watch-ci-flow.gif" width="360" alt="watch-ci: you merge, every check on the commit finishes, the session hears GREEN by itself"></a><br>
+<b><a href="plugins/dev-workflow/skills/watch-ci"><code>watch-ci</code></a></b>: Watches a pull request or a merge until every check has finished, then reports GREEN or RED by itself
+</td>
+<td valign="top" width="50%">
 </td>
 </tr>
 </table>

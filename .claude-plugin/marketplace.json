@@ -11,6 +11,11 @@
       "description": "Start a project the same way every time (create-project) and save what a session decided before you close it (save-context)."
     },
     {
+      "name": "dev-workflow",
+      "source": "./plugins/dev-workflow",
+      "description": "Skills for shipping code. watch-ci watches a pull request, a merge or a commit until every check has finished, then reports GREEN or RED by itself."
+    },
+    {
       "name": "subtask-icons",
       "source": "./plugins/subtask-icons",
       "description": "Small ⑂ icons under Claude's last answer, one per item; a press puts /subtask with that item's text in the prompt box"
