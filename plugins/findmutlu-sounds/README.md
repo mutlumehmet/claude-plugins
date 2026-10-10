@@ -79,9 +79,12 @@ same terms.
 
 | Command | Effect |
 |---|---|
-| `/sounds` | This terminal's pack, the default for new terminals and the settings, then every pack, every command and what every moment plays |
+| `/sounds` | This terminal's pack, this project's pack, the default for new terminals and the settings, then what every moment plays, every command, and every pack at the bottom |
 | `/sounds <pack>` | Switch this terminal only |
-| `/sounds default <pack>` | Every terminal plays this pack: the open ones (in both accounts) from their next sound, and every new one. A terminal's own `/sounds <pack>` afterwards still wins there |
+| `/sounds default <pack>` | Every terminal plays this pack: the open ones (in both accounts) from their next sound, and every new one. Project packs stay, and a terminal's own `/sounds <pack>` afterwards still wins there |
+| `/sounds project <pack>` | Every terminal in this folder, or a folder inside it, plays this pack, now and in every later session, in both accounts. One pack per project tells you by ear which one needs you |
+| `/sounds project off`, `/sounds project` | Take this folder's pack back, or see this project's pack and every project pack |
+| `/sounds project clear` | Remove every project pack at once; the answer lists what it removed |
 | `/sounds <moment> <pack>` | One moment plays another pack's clips, e.g. `/sounds pushed aoe-turk`: each push plays one of that pack's push clips |
 | `/sounds <moment> <pack> <clip>` | Always the same clip, e.g. `/sounds pushed aoe-turk allah-allah` |
 | `/sounds <moment> <pack> <pack>` | Mix two or more packs' clips for that moment |
@@ -134,10 +137,11 @@ scripts/packs.py`, which writes the table in `hooks/register.js` (CI checks it i
   packs folder at session start. In away mode, the name of the front app (`lsappinfo`, no
   permission needed).
 - **Does**: plays a clip (`afplay` underneath), never waiting for it, so
-  nothing slows down. Answers its own `/sounds` command and no other. Writes two files:
-  `~/.config/findmutlu-sounds/last-played` (the time of the last sound), so your terminals take
-  turns instead of talking over each other, and `all-terminals.json` beside it (the pack and time
-  of the last `/sounds default`), which every terminal reads before a sound.
+  nothing slows down. Answers its own `/sounds` command and no other. Writes three files in
+  `~/.config/findmutlu-sounds/`: `last-played` (the time of the last sound), so your terminals take
+  turns instead of talking over each other, `all-terminals.json` (the pack and time of the last
+  `/sounds default`) and `projects.json` (each project folder you gave a pack, and the pack). Every
+  terminal reads them before a sound, and asks Claude Code which folder it runs in.
 - **Hooks**: `tool.call` (Bash, AskUserQuestion, ExitPlanMode) plays a sound and passes the
   call on; it never changes or blocks a call. `prompt.submit`, `turn.complete` and the notification, subagent and compaction
   events pass through unchanged.

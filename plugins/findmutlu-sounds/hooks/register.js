@@ -964,8 +964,9 @@ const VOICE_PACKS = {}
 
 // Module variables are this terminal's: each terminal is its own process. A plugin reload
 // starts them over, which only costs this terminal's /sounds <pack> choice.
-// pack and packAt: this terminal's /sounds <pack>; all: the last /sounds default <pack> of any terminal
-const here = { pack: undefined, packAt: -1, all: undefined, playedAt: 0, orderedAt: 0, yourPacks: {}, lastClip: {} }
+// pack and packAt: this terminal's /sounds <pack>; all: the last /sounds default <pack> of any terminal;
+// project: the folder this session runs in and the pack /sounds project gave it (or its parent)
+const here = { pack: undefined, packAt: -1, all: undefined, cwd: '', project: undefined, playedAt: 0, orderedAt: 0, yourPacks: {}, lastClip: {} }
 
 const DEFAULTS = { isOn: true, defaultPack: DEFAULT_PACK, mode: 'always', isNightQuiet: true, restMin: ORDERED_REST_MIN }
 
@@ -1027,6 +1028,8 @@ export function register(on) {
       if (meant) return { text: 'No pack named ' + args[1] + '. Did you mean ' + meant + '? /sounds default ' + meant }
       return { text: (args[1] ? 'No pack named ' + args[1] : 'Which pack? /sounds default <pack>') + '\n' + listing() }
     }
+    // /sounds project [<pack>|off]: every terminal in this folder, or one below it
+    if (args[0] === 'project') return projectCommand($, args.slice(1))
     // /sounds default <pack>: every open terminal, of both accounts, and every new one
     if (args[0] === 'default' && args.length === 2) {
       const name = args[1]
@@ -1037,7 +1040,11 @@ export function register(on) {
       here.packAt = -1
       await $.fs.write(await allFile($), JSON.stringify(here.all)).catch(() => {})
       await $.store.set('settings', { ...settings, defaultPack: name, defaultAt: at })
-      return { text: 'Default changed: every terminal, open or new, now plays ' + name + ': ' + packOf(name).label }
+      const kept = Object.keys(await readProjects($)).length
+      return {
+        text: 'Default changed: every terminal, open or new, now plays ' + name + ': ' + packOf(name).label +
+          (kept ? '\nProject packs stay (/sounds project to see them)' : ''),
+      }
     }
     const change = CHANGES.find((c) => c.matches(args))
     if (!change && args[0] === 'rest') return { text: 'How many minutes? /sounds rest <0 to ' + MAX_REST_MIN + '> (0: every prompt). Now: ' + restText(settings) }
@@ -1187,6 +1194,84 @@ async function readAll($) {
   }
 }
 
+// Packs per project folder, { "<folder>": "<pack>" }, shared by both accounts like the files above
+async function projectsFile($) {
+  return (await $.env.get('HOME')) + '/.config/' + $.plugin.name + '/projects.json'
+}
+
+async function readProjects($) {
+  try {
+    const all = JSON.parse(await $.fs.read(await projectsFile($)))
+    return all && typeof all === 'object' && !Array.isArray(all) ? all : {}
+  } catch {
+    // None set yet, or unreadable: no project packs
+    return {}
+  }
+}
+
+// The closest folder with a pack: the session's own, or the nearest one above it
+function projectOf(projects, cwd) {
+  const dir = Object.keys(projects)
+    .filter((d) => cwd === d || cwd.startsWith(d.endsWith('/') ? d : d + '/'))
+    .sort((a, b) => b.length - a.length)[0]
+  return dir ? { dir, pack: projects[dir] } : undefined
+}
+
+// A folder as people read it, with the home folder as ~
+async function shortPath($, dir) {
+  const home = await $.env.get('HOME')
+  return home && (dir === home || dir.startsWith(home + '/')) ? '~' + dir.slice(home.length) : dir
+}
+
+async function projectCommand($, words) {
+  const settings = await readSettings($)
+  const projects = await readProjects($)
+  const name = words[0]
+  if (!name) {
+    const set = Object.keys(projects).sort()
+    const lines = await Promise.all(set.map(async (d) => '  ' + (await shortPath($, d)) + ': ' + projects[d]))
+    return {
+      text: [
+        'This project: ' + (here.project ? here.project.pack + ' (' + (await shortPath($, here.project.dir)) + ')' : 'none') +
+          '. /sounds project <pack> gives this folder a pack, /sounds project off takes it back',
+        ...(set.length ? ['Project packs:', ...lines] : []),
+      ].join('\n'),
+    }
+  }
+  const where = await shortPath($, here.cwd)
+  // Every project pack at once; the answer names them, so one can be set back by hand
+  if (name === 'clear' && words.length === 1) {
+    const set = Object.keys(projects).sort()
+    if (!set.length) return { text: 'No project packs to clear' }
+    await $.fs.write(await projectsFile($), JSON.stringify({}, null, 2))
+    here.project = undefined
+    const lines = await Promise.all(set.map(async (d) => '  ' + (await shortPath($, d)) + ': ' + projects[d]))
+    return { text: ['Cleared every project pack; they all play the default now. Removed:', ...lines].join('\n') }
+  }
+  if (name === 'off' || name === 'reset') {
+    if (!(here.cwd in projects)) {
+      return { text: here.project ? 'No pack set for ' + where + ' itself; it takes ' + here.project.pack + ' from ' + (await shortPath($, here.project.dir)) : 'No project pack for ' + where }
+    }
+    delete projects[here.cwd]
+    await $.fs.write(await projectsFile($), JSON.stringify(projects, null, 2))
+    here.project = projectOf(projects, here.cwd)
+    return { text: 'Project pack removed: ' + where + ' now plays ' + currentPack(settings) }
+  }
+  if (!packOf(name) || words.length > 1) {
+    const meant = closestPack(name)
+    if (meant) return { text: 'No pack named ' + name + '. Did you mean ' + meant + '? /sounds project ' + meant }
+    return { text: 'Unknown: project ' + words.join(' ') + '\n' + listing() }
+  }
+  if (projects[here.cwd] === name) return { text: where + ' already plays ' + name }
+  projects[here.cwd] = name
+  await $.fs.write(await projectsFile($), JSON.stringify(projects, null, 2))
+  here.project = { dir: here.cwd, pack: name }
+  // This terminal follows the project now, not a pick it made before
+  here.pack = undefined
+  here.packAt = -1
+  return { text: 'Project pack set: every terminal in ' + where + ' (and the folders inside it) plays ' + name + ': ' + packOf(name).label }
+}
+
 async function sharedPlayedAt($) {
   try {
     return Number(await $.fs.read(await playedAtFile($))) || 0
@@ -1257,8 +1342,11 @@ function allPacks() {
   return [...Object.keys(FILE_PACKS), ...Object.keys(VOICE_PACKS), ...Object.keys(here.yourPacks).filter((n) => !FILE_PACKS[n] && !VOICE_PACKS[n])]
 }
 
-// The newest choice wins: this terminal's /sounds <pack>, or the last /sounds default of any terminal
+// This terminal's own /sounds <pack> when it came after the last /sounds default, then the
+// project's pack, then the newest of the default and the last /sounds default
 function currentPack(settings) {
+  if (packOf(here.pack) && here.packAt > (here.all?.at ?? -1)) return here.pack
+  if (packOf(here.project?.pack)) return here.project.pack
   const choices = [
     [packOf(settings.defaultPack) ? settings.defaultPack : DEFAULT_PACK, settings.defaultAt ?? 0],
     [here.all?.pack, here.all?.at ?? -1],
@@ -1304,6 +1392,8 @@ function mimeOf(file) {
 
 async function readSettings($) {
   here.all = await readAll($)
+  here.cwd = await $.session.cwd().catch(() => here.cwd)
+  here.project = projectOf(await readProjects($), here.cwd)
   const stored = await $.store.get('settings')
   return { ...DEFAULTS, ...(stored && typeof stored === 'object' ? stored : {}) }
 }
@@ -1494,20 +1584,26 @@ function describe(s) {
   const def = defaultOf(s)
   return [
     'This terminal: ' + current,
+    'This project: ' + (here.project ? here.project.pack : 'none (/sounds project <pack> to give it one)'),
     'New terminals: ' + def,
     'Sound: ' + (s.isOn ? 'on' : 'off') + ', ' + (s.mode === 'away' ? 'only when no terminal or editor is in front' : 'always') +
       ', quiet 23:00 to 07:00 ' + (s.isNightQuiet ? 'on' : 'off') + ', ' + restText(s),
-    listing(),
-    commands(),
+    // The packs last: a long answer shows its end first, and the packs are what people pick from
     'Moments (what plays when):',
     ...MOMENTS.map((m) => '  ' + m + ': ' + MOMENT_INFO[m] + (m === 'ordered' ? ' (' + restText(s).replace('a prompt sound ', '') + ')' : '') + ' → ' + ruleText(s, m)),
+    commands(),
+    listing(),
   ].join('\n')
 }
 
 // Every command, one per line, the way the packs are listed
 const COMMANDS = [
   ['/sounds <pack>', 'switch this terminal to a pack'],
-  ['/sounds default <pack>', 'every terminal, open or new, plays this pack'],
+  ['/sounds default <pack>', 'every terminal, open or new, plays this pack (project packs stay)'],
+  ['/sounds project <pack>', 'every terminal in this folder plays this pack, now and later'],
+  ['/sounds project off', 'this folder goes back to the default'],
+  ['/sounds project clear', 'remove every project pack, in every folder'],
+  ['/sounds project', 'this project\'s pack and every project pack'],
   ['/sounds <moment> <pack>', 'one moment plays another pack, e.g. /sounds pushed aoe-turk'],
   ['/sounds <moment> <pack> <clip>', 'always the same clip, e.g. /sounds pushed aoe-turk allah-allah'],
   ['/sounds <moment> <pack> <pack>', "mix two packs' clips for that moment"],

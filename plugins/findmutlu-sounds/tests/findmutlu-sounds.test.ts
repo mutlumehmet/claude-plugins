@@ -50,7 +50,10 @@ function engine(on, opts: { now?: number; front?: string; settings?: object; you
   on('prompt.submit', ($, e) => ({ text: e.text }))
   on('command.register', () => ({ value: undefined }))
   on('session.start', () => ({ cwd: '/repo' }))
-  return { played, spoken, clock, files }
+  // The folder the session runs in; a test moves it to stand for a terminal in another project
+  const where = { cwd: '/work/shop' }
+  on('session.cwd', () => ({ value: where.cwd }))
+  return { played, spoken, clock, files, where }
 }
 
 // Lets the unawaited play settle
@@ -98,7 +101,7 @@ test('/sounds <pack> changes this terminal, /sounds default <pack> every termina
   const def = await $.command.run({ command: 'sounds', args: 'default red-alert' })
   expect(def.text).toMatch(/^Default changed: every terminal, open or new, now plays red-alert: /)
   const status = await $.command.run({ command: 'sounds', args: '' })
-  expect(status.text).toStartWith('This terminal: red-alert\nNew terminals: red-alert')
+  expect(status.text).toStartWith('This terminal: red-alert\nThis project: none (/sounds project <pack> to give it one)\nNew terminals: red-alert')
   const again = await $.command.run({ command: 'sounds', args: 'default red-alert' })
   expect(again.text).toMatch(/^Default is already red-alert/)
 })
@@ -200,6 +203,60 @@ test('/sounds default from another terminal wins over this terminal\'s pack unti
   expect(played[1]).toMatch(/^sounds\/aoe\//)
 })
 
+test('a project pack plays in that folder and the ones inside it, and survives /sounds default', async ($, on) => {
+  const { played, clock, where } = engine(on)
+  const set = await $.command.run({ command: 'sounds', args: 'project lebowski' })
+  expect(set.text).toStartWith('Project pack set: every terminal in /work/shop (and the folders inside it) plays lebowski: ')
+  expect((await $.command.run({ command: 'sounds', args: 'project lebowski' })).text).toBe('/work/shop already plays lebowski')
+  const def = await $.command.run({ command: 'sounds', args: 'default peon' })
+  expect(def.text).toContain('Project packs stay (/sounds project to see them)')
+  // A terminal inside the project still plays the project's pack
+  where.cwd = '/work/shop/api'
+  clock.now += 5000
+  await $.tool.call({ tool: 'AskUserQuestion', questions: [] } as any)
+  await settle()
+  expect(played[0]).toMatch(/^sounds\/lebowski\//)
+  // One outside plays the default
+  where.cwd = '/work/blog'
+  clock.now += 5000
+  await $.tool.call({ tool: 'AskUserQuestion', questions: [] } as any)
+  await settle()
+  expect(played[1]).toMatch(/^sounds\/peon\//)
+  const status = await $.command.run({ command: 'sounds', args: '' })
+  expect(status.text).toStartWith('This terminal: peon\nThis project: none')
+})
+
+test('/sounds project lists the project packs, off takes one back, a typo gets the pack it meant', async ($, on) => {
+  const { where } = engine(on)
+  await $.command.run({ command: 'sounds', args: 'project terran' })
+  where.cwd = '/work/blog'
+  await $.command.run({ command: 'sounds', args: 'project meeseeks' })
+  const list = await $.command.run({ command: 'sounds', args: 'project' })
+  expect(list.text).toBe('This project: meeseeks (/work/blog). /sounds project <pack> gives this folder a pack, /sounds project off takes it back\nProject packs:\n  /work/blog: meeseeks\n  /work/shop: terran')
+  expect((await $.command.run({ command: 'sounds', args: 'project lebowksi' })).text).toBe('No pack named lebowksi. Did you mean lebowski? /sounds project lebowski')
+  expect((await $.command.run({ command: 'sounds', args: 'project off' })).text).toBe('Project pack removed: /work/blog now plays terran')
+  expect((await $.command.run({ command: 'sounds', args: 'project off' })).text).toBe('No project pack for /work/blog')
+})
+
+test('/sounds project clear removes every project pack and names them', async ($, on) => {
+  const { where } = engine(on)
+  expect((await $.command.run({ command: 'sounds', args: 'project clear' })).text).toBe('No project packs to clear')
+  await $.command.run({ command: 'sounds', args: 'project terran' })
+  where.cwd = '/work/blog'
+  await $.command.run({ command: 'sounds', args: 'project meeseeks' })
+  expect((await $.command.run({ command: 'sounds', args: 'project clear' })).text).toBe(
+    'Cleared every project pack; they all play the default now. Removed:\n  /work/blog: meeseeks\n  /work/shop: terran',
+  )
+  expect((await $.command.run({ command: 'sounds', args: '' })).text).toStartWith('This terminal: terran\nThis project: none')
+})
+
+test('this terminal\'s own pick wins over its project until /sounds default', async ($, on) => {
+  engine(on)
+  await $.command.run({ command: 'sounds', args: 'project terran' })
+  await $.command.run({ command: 'sounds', args: 'duke' })
+  expect((await $.command.run({ command: 'sounds', args: '' })).text).toStartWith('This terminal: duke\nThis project: terran')
+})
+
 test('a question for you plays its moment before the answer', async ($, on) => {
   const { played } = engine(on, { settings: { defaultPack: 'terran' } })
   await $.tool.call({ tool: 'AskUserQuestion', questions: [] } as any)
@@ -269,12 +326,12 @@ test('/sounds lists the commands as well as the packs', async ($, on) => {
   expect(out.text).toContain('Commands (<moment> is one of: ordered, needsyou, longdone, subagentstart, subagent, failed, pushed, compacted, mcp):')
   expect(out.text).toContain('  /sounds default <pack>: every terminal, open or new, plays this pack')
   expect(out.text).toContain('  /sounds night off: ')
-  // Where things stand, then the packs, then the commands, then the moments
+  // Where things stand, then the moments, then the commands, then the packs at the bottom
   const at = (t: string) => out.text.indexOf(t)
   expect(at('This terminal: ')).toBe(0)
-  expect(at('Sound: ')).toBeLessThan(at('Packs:'))
-  expect(at('Packs:')).toBeLessThan(at('Commands ('))
-  expect(at('Commands (')).toBeLessThan(at('Moments (what plays when):'))
+  expect(at('Sound: ')).toBeLessThan(at('Moments (what plays when):'))
+  expect(at('Moments (what plays when):')).toBeLessThan(at('Commands ('))
+  expect(at('Commands (')).toBeLessThan(at('Packs:'))
 })
 
 test('a mistyped pack name gets the pack it meant', async ($, on) => {
