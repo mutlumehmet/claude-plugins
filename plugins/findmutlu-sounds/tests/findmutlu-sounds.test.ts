@@ -91,14 +91,14 @@ test('your own pack loads at session start and plays from its bytes', async ($, 
   expect(played).toEqual(['audio/wav'])
 })
 
-test('/sounds <pack> changes this terminal, /sounds default <pack> new ones', async ($, on) => {
+test('/sounds <pack> changes this terminal, /sounds default <pack> every terminal', async ($, on) => {
   engine(on)
   const here = await $.command.run({ command: 'sounds', args: 'protoss' })
-  expect(here.text).toMatch(/^This terminal now plays protoss: .+\nNew terminals still start with terran \(\/sounds default protoss to change that\)$/)
+  expect(here.text).toMatch(/^This terminal now plays protoss: .+\nOther terminals keep theirs \(\/sounds default protoss switches them all\)$/)
   const def = await $.command.run({ command: 'sounds', args: 'default red-alert' })
-  expect(def.text).toMatch(/^Default changed: new terminals now start with red-alert: /)
+  expect(def.text).toMatch(/^Default changed: every terminal, open or new, now plays red-alert: /)
   const status = await $.command.run({ command: 'sounds', args: '' })
-  expect(status.text).toContain('New terminals: red-alert')
+  expect(status.text).toStartWith('This terminal: red-alert\nNew terminals: red-alert')
   const again = await $.command.run({ command: 'sounds', args: 'default red-alert' })
   expect(again.text).toMatch(/^Default is already red-alert/)
 })
@@ -141,8 +141,8 @@ test('/sounds test plays every sound of a pack', async ($, on) => {
   expect(played.length).toBeGreaterThan(8)
 })
 
-test('a prompt plays only after five quiet minutes', async ($, on) => {
-  const { played, clock } = engine(on)
+test('with /sounds rest 5 a prompt plays only after five quiet minutes', async ($, on) => {
+  const { played, clock } = engine(on, { settings: { restMin: 5 } })
   await $.prompt.submit({ text: 'go' } as any)
   await settle()
   clock.now += 60000
@@ -153,6 +153,51 @@ test('a prompt plays only after five quiet minutes', async ($, on) => {
   await $.prompt.submit({ text: 'back again' } as any)
   await settle()
   expect(played.length).toBe(2)
+})
+
+test('another moment or terminal does not silence the next prompt', async ($, on) => {
+  const { played, clock } = engine(on)
+  await $.tool.call({ tool: 'AskUserQuestion', questions: [] } as any)
+  await settle()
+  clock.now += 10000
+  await $.prompt.submit({ text: 'go' } as any)
+  await settle()
+  expect(played.length).toBe(2)
+})
+
+test('every prompt plays by default; rest changes the wait and says so', async ($, on) => {
+  const { played, clock } = engine(on)
+  expect((await $.command.run({ command: 'sounds', args: 'rest 0' })).text).toBe('Already a prompt sound every prompt')
+  for (let i = 0; i < 3; i++) {
+    await $.prompt.submit({ text: 'go' } as any)
+    await settle()
+    clock.now += 5000
+  }
+  expect(played.length).toBe(3)
+  expect((await $.command.run({ command: 'sounds', args: 'rest 2' })).text).toBe('Changed: a prompt sound after 2 quiet minutes')
+  expect((await $.command.run({ command: 'sounds', args: 'rest' })).text).toContain('How many minutes?')
+  const all = await $.command.run({ command: 'sounds', args: '' })
+  expect(all.text).toContain('  ordered: you send a prompt (after 2 quiet minutes) → terran')
+})
+
+test('/sounds default from another terminal wins over this terminal\'s pack until it picks again', async ($, on) => {
+  const { played, clock, files } = engine(on)
+  await $.command.run({ command: 'sounds', args: 'default peon' })
+  const shared = Object.keys(files).find((f) => f.endsWith('/all-terminals.json'))!
+  clock.now += 1000
+  await $.command.run({ command: 'sounds', args: 'engineer' })
+  clock.now += 1000
+  // Another terminal, maybe of the other account, ran /sounds default terran
+  files[shared] = JSON.stringify({ pack: 'terran', at: clock.now })
+  clock.now += 1000
+  await $.tool.call({ tool: 'AskUserQuestion', questions: [] } as any)
+  await settle()
+  expect(played[0]).toMatch(/^sounds\/terran\//)
+  clock.now += 10000
+  await $.command.run({ command: 'sounds', args: 'aoe' })
+  await $.tool.call({ tool: 'AskUserQuestion', questions: [] } as any)
+  await settle()
+  expect(played[1]).toMatch(/^sounds\/aoe\//)
 })
 
 test('a question for you plays its moment before the answer', async ($, on) => {
@@ -222,9 +267,14 @@ test('/sounds lists the commands as well as the packs', async ($, on) => {
   engine(on)
   const out = await $.command.run({ command: 'sounds', args: '' })
   expect(out.text).toContain('Commands (<moment> is one of: ordered, needsyou, longdone, subagentstart, subagent, failed, pushed, compacted, mcp):')
-  expect(out.text).toContain('  /sounds default <pack>: the pack every new terminal starts with')
+  expect(out.text).toContain('  /sounds default <pack>: every terminal, open or new, plays this pack')
   expect(out.text).toContain('  /sounds night off: ')
-  expect(out.text.indexOf('Commands:')).toBeLessThan(out.text.indexOf('Packs:'))
+  // Where things stand, then the packs, then the commands, then the moments
+  const at = (t: string) => out.text.indexOf(t)
+  expect(at('This terminal: ')).toBe(0)
+  expect(at('Sound: ')).toBeLessThan(at('Packs:'))
+  expect(at('Packs:')).toBeLessThan(at('Commands ('))
+  expect(at('Commands (')).toBeLessThan(at('Moments (what plays when):'))
 })
 
 test('a mistyped pack name gets the pack it meant', async ($, on) => {

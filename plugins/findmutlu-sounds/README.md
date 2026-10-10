@@ -19,7 +19,7 @@ radio. Part of [claude-plugins](../../README.md).
 
 | Moment | When |
 |---|---|
-| `ordered` | You send a prompt after 5 quiet minutes (an order given, back at work) |
+| `ordered` | You send a prompt (an order given); every prompt by default, `/sounds rest` adds a wait |
 | `needsYou` | Claude waits for you: a permission prompt, a question for you or a plan to approve |
 | `longDone` | A turn that took 60 seconds or more is answered |
 | `subagentStart` | A subagent starts (a villager is created, from the aoe pack, whatever your pack) |
@@ -79,9 +79,9 @@ same terms.
 
 | Command | Effect |
 |---|---|
-| `/sounds` | This terminal's pack, the default for new terminals, the settings, what every moment plays, every command and every pack |
+| `/sounds` | This terminal's pack, the default for new terminals and the settings, then every pack, every command and what every moment plays |
 | `/sounds <pack>` | Switch this terminal only |
-| `/sounds default <pack>` | The pack every new terminal starts with |
+| `/sounds default <pack>` | Every terminal plays this pack: the open ones (in both accounts) from their next sound, and every new one. A terminal's own `/sounds <pack>` afterwards still wins there |
 | `/sounds <moment> <pack>` | One moment plays another pack's clips, e.g. `/sounds pushed aoe-turk`: each push plays one of that pack's push clips |
 | `/sounds <moment> <pack> <clip>` | Always the same clip, e.g. `/sounds pushed aoe-turk allah-allah` |
 | `/sounds <moment> <pack> <pack>` | Mix two or more packs' clips for that moment |
@@ -92,6 +92,7 @@ same terms.
 | `/sounds off`, `/sounds on` | Mute, unmute |
 | `/sounds away`, `/sounds always` | Play only while no terminal or editor is the front app, or always (the default). The prompt answer still plays in away mode: you are at the keyboard |
 | `/sounds night off`, `/sounds night on` | Quiet hours from 23:00 to 07:00, on by default |
+| `/sounds rest <minutes>` | How long after this terminal's last prompt sound the next prompt plays one; 0 (the default) plays every prompt |
 
 Every change answers with one line saying what changed, and a mistyped pack or clip name gets the
 one it meant ("Did you mean aoe-turk?"). Moment names are typed in lowercase (`/sounds needsyou`);
@@ -133,9 +134,10 @@ scripts/packs.py`, which writes the table in `hooks/register.js` (CI checks it i
   packs folder at session start. In away mode, the name of the front app (`lsappinfo`, no
   permission needed).
 - **Does**: plays a clip (`afplay` underneath), never waiting for it, so
-  nothing slows down. Answers its own `/sounds` command and no other. Writes one file,
+  nothing slows down. Answers its own `/sounds` command and no other. Writes two files:
   `~/.config/findmutlu-sounds/last-played` (the time of the last sound), so your terminals take
-  turns instead of talking over each other.
+  turns instead of talking over each other, and `all-terminals.json` beside it (the pack and time
+  of the last `/sounds default`), which every terminal reads before a sound.
 - **Hooks**: `tool.call` (Bash, AskUserQuestion, ExitPlanMode) plays a sound and passes the
   call on; it never changes or blocks a call. `prompt.submit`, `turn.complete` and the notification, subagent and compaction
   events pass through unchanged.

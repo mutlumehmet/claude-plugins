@@ -1,7 +1,7 @@
 // Sound packs for the moments that need you, and no others.
 //
 //   moment       when                                         event
-//   ordered      you sent a prompt after 5 quiet minutes      prompt.submit
+//   ordered      you sent a prompt (after /sounds rest minutes) prompt.submit
 //   needsYou     Claude waits for you: a permission prompt,   classic.Notification,
 //                a question, a plan to approve                tool.call (AskUserQuestion, ExitPlanMode)
 //   longDone     a turn of 60 s or more answered              turn.complete (main loop)
@@ -31,8 +31,10 @@ const QUIET_TO = 7
 // One sound at a time: several subagents finishing together give one clip, not ten. The last
 // play time is shared by every terminal through a small file beside your packs folder
 const GAP_MS = 2500
-// A prompt plays only after a quiet spell, so typing away is not a clip every message
-const ORDERED_REST_MS = 5 * 60000
+// Every prompt plays by default; /sounds rest <minutes> makes a prompt wait that long after this
+// terminal's last prompt clip, so typing away is not a clip every message
+const ORDERED_REST_MIN = 0
+const MAX_REST_MIN = 120
 
 // Front apps that mean you are already looking at Claude Code (away mode)
 const HERE_APPS = ['Terminal', 'iTerm2', 'Code', 'Visual Studio Code', 'Cursor', 'Ghostty', 'Warp', 'Claude']
@@ -53,7 +55,7 @@ const MOMENTS = ['ordered', 'needsYou', 'longDone', 'subagentStart', 'subagent',
 
 // What each moment means, for /sounds and its replies
 const MOMENT_INFO = {
-  ordered: 'you send a prompt (after 5 quiet minutes)',
+  ordered: 'you send a prompt',
   needsYou: 'Claude waits for your OK or answer',
   longDone: 'a turn of 60 s or more finishes',
   subagentStart: 'a subagent starts',
@@ -962,9 +964,10 @@ const VOICE_PACKS = {}
 
 // Module variables are this terminal's: each terminal is its own process. A plugin reload
 // starts them over, which only costs this terminal's /sounds <pack> choice.
-const here = { pack: undefined, playedAt: 0, yourPacks: {}, lastClip: {} }
+// pack and packAt: this terminal's /sounds <pack>; all: the last /sounds default <pack> of any terminal
+const here = { pack: undefined, packAt: -1, all: undefined, playedAt: 0, orderedAt: 0, yourPacks: {}, lastClip: {} }
 
-const DEFAULTS = { isOn: true, defaultPack: DEFAULT_PACK, mode: 'always', isNightQuiet: true }
+const DEFAULTS = { isOn: true, defaultPack: DEFAULT_PACK, mode: 'always', isNightQuiet: true, restMin: ORDERED_REST_MIN }
 
 export function register(on) {
   on('session.start', async ($, e, next) => {
@@ -1012,10 +1015,11 @@ export function register(on) {
     // A change answers with one line saying what changed, not the whole list again
     if (packOf(args[0]) && args.length === 1) {
       here.pack = args[0]
+      here.packAt = await $.clock.now()
       const def = defaultOf(settings)
       return {
         text: 'This terminal now plays ' + args[0] + ': ' + packOf(args[0]).label +
-          (args[0] === def ? '' : '\nNew terminals still start with ' + def + ' (/sounds default ' + args[0] + ' to change that)'),
+          (args[0] === def ? '' : '\nOther terminals keep theirs (/sounds default ' + args[0] + ' switches them all)'),
       }
     }
     if (args[0] === 'default' && !packOf(args[1])) {
@@ -1023,7 +1027,20 @@ export function register(on) {
       if (meant) return { text: 'No pack named ' + args[1] + '. Did you mean ' + meant + '? /sounds default ' + meant }
       return { text: (args[1] ? 'No pack named ' + args[1] : 'Which pack? /sounds default <pack>') + '\n' + listing() }
     }
+    // /sounds default <pack>: every open terminal, of both accounts, and every new one
+    if (args[0] === 'default' && args.length === 2) {
+      const name = args[1]
+      if (current === name && defaultOf(settings) === name) return { text: 'Default is already ' + name + ': ' + packOf(name).label }
+      const at = await $.clock.now()
+      here.all = { pack: name, at }
+      here.pack = undefined
+      here.packAt = -1
+      await $.fs.write(await allFile($), JSON.stringify(here.all)).catch(() => {})
+      await $.store.set('settings', { ...settings, defaultPack: name, defaultAt: at })
+      return { text: 'Default changed: every terminal, open or new, now plays ' + name + ': ' + packOf(name).label }
+    }
     const change = CHANGES.find((c) => c.matches(args))
+    if (!change && args[0] === 'rest') return { text: 'How many minutes? /sounds rest <0 to ' + MAX_REST_MIN + '> (0: every prompt). Now: ' + restText(settings) }
     // A moment name mistyped or shortened (push, needsyu) gets the moment it meant
     const moment = !change && !packOf(args[0]) && closestMoment(args[0])
     if (moment) {
@@ -1043,7 +1060,12 @@ export function register(on) {
 
   // An order given: the unit answers. You are at the keyboard, so away mode does not apply
   on('prompt.submit', async ($, e, next) => {
-    await cue($, 'ordered', { isPresent: true, restMs: ORDERED_REST_MS })
+    // The rest counts from this terminal's last prompt clip only: a clip of another moment, or of
+    // another terminal, does not silence the next prompt
+    const settings = await readSettings($).catch(() => DEFAULTS)
+    const now = await $.clock.now()
+    if (here.orderedAt && now - here.orderedAt < restOf(settings) * 60000) return next(e)
+    if (await cue($, 'ordered', { isPresent: true })) here.orderedAt = now
     return next(e)
   })
 
@@ -1105,7 +1127,7 @@ async function cue($, moment, opts = {}) {
     if (!choices.length) return
     const now = await $.clock.now()
     const last = Math.max(here.playedAt, await sharedPlayedAt($))
-    if (now - last < Math.max(GAP_MS, opts.restMs ?? 0)) return
+    if (now - last < GAP_MS) return
     if (settings.isNightQuiet && isQuietHour(new Date(now).getHours())) return
     if (!opts.isPresent && settings.mode === 'away' && (await isHere($))) return
     here.playedAt = now
@@ -1113,9 +1135,11 @@ async function cue($, moment, opts = {}) {
     // Not awaited: the sound plays while the session goes on
     const [name, item] = pick(choices.map((c) => c.pack + '/' + c.item), here.lastClip, moment, now).split(/\/(.*)/s)
     sound($, packOf(name), item).catch(() => {})
+    return true
   } catch {
     // A sound is never worth an error line
   }
+  return false
 }
 
 // One sound of a pack: a clip of the plugin's, a line to speak, or a file of yours
@@ -1146,6 +1170,21 @@ function pick(choices, lastClip, key, now) {
 // The file every terminal reads and writes the last play time through
 async function playedAtFile($) {
   return (await $.env.get('HOME')) + '/.config/' + $.plugin.name + '/last-played'
+}
+
+// The last /sounds default, shared by every terminal of both accounts beside the last play time
+async function allFile($) {
+  return (await $.env.get('HOME')) + '/.config/' + $.plugin.name + '/all-terminals.json'
+}
+
+async function readAll($) {
+  try {
+    const all = JSON.parse(await $.fs.read(await allFile($)))
+    return all && typeof all.pack === 'string' && Number.isFinite(all.at) ? all : undefined
+  } catch {
+    // Never used, or unreadable: each terminal keeps its own pack
+    return undefined
+  }
 }
 
 async function sharedPlayedAt($) {
@@ -1218,10 +1257,14 @@ function allPacks() {
   return [...Object.keys(FILE_PACKS), ...Object.keys(VOICE_PACKS), ...Object.keys(here.yourPacks).filter((n) => !FILE_PACKS[n] && !VOICE_PACKS[n])]
 }
 
+// The newest choice wins: this terminal's /sounds <pack>, or the last /sounds default of any terminal
 function currentPack(settings) {
-  if (packOf(here.pack)) return here.pack
-  if (packOf(settings.defaultPack)) return settings.defaultPack
-  return DEFAULT_PACK
+  const choices = [
+    [packOf(settings.defaultPack) ? settings.defaultPack : DEFAULT_PACK, settings.defaultAt ?? 0],
+    [here.all?.pack, here.all?.at ?? -1],
+    [here.pack, here.packAt],
+  ].filter(([name]) => packOf(name))
+  return choices.reduce((a, b) => (b[1] >= a[1] ? b : a))[0]
 }
 
 // Your own packs: ~/.config/<plugin>/packs/<pack>/pack.json naming the clips beside it
@@ -1260,6 +1303,7 @@ function mimeOf(file) {
 }
 
 async function readSettings($) {
+  here.all = await readAll($)
   const stored = await $.store.get('settings')
   return { ...DEFAULTS, ...(stored && typeof stored === 'object' ? stored : {}) }
 }
@@ -1279,12 +1323,6 @@ async function isHere($) {
 // The settings a word changes, and the one line that says so
 const CHANGES = [
   {
-    matches: (a) => a[0] === 'default',
-    apply: (s, a) => ({ ...s, defaultPack: a[1] }),
-    said: (s, a, was) =>
-      (was.defaultPack === a[1] ? 'Default is already ' : 'Default changed: new terminals now start with ') + a[1] + ': ' + packOf(a[1]).label,
-  },
-  {
     matches: (a) => a.length === 1 && (a[0] === 'on' || a[0] === 'off'),
     apply: (s, a) => ({ ...s, isOn: a[0] === 'on' }),
     said: (s) => (s.isOn ? 'Sound on' : 'Sound off: no clips until /sounds on'),
@@ -1301,6 +1339,11 @@ const CHANGES = [
     matches: (a) => a[0] === 'night' && (a[1] === 'on' || a[1] === 'off'),
     apply: (s, a) => ({ ...s, isNightQuiet: a[1] === 'on' }),
     said: (s) => (s.isNightQuiet ? 'Quiet hours on: no clips from 23:00 to 07:00' : 'Quiet hours off: clips play at night too'),
+  },
+  {
+    matches: (a) => a[0] === 'rest' && a.length === 2 && /^\d+$/.test(a[1]) && Number(a[1]) <= MAX_REST_MIN,
+    apply: (s, a) => ({ ...s, restMin: Number(a[1]) }),
+    said: (s, a, was) => (restOf(was) === restOf(s) ? 'Already ' : 'Changed: ') + restText(s),
   },
 ]
 
@@ -1432,6 +1475,16 @@ async function momentCommand($, settings, moment, words) {
   return { text: moment + ' now plays: ' + ruleText(updated, moment) }
 }
 
+function restOf(s) {
+  const n = Number(s.restMin)
+  return Number.isInteger(n) && n >= 0 && n <= MAX_REST_MIN ? n : ORDERED_REST_MIN
+}
+
+function restText(s) {
+  const n = restOf(s)
+  return n === 0 ? 'a prompt sound every prompt' : 'a prompt sound after ' + n + ' quiet minute' + (n === 1 ? '' : 's')
+}
+
 function defaultOf(s) {
   return packOf(s.defaultPack) ? s.defaultPack : DEFAULT_PACK
 }
@@ -1443,18 +1496,18 @@ function describe(s) {
     'This terminal: ' + current,
     'New terminals: ' + def,
     'Sound: ' + (s.isOn ? 'on' : 'off') + ', ' + (s.mode === 'away' ? 'only when no terminal or editor is in front' : 'always') +
-      ', quiet 23:00 to 07:00 ' + (s.isNightQuiet ? 'on' : 'off'),
-    'Moments (what plays when):',
-    ...MOMENTS.map((m) => '  ' + m + ': ' + MOMENT_INFO[m] + ' → ' + ruleText(s, m)),
-    commands(),
+      ', quiet 23:00 to 07:00 ' + (s.isNightQuiet ? 'on' : 'off') + ', ' + restText(s),
     listing(),
+    commands(),
+    'Moments (what plays when):',
+    ...MOMENTS.map((m) => '  ' + m + ': ' + MOMENT_INFO[m] + (m === 'ordered' ? ' (' + restText(s).replace('a prompt sound ', '') + ')' : '') + ' → ' + ruleText(s, m)),
   ].join('\n')
 }
 
 // Every command, one per line, the way the packs are listed
 const COMMANDS = [
   ['/sounds <pack>', 'switch this terminal to a pack'],
-  ['/sounds default <pack>', 'the pack every new terminal starts with'],
+  ['/sounds default <pack>', 'every terminal, open or new, plays this pack'],
   ['/sounds <moment> <pack>', 'one moment plays another pack, e.g. /sounds pushed aoe-turk'],
   ['/sounds <moment> <pack> <clip>', 'always the same clip, e.g. /sounds pushed aoe-turk allah-allah'],
   ['/sounds <moment> <pack> <pack>', "mix two packs' clips for that moment"],
@@ -1469,6 +1522,7 @@ const COMMANDS = [
   ['/sounds always', 'play whatever is in front'],
   ['/sounds night on', 'quiet from 23:00 to 07:00'],
   ['/sounds night off', 'play at night too'],
+  ['/sounds rest <minutes>', 'minutes before a prompt plays again (0: every prompt)'],
 ]
 
 function commands() {
