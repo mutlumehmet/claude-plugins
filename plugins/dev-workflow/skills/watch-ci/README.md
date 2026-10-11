@@ -10,6 +10,8 @@ loop written on the spot, run in the foreground, cut off at 600 seconds, and che
 asked. This skill runs one read only script as a background job instead. Claude Code tells the
 session when a background job ends, so the result arrives without anyone asking.
 
+![A session merges PR #42, carries on with other work, and hears GREEN when CI finishes](../../../../docs/images/watch-ci-film.gif)
+
 ## What it does
 
 1. **Starts with the merge command.** When Claude hands you a merge command, it starts
