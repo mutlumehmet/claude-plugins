@@ -16,6 +16,17 @@ background job exits, so the result arrives on its own.
 
 The script: `${CLAUDE_PLUGIN_ROOT}/skills/watch-ci/scripts/watch.sh`
 
+## Run it through the skill every time
+
+Invoke this skill each time you watch CI, even if you ran `watch.sh` earlier in the same
+conversation. Take the script path from the base directory shown when the skill loads.
+
+The installed path contains the plugin's version (`.../dev-workflow/<version>/...`). A path
+remembered from earlier, or carried over in a summary after the context was compacted, keeps
+pointing at the old version once the plugin updates, so the watch runs an outdated script or
+fails on a missing file. Invoking the skill also reloads these instructions, which may have
+changed since you last read them.
+
 ## How to run it
 
 Always with the Bash tool's `run_in_background: true`. In the foreground it would be cut
