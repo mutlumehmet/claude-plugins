@@ -17,24 +17,30 @@
 #   --gate-job NAME     a job that only fails because another job failed
 #                       (a "ci gate" that sums up the others); it is skipped
 #                       when explaining a failure. Repeatable.
+#   --superseded-step NAME
+#                       a gate-job step that fails only because a newer
+#                       commit exists (e.g. "only main's HEAD may deploy").
+#                       If that step is the ONLY failure, the verdict is
+#                       SUPERSEDED, not RED. Repeatable.
 #   --timeout MIN       give up after MIN minutes of watching CI (default 60)
 #   --merge-timeout MIN give up waiting for the merge after MIN (default 240)
 #   --interval SEC      poll interval (default 20)
 #
-# Exit: 0 GREEN, 1 RED, 2 NO CI / TIMEOUT / ERROR. The last line always
+# Exit: 0 GREEN, 1 RED, 2 NO CI / TIMEOUT / ERROR, 3 SUPERSEDED. The last line always
 # starts with "WATCH RESULT:".
 
 set -uo pipefail
-REPO=""; TIMEOUT=60; MTIMEOUT=240; INTERVAL=20; MERGE=0; TARGET=""; GATES=()
+REPO=""; TIMEOUT=60; MTIMEOUT=240; INTERVAL=20; MERGE=0; TARGET=""; GATES=(); SUPERSEDED=()
 while [ $# -gt 0 ]; do
   case "$1" in
     --repo) REPO="$2"; shift 2;;
     --gate-job) GATES+=("$2"); shift 2;;
+    --superseded-step) SUPERSEDED+=("$2"); shift 2;;
     --timeout) TIMEOUT="$2"; shift 2;;
     --merge-timeout) MTIMEOUT="$2"; shift 2;;
     --interval) INTERVAL="$2"; shift 2;;
     --merge) MERGE=1; shift;;
-    -h|--help) sed -n '2,26p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
+    -h|--help) sed -n '2,31p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
     -*) echo; echo "WATCH RESULT: ERROR unknown option $1 (see --help)"; exit 2;;
     *) TARGET="$1"; shift;;
   esac
@@ -42,6 +48,17 @@ done
 say() { echo "[$(date -u +%H:%M:%S)] $*"; }
 result() { echo; echo "WATCH RESULT: $*"; }
 is_gate() { local g; for g in ${GATES[@]+"${GATES[@]}"}; do [ "$1" = "$g" ] && return 0; done; return 1; }
+# The superseded step can also fail for another reason (it could not read the
+# branch head, say), so confirm it independently: the run's branch must now
+# point at a different commit. Any doubt counts as "no".
+newer_exists() {
+  local br head
+  br=$(gh api "repos/$REPO/actions/runs/$1" --jq .head_branch 2>/dev/null) || return 1
+  [ -n "$br" ] || return 1
+  head=$(gh api "repos/$REPO/commits/$br" --jq .sha 2>/dev/null) || return 1
+  [ -n "$head" ] && [ "$head" != "$SHA" ]
+}
+is_superseded_step() { local g; for g in ${SUPERSEDED[@]+"${SUPERSEDED[@]}"}; do [ "$1" = "$g" ] && return 0; done; return 1; }
 command -v gh >/dev/null || { result "ERROR gh (GitHub CLI) is not installed"; exit 2; }
 
 if [ -z "$REPO" ]; then
@@ -149,31 +166,52 @@ fi
 echo
 echo "Failures:"
 flaky=1
+# superseded=1 when a gate job failed only at a --superseded-step; real=1 when
+# anything else failed. SUPERSEDED is reported only if nothing real failed.
+superseded=0; real=0
 while IFS=$'\t' read -r id name _ concl attempt _ev; do
   [ -z "$id" ] && continue
   echo "  workflow '$name' $concl (run $id, attempt $attempt)"
+  # Per run: did its gate fail on its own rule, did any other job fail, was it superseded.
+  gate_own=0; nongate=0; run_sup=0
   jobs=$(gh api "repos/$REPO/actions/runs/$id/jobs?per_page=100" \
     --jq '.jobs[] | select(.conclusion=="failure" or .conclusion=="timed_out" or .conclusion=="cancelled") | "\(.id)\t\(.name)\t\(.conclusion)\t\([.steps[] | select(.conclusion=="failure") | .name] | join(", "))"' 2>/dev/null)
   while IFS=$'\t' read -r jid jname jconcl steps; do
     [ -z "$jid" ] && continue
     echo "    job '$jname' $jconcl, failed step: ${steps:-unknown}"
-    # A gate job only fails because an upstream job failed; it says nothing new.
-    is_gate "$jname" && continue
+    if is_gate "$jname"; then
+      if [ "$jconcl" = "failure" ] && is_superseded_step "$steps" && newer_exists "$id"; then
+        superseded=1; run_sup=1
+      else
+        gate_own=1
+      fi
+      # A gate job otherwise only fails because an upstream job failed; it says nothing new.
+      continue
+    fi
+    real=1; nongate=1
     # A failure in a setup / download / cache step means no test ran: likely infrastructure.
     if ! printf '%s' "$steps" | grep -qiE 'set ?up|setup|install|download|cache|checkout|restore'; then flaky=0; fi
   done <<< "$jobs"
-  [ -z "$jobs" ] && flaky=0
+  [ -z "$jobs" ] && { flaky=0; real=1; }
+  # A gate that failed with no failed upstream job failed on its own rule: real, never infrastructure.
+  if [ "$gate_own" -eq 1 ] && [ "$nongate" -eq 0 ]; then real=1; flaky=0; fi
+  # A run whose only failure is a confirmed superseded gate gets no rerun hint.
+  if [ "$run_sup" -eq 1 ] && [ "$gate_own" -eq 0 ] && [ "$nongate" -eq 0 ]; then continue; fi
   echo "    rerun failed jobs: gh run rerun $id --failed --repo $REPO"
 done <<< "$bad"
 if [ -n "$badck" ]; then
-  flaky=0
+  flaky=0; real=1
   printf '%s\n' "$badck" | awk -F'\t' '{print "  check " $1 " " $3 " (" $4 ") " $5}'
 fi
 if [ -n "$badst" ]; then
-  flaky=0
+  flaky=0; real=1
   printf '%s\n' "$badst" | awk -F'\t' '{print "  status " $1 " " $2 " " $3}'
 fi
 
+if [ "$superseded" -eq 1 ] && [ "$real" -eq 0 ]; then
+  result "SUPERSEDED $LABEL: not a failure. A newer commit exists and its own run decides what deploys; watch that one. Do not rerun or revert this."
+  exit 3
+fi
 if [ "$flaky" -eq 1 ]; then
   result "RED (likely infrastructure) $LABEL: only setup/download/cache steps failed, so no test ran. Rerun the failed jobs."
 else

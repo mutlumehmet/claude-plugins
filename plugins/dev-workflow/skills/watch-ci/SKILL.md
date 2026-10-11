@@ -46,6 +46,7 @@ Options:
 |---|---|---|
 | `--repo owner/name` | The repository to watch | The repo of the current folder (`gh repo view`) |
 | `--gate-job NAME` | A job that only fails because another job failed (a "gate" job that sums up the others). It is skipped when explaining a failure. Repeatable. | none |
+| `--superseded-step NAME` | A step of a gate job that fails only because a newer commit exists (for example a rule that lets only the branch's newest commit deploy). If that step is the only failure, the verdict is SUPERSEDED instead of RED. Repeatable. | none |
 | `--timeout MIN` | Give up watching CI after this many minutes | 60 |
 | `--merge-timeout MIN` | Give up waiting for the merge after this many minutes | 240 |
 | `--interval SEC` | Seconds between polls | 20 |
@@ -82,7 +83,7 @@ read the output file in between: the notification will come.
 ## Reading the result
 
 The last line always starts with `WATCH RESULT:`. Exit 0 = GREEN, 1 = RED, 2 = no CI,
-timeout or error.
+timeout or error, 3 = SUPERSEDED.
 
 - **GREEN**: say so in one sentence with the commit. If other sessions or agents are
   waiting on this merge, tell them now (for example with SendMessage).
@@ -94,6 +95,10 @@ timeout or error.
   (`gh run view <id> --log-failed`), and explain before suggesting anything. For a failed
   check run or status from another app, open the link it printed. Do not rerun a real
   failure hoping it goes away.
+- **SUPERSEDED**: not a failure. The only thing that failed is the `--superseded-step`,
+  because a newer commit exists and its own run decides what deploys. Say so, then watch
+  the newer commit. Never rerun or revert a superseded commit. Any real failure on the same
+  commit makes the verdict RED instead.
 - **NO CI / TIMEOUT / ERROR**: report it as is. Never turn it into "probably fine".
 
 ## Boundaries

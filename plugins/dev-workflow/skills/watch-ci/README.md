@@ -31,8 +31,9 @@ session when a background job ends, so the result arrives without anyone asking.
    setup, install, download or cache steps failed) from a real failure, and prints the rerun
    command.
 
-The last line is always `WATCH RESULT: GREEN | RED | NO CI | TIMEOUT | ERROR`. Exit code 0 is
-green, 1 red, 2 anything else.
+The last line is always `WATCH RESULT: GREEN | RED | SUPERSEDED | NO CI | TIMEOUT | ERROR`. Exit
+code 0 is green, 1 red, 3 superseded (only a `--superseded-step` failed, because a newer commit
+exists), 2 anything else.
 
 ## Use
 
@@ -55,6 +56,7 @@ No config file. Everything is an option with a default.
 |---|---|---|
 | `--repo owner/name` | The repository to watch | The repo of the current folder |
 | `--gate-job NAME` | A job that only fails because another failed (a "gate" that sums up the others); skipped when explaining a failure. Repeatable | none |
+| `--superseded-step NAME` | A gate-job step that fails only because a newer commit exists; if it is the only failure, the verdict is SUPERSEDED, not RED. Repeatable | none |
 | `--timeout MIN` | Give up watching CI after this long | 60 |
 | `--merge-timeout MIN` | Give up waiting for the merge after this long | 240 |
 | `--interval SEC` | Seconds between polls | 20 |
