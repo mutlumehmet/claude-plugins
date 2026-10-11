@@ -28,7 +28,7 @@ session when a background job ends, so the result arrives without anyone asking.
 5. **Gives up honestly.** Nothing reported after 4 minutes means CI will never run, so it says
    `NO CI` instead of waiting forever.
 6. **Explains a red.** It names the failing job and step, tells an infrastructure hiccup (only
-   setup, install, download or cache steps failed) from a real failure, and prints the rerun
+   setup, install, download, cache or service-start steps failed) from a real failure, and prints the rerun
    command.
 
 The last line is always `WATCH RESULT: GREEN | RED | SUPERSEDED | NO CI | TIMEOUT | ERROR`. Exit
@@ -57,6 +57,7 @@ No config file. Everything is an option with a default.
 | `--repo owner/name` | The repository to watch | The repo of the current folder |
 | `--gate-job NAME` | A job that only fails because another failed (a "gate" that sums up the others); skipped when explaining a failure. Repeatable | none |
 | `--superseded-step NAME` | A gate-job step that fails only because a newer commit exists; if it is the only failure, the verdict is SUPERSEDED, not RED. Repeatable | none |
+| `--gated-status NAME` | A commit status that fails only because the gate failed (a deploy waiting for the gate); ignored while a gate job has failed, a real failure otherwise. Repeatable | none |
 | `--timeout MIN` | Give up watching CI after this long | 60 |
 | `--merge-timeout MIN` | Give up waiting for the merge after this long | 240 |
 | `--interval SEC` | Seconds between polls | 20 |

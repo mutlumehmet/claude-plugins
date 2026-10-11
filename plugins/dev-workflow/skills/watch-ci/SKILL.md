@@ -47,6 +47,7 @@ Options:
 | `--repo owner/name` | The repository to watch | The repo of the current folder (`gh repo view`) |
 | `--gate-job NAME` | A job that only fails because another job failed (a "gate" job that sums up the others). It is skipped when explaining a failure. Repeatable. | none |
 | `--superseded-step NAME` | A step of a gate job that fails only because a newer commit exists (for example a rule that lets only the branch's newest commit deploy). If that step is the only failure, the verdict is SUPERSEDED instead of RED. Repeatable. | none |
+| `--gated-status NAME` | A commit status that fails only because the gate job failed (for example a deploy that waits for the gate before going live). While a gate job has failed it does not change the verdict, so a superseded or infrastructure failure keeps its own verdict; otherwise it is a real failure. Repeatable. | none |
 | `--timeout MIN` | Give up watching CI after this many minutes | 60 |
 | `--merge-timeout MIN` | Give up waiting for the merge after this many minutes | 240 |
 | `--interval SEC` | Seconds between polls | 20 |
@@ -87,8 +88,8 @@ timeout or error, 3 = SUPERSEDED.
 
 - **GREEN**: say so in one sentence with the commit. If other sessions or agents are
   waiting on this merge, tell them now (for example with SendMessage).
-- **RED (likely infrastructure)**: only a setup, install, download or cache step failed, so
-  no test ran (for example a tool download returned HTTP 500). Give the user the printed
+- **RED (likely infrastructure)**: only a setup, install, download, cache or service-start step
+  (such as starting a local database stack) failed, so no test ran (for example a tool download returned HTTP 500). Give the user the printed
   `gh run rerun ... --failed` command to run, then start the same watch again in the
   background straight away.
 - **RED**: a real check failed. Name the job and step it printed, read that job's log

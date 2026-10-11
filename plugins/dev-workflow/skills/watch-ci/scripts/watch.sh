@@ -22,6 +22,10 @@
 #                       commit exists (e.g. "only main's HEAD may deploy").
 #                       If that step is the ONLY failure, the verdict is
 #                       SUPERSEDED, not RED. Repeatable.
+#   --gated-status NAME a commit status that fails only because the gate
+#                       job failed (e.g. a deploy that waits for the gate).
+#                       While a gate job failed, it adds nothing to the
+#                       verdict; otherwise it is a real failure. Repeatable.
 #   --timeout MIN       give up after MIN minutes of watching CI (default 60)
 #   --merge-timeout MIN give up waiting for the merge after MIN (default 240)
 #   --interval SEC      poll interval (default 20)
@@ -30,17 +34,18 @@
 # starts with "WATCH RESULT:".
 
 set -uo pipefail
-REPO=""; TIMEOUT=60; MTIMEOUT=240; INTERVAL=20; MERGE=0; TARGET=""; GATES=(); SUPERSEDED=()
+REPO=""; TIMEOUT=60; MTIMEOUT=240; INTERVAL=20; MERGE=0; TARGET=""; GATES=(); SUPERSEDED=(); GATED=()
 while [ $# -gt 0 ]; do
   case "$1" in
     --repo) REPO="$2"; shift 2;;
     --gate-job) GATES+=("$2"); shift 2;;
     --superseded-step) SUPERSEDED+=("$2"); shift 2;;
+    --gated-status) GATED+=("$2"); shift 2;;
     --timeout) TIMEOUT="$2"; shift 2;;
     --merge-timeout) MTIMEOUT="$2"; shift 2;;
     --interval) INTERVAL="$2"; shift 2;;
     --merge) MERGE=1; shift;;
-    -h|--help) sed -n '2,31p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
+    -h|--help) sed -n '2,35p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
     -*) echo; echo "WATCH RESULT: ERROR unknown option $1 (see --help)"; exit 2;;
     *) TARGET="$1"; shift;;
   esac
@@ -58,6 +63,7 @@ newer_exists() {
   head=$(gh api "repos/$REPO/commits/$br" --jq .sha 2>/dev/null) || return 1
   [ -n "$head" ] && [ "$head" != "$SHA" ]
 }
+is_gated_status() { local g; for g in ${GATED[@]+"${GATED[@]}"}; do [ "$1" = "$g" ] && return 0; done; return 1; }
 is_superseded_step() { local g; for g in ${SUPERSEDED[@]+"${SUPERSEDED[@]}"}; do [ "$1" = "$g" ] && return 0; done; return 1; }
 command -v gh >/dev/null || { result "ERROR gh (GitHub CLI) is not installed"; exit 2; }
 
@@ -168,7 +174,7 @@ echo "Failures:"
 flaky=1
 # superseded=1 when a gate job failed only at a --superseded-step; real=1 when
 # anything else failed. SUPERSEDED is reported only if nothing real failed.
-superseded=0; real=0
+superseded=0; real=0; gate_failed=0
 while IFS=$'\t' read -r id name _ concl attempt _ev; do
   [ -z "$id" ] && continue
   echo "  workflow '$name' $concl (run $id, attempt $attempt)"
@@ -180,6 +186,7 @@ while IFS=$'\t' read -r id name _ concl attempt _ev; do
     [ -z "$jid" ] && continue
     echo "    job '$jname' $jconcl, failed step: ${steps:-unknown}"
     if is_gate "$jname"; then
+      gate_failed=1
       if [ "$jconcl" = "failure" ] && is_superseded_step "$steps" && newer_exists "$id"; then
         superseded=1; run_sup=1
       else
@@ -190,7 +197,7 @@ while IFS=$'\t' read -r id name _ concl attempt _ev; do
     fi
     real=1; nongate=1
     # A failure in a setup / download / cache step means no test ran: likely infrastructure.
-    if ! printf '%s' "$steps" | grep -qiE 'set ?up|setup|install|download|cache|checkout|restore'; then flaky=0; fi
+    if ! printf '%s' "$steps" | grep -qiE 'set ?up|setup|install|download|cache|checkout|restore|start [^,]*(stack|services?|containers?|database)'; then flaky=0; fi
   done <<< "$jobs"
   [ -z "$jobs" ] && { flaky=0; real=1; }
   # A gate that failed with no failed upstream job failed on its own rule: real, never infrastructure.
@@ -204,7 +211,13 @@ if [ -n "$badck" ]; then
   printf '%s\n' "$badck" | awk -F'\t' '{print "  check " $1 " " $3 " (" $4 ") " $5}'
 fi
 if [ -n "$badst" ]; then
-  flaky=0; real=1
+  # A --gated-status only echoes the gate: it decides nothing while a gate job
+  # failed (that failure is the verdict), and is a real failure otherwise.
+  while IFS=$'\t' read -r ctx _st _url; do
+    [ -z "$ctx" ] && continue
+    if is_gated_status "$ctx" && [ "$gate_failed" -eq 1 ]; then continue; fi
+    flaky=0; real=1
+  done <<< "$badst"
   printf '%s\n' "$badst" | awk -F'\t' '{print "  status " $1 " " $2 " " $3}'
 fi
 
@@ -213,7 +226,7 @@ if [ "$superseded" -eq 1 ] && [ "$real" -eq 0 ]; then
   exit 3
 fi
 if [ "$flaky" -eq 1 ]; then
-  result "RED (likely infrastructure) $LABEL: only setup/download/cache steps failed, so no test ran. Rerun the failed jobs."
+  result "RED (likely infrastructure) $LABEL: only setup, download, cache or service-start steps failed, so no test ran. Rerun the failed jobs."
 else
   result "RED $LABEL: a real check failed, read the job log before rerunning."
 fi
