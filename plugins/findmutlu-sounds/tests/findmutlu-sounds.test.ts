@@ -106,8 +106,16 @@ test('/sounds <pack> changes this terminal, /sounds default <pack> every termina
   expect(again.text).toMatch(/^Default is already red-alert/)
 })
 
-test('quiet hours keep it silent', async ($, on) => {
+test('quiet hours are off by default, even for settings saved before 0.1.8', async ($, on) => {
+  const night = engine(on, { now: MIDNIGHT, settings: { isNightQuiet: true } })
+  await $.turn.complete(LONG)
+  await settle()
+  expect(night.played.length).toBe(1)
+})
+
+test('/sounds night on keeps it silent at night', async ($, on) => {
   const night = engine(on, { now: MIDNIGHT })
+  expect((await $.command.run({ command: 'sounds', args: 'night on' })).text).toBe('Quiet hours on: no clips from 23:00 to 07:00')
   await $.turn.complete(LONG)
   await settle()
   expect(night.played).toEqual([])

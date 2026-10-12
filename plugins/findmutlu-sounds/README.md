@@ -94,7 +94,7 @@ same terms.
 | `/sounds test [pack] [moment]` | Play every sound of a pack once, or only one moment of it (`/sounds test aoe-turk pushed`), whatever the settings |
 | `/sounds off`, `/sounds on` | Mute, unmute |
 | `/sounds away`, `/sounds always` | Play only while no terminal or editor is the front app, or always (the default). The prompt answer still plays in away mode: you are at the keyboard |
-| `/sounds night off`, `/sounds night on` | Quiet hours from 23:00 to 07:00, on by default |
+| `/sounds night off`, `/sounds night on` | Quiet hours: no clips from 23:00 to 07:00. Off by default |
 | `/sounds rest <minutes>` | How long after this terminal's last prompt sound the next prompt plays one; 0 (the default) plays every prompt |
 
 Every change answers with one line saying what changed, and a mistyped pack or clip name gets the

@@ -968,7 +968,7 @@ const VOICE_PACKS = {}
 // project: the folder this session runs in and the pack /sounds project gave it (or its parent)
 const here = { pack: undefined, packAt: -1, all: undefined, cwd: '', project: undefined, playedAt: 0, orderedAt: 0, yourPacks: {}, lastClip: {} }
 
-const DEFAULTS = { isOn: true, defaultPack: DEFAULT_PACK, mode: 'always', isNightQuiet: true, restMin: ORDERED_REST_MIN }
+const DEFAULTS = { isOn: true, defaultPack: DEFAULT_PACK, mode: 'always', isNightQuiet: false, restMin: ORDERED_REST_MIN }
 
 export function register(on) {
   on('session.start', async ($, e, next) => {
@@ -1395,7 +1395,11 @@ async function readSettings($) {
   here.cwd = await $.session.cwd().catch(() => here.cwd)
   here.project = projectOf(await readProjects($), here.cwd)
   const stored = await $.store.get('settings')
-  return { ...DEFAULTS, ...(stored && typeof stored === 'object' ? stored : {}) }
+  const settings = { ...DEFAULTS, ...(stored && typeof stored === 'object' ? stored : {}) }
+  // Quiet hours were on by default until 0.1.8 and every saved change kept that default, so
+  // only a /sounds night on of the user's own counts: silence at night looked like a bug
+  if (!settings.isNightChosen) settings.isNightQuiet = false
+  return settings
 }
 
 function isQuietHour(hour) {
@@ -1427,7 +1431,7 @@ const CHANGES = [
   },
   {
     matches: (a) => a[0] === 'night' && (a[1] === 'on' || a[1] === 'off'),
-    apply: (s, a) => ({ ...s, isNightQuiet: a[1] === 'on' }),
+    apply: (s, a) => ({ ...s, isNightQuiet: a[1] === 'on', isNightChosen: true }),
     said: (s) => (s.isNightQuiet ? 'Quiet hours on: no clips from 23:00 to 07:00' : 'Quiet hours off: clips play at night too'),
   },
   {
