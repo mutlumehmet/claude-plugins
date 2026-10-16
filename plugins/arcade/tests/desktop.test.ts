@@ -46,7 +46,7 @@ for (const [id, title] of GAMES) {
     expect(svg!.props.alt).toBe(title)
     expect(svg!.props.source.startsWith('<svg')).toBe(true)
     expect(svg!.props.source.length).toBeLessThan(131072)
-    expect(svg!.props.source).toMatch(/class="f0"/)
+    expect(svg!.props.source).toMatch(/"p f0"/)
     expect(await desk.find({ type: 'Text', text: /project/ })).toBeDefined()
     expect(await desk.find({ type: 'Button', key: 'arcade-next' } as never)).toBeDefined()
     await desk.unmount()
@@ -66,7 +66,7 @@ test('Bug Command runs its sky in the hooks on the desktop and draws it as a fli
   await clock.advance(1000)
   const svg = (await ui.find({ type: 'Svg' } as never)) as unknown as SvgFound
   expect(svg!.props.alt).toBe('Bug Command')
-  expect(svg!.props.source).toMatch(/class="f5"/)
+  expect(svg!.props.source).toMatch(/"p f0"/)
   await ui.unmount()
   const term = await $.ui.mount(band('terminal'))
   expect(await term.find({ type: 'Client' } as never)).toBeDefined()
@@ -99,6 +99,6 @@ test('on the desktop a game never blits: a second of frames comes as one flipboo
   await clock.advance(1000)
   const svg = (await ui.find({ type: 'Svg' } as never)) as unknown as SvgFound
   expect(blits.n).toBe(0)
-  expect(svg!.props.source).toMatch(/class="f5"/)
+  expect(svg!.props.source).toMatch(/"p f5"/)
   await ui.unmount()
 })

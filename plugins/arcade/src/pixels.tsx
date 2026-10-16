@@ -1,6 +1,7 @@
 import type { EngineInterface, RenderElement, RenderInput, RenderSurface } from 'claude-code'
 
-import { CELL_W, flipbook, framePaths } from './cells'
+import { flipbook, framePaths } from './cells'
+import type { Page } from './cells'
 
 // The games draw a grid of cells (half blocks, mostly) fifteen times a second. The terminal takes
 // each frame as a Raster repainted by $.ui.blit. The Desktop Code tab has neither a Raster nor a
@@ -16,8 +17,9 @@ export const drawsGames = (surface: RenderSurface) => surface === 'terminal' || 
 
 // Which surface each drawn site is on, so a game's frame loop knows whether it can blit.
 const sites = new Map<string, RenderSurface>()
-// Each game's frames since its last flipbook on the desktop, by its key.
-const pending = new Map<string, string[]>()
+// Each game's pages since its last flipbook on the desktop, by its key: each frame painted as it
+// comes (not all at once when the band is drawn), a frame like the one before only lengthening it.
+const pending = new Map<string, { size: number; columns: number; rows: number; pages: Page[]; lastCells: string; shown: string }>()
 
 // How long a flipbook covers, and how long each frame of it shows (the games' frame clock).
 const BOOK_MS = 1000
@@ -28,7 +30,9 @@ const onDesktop = () => [...sites.values()].includes('desktop')
 // Called once at session start: the clock that hands the desktop a new flipbook each second.
 export function startFlipbooks($: EngineInterface) {
   $.clock.every(BOOK_MS, () => {
-    if (onDesktop() && [...pending.values()].some(f => f.length > 0)) $.ui.invalidate('ui.render')
+    // A still picture (one page, the one already on screen) needs no new book.
+    const isNew = (f: { pages: Page[]; shown: string }) => f.pages.length > 1 || (f.pages.length === 1 && f.pages[0]!.paths !== f.shown)
+    if (onDesktop() && [...pending.values()].some(isNew)) $.ui.invalidate('ui.render')
   })
 }
 
@@ -50,12 +54,13 @@ export function pixels($: EngineInterface, e: Site, g: Grid): RenderElement | nu
   }
   if (e.surface === 'desktop') {
     const { Svg } = $.ui.resolve(e)
-    // Frames from before a resize do not fit this band: only this size's go in the book.
-    const kept = (pending.get(g.key) ?? []).filter(cells => cells.length === g.cells.length)
-    pending.set(g.key, [])
-    const frames = (kept.length > 0 ? kept : [g.cells]).map(cells => framePaths(g.columns, g.rows, cells))
-    const source = flipbook(g.columns, g.rows, frames, frames.length * FRAME_MS)
-    return <Svg key={g.key} alt={g.alt} source={source} width={g.columns * CELL_W} />
+    // Pages from before a resize do not fit this band: only this size's go in the book.
+    const kept = pending.get(g.key)
+    const pages = kept && kept.size === g.cells.length && kept.pages.length > 0 ? kept.pages : [{ paths: framePaths(g.columns, g.rows, g.cells), ms: FRAME_MS }]
+    pending.set(g.key, { size: g.cells.length, columns: g.columns, rows: g.rows, pages: [], lastCells: '', shown: pages[pages.length - 1]!.paths })
+    const source = flipbook(g.columns, g.rows, pages)
+    // No width: the Svg takes its markup's width up to the band's, so it fills the band edge to edge.
+    return <Svg key={g.key} alt={g.alt} source={source} />
   }
   return null
 }
@@ -63,11 +68,16 @@ export function pixels($: EngineInterface, e: Site, g: Grid): RenderElement | nu
 // Repaints a game's cells: a blit in the terminal; on the desktop the frame joins the next flipbook.
 export function repaint($: EngineInterface, args: { requestId: string; key: string; cells: string; columns?: number }) {
   if (sites.get(args.requestId) === 'desktop') {
-    const kept = pending.get(args.key) ?? []
-    kept.push(args.cells)
+    const kept = pending.get(args.key)
+    if (!kept || kept.size !== args.cells.length) return Promise.resolve({} as { deny?: unknown })
+    const last = kept.pages[kept.pages.length - 1]
+    if (last && args.cells === kept.lastCells) last.ms += FRAME_MS
+    else {
+      kept.pages.push({ paths: framePaths(kept.columns, kept.rows, args.cells), ms: FRAME_MS })
+      kept.lastCells = args.cells
+    }
     // Never more than a few seconds behind, should the band not be drawn for a while.
-    if (kept.length > 45) kept.splice(0, kept.length - 45)
-    pending.set(args.key, kept)
+    if (kept.pages.length > 45) kept.pages.splice(0, kept.pages.length - 45)
     return Promise.resolve({} as { deny?: unknown })
   }
   return $.ui.blit(args)

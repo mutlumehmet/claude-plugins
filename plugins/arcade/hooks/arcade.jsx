@@ -165,21 +165,32 @@ function framePaths(columns, rows, cells) {
   return paths.join("") + glyphs.join("");
 }
 const BUDGET = 12e4;
-function flipbook(columns, rows, frames, ms) {
+const OVERSIZE = 2;
+function flipbook(columns, rows, pages) {
   const W5 = columns * CELL_W;
   const H3 = rows * CELL_H;
-  const head = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W5} ${H3}" width="${W5}" height="${H3}" shape-rendering="crispEdges"><style>.d{fill:#3d3d3a}@media (prefers-color-scheme:dark){.d{fill:#e8e6dc}}text{font:${CELL_H - 2}px ui-monospace,Menlo,monospace;text-anchor:middle}g{visibility:hidden}@keyframes on{from,to{visibility:visible}}`;
-  let list2 = frames.length > 0 ? frames : [""];
+  const head = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W5} ${H3}" width="${W5 * OVERSIZE}" height="${H3 * OVERSIZE}" shape-rendering="crispEdges"><style>.d{fill:#3d3d3a}@media (prefers-color-scheme:dark){.d{fill:#e8e6dc}}text{font:${CELL_H - 2}px ui-monospace,Menlo,monospace;text-anchor:middle}.p{visibility:hidden}@keyframes on{from,to{visibility:visible}}`;
+  let list2 = pages.length > 0 ? pages : [{ paths: "", ms: 66 }];
   for (; ; ) {
-    const each = ms / list2.length;
-    const css = list2.map((_, i) => {
+    const ids = /* @__PURE__ */ new Map();
+    for (const p of list2) if (!ids.has(p.paths)) ids.set(p.paths, ids.size);
+    let at = 0;
+    const css = list2.map((p, i) => {
       const isLast = i === list2.length - 1;
-      return `.f${i}{animation:on ${Math.round(each)}ms step-end ${Math.round(i * each)}ms ${isLast ? "forwards" : "1"}}`;
+      const rule = `.f${i}{animation:on ${Math.round(p.ms)}ms step-end ${Math.round(at)}ms ${isLast ? "forwards" : "1"}}`;
+      at += p.ms;
+      return rule;
     }).join("");
-    const body = list2.map((f, i) => `<g class="f${i}">${f}</g>`).join("");
-    const svg = `${head}${css}</style>${body}</svg>`;
+    const defs = [...ids].map(([paths, id]) => `<g id="u${id}">${paths}</g>`).join("");
+    const body = list2.map((p, i) => `<use href="#u${ids.get(p.paths)}" class="p f${i}"/>`).join("");
+    const svg = `${head}${css}</style><defs>${defs}</defs>${body}</svg>`;
     if (svg.length <= BUDGET || list2.length === 1) return svg;
-    list2 = list2.filter((_, i) => i % 2 === 1 || i === list2.length - 1);
+    const fewer = [];
+    list2.forEach((p, i) => {
+      if (i % 2 === 0 || i === list2.length - 1) fewer.push({ ...p });
+      else fewer[fewer.length - 1].ms += p.ms;
+    });
+    list2 = fewer;
   }
 }
 
@@ -192,7 +203,8 @@ const FRAME_MS = 66;
 const onDesktop = () => [...sites.values()].includes("desktop");
 function startFlipbooks($) {
   $.clock.every(BOOK_MS, () => {
-    if (onDesktop() && [...pending.values()].some((f) => f.length > 0)) $.ui.invalidate("ui.render");
+    const isNew = (f) => f.pages.length > 1 || f.pages.length === 1 && f.pages[0].paths !== f.shown;
+    if (onDesktop() && [...pending.values()].some(isNew)) $.ui.invalidate("ui.render");
   });
 }
 function redrawDesktop($) {
@@ -206,20 +218,25 @@ function pixels($, e, g) {
   }
   if (e.surface === "desktop") {
     const { Svg } = $.ui.resolve(e);
-    const kept = (pending.get(g.key) ?? []).filter((cells) => cells.length === g.cells.length);
-    pending.set(g.key, []);
-    const frames = (kept.length > 0 ? kept : [g.cells]).map((cells) => framePaths(g.columns, g.rows, cells));
-    const source = flipbook(g.columns, g.rows, frames, frames.length * FRAME_MS);
-    return <Svg key={g.key} alt={g.alt} source={source} width={g.columns * CELL_W} />;
+    const kept = pending.get(g.key);
+    const pages = kept && kept.size === g.cells.length && kept.pages.length > 0 ? kept.pages : [{ paths: framePaths(g.columns, g.rows, g.cells), ms: FRAME_MS }];
+    pending.set(g.key, { size: g.cells.length, columns: g.columns, rows: g.rows, pages: [], lastCells: "", shown: pages[pages.length - 1].paths });
+    const source = flipbook(g.columns, g.rows, pages);
+    return <Svg key={g.key} alt={g.alt} source={source} />;
   }
   return null;
 }
 function repaint($, args) {
   if (sites.get(args.requestId) === "desktop") {
-    const kept = pending.get(args.key) ?? [];
-    kept.push(args.cells);
-    if (kept.length > 45) kept.splice(0, kept.length - 45);
-    pending.set(args.key, kept);
+    const kept = pending.get(args.key);
+    if (!kept || kept.size !== args.cells.length) return Promise.resolve({});
+    const last2 = kept.pages[kept.pages.length - 1];
+    if (last2 && args.cells === kept.lastCells) last2.ms += FRAME_MS;
+    else {
+      kept.pages.push({ paths: framePaths(kept.columns, kept.rows, args.cells), ms: FRAME_MS });
+      kept.lastCells = args.cells;
+    }
+    if (kept.pages.length > 45) kept.pages.splice(0, kept.pages.length - 45);
     return Promise.resolve({});
   }
   return $.ui.blit(args);

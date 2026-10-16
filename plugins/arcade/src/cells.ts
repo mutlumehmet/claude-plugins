@@ -89,26 +89,45 @@ const BUDGET = 120000
 
 // A flipbook: the frames of the last moment, each shown in turn for its share of `ms`, the last one
 // kept on screen until the next flipbook arrives. The page plays it; nothing redraws in between.
-export function flipbook(columns: number, rows: number, frames: string[], ms: number): string {
+// Drawn this many times its cell size, so the page shrinks it to the band's width rather than
+// leaving room at the right (the desktop's cells are wider than CELL_W; seen 16 October 2026).
+const OVERSIZE = 2
+
+// One frame of a flipbook: what it shows, and for how long.
+export type Page = { paths: string; ms: number }
+
+export function flipbook(columns: number, rows: number, pages: Page[]): string {
   const W = columns * CELL_W
   const H = rows * CELL_H
   const head =
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" shape-rendering="crispEdges">` +
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W * OVERSIZE}" height="${H * OVERSIZE}" shape-rendering="crispEdges">` +
     `<style>.d{fill:#3d3d3a}@media (prefers-color-scheme:dark){.d{fill:#e8e6dc}}` +
     `text{font:${CELL_H - 2}px ui-monospace,Menlo,monospace;text-anchor:middle}` +
-    `g{visibility:hidden}@keyframes on{from,to{visibility:visible}}`
-  let list = frames.length > 0 ? frames : ['']
+    `.p{visibility:hidden}@keyframes on{from,to{visibility:visible}}`
+  let list = pages.length > 0 ? pages : [{ paths: '', ms: 66 }]
   for (;;) {
-    const each = ms / list.length
+    // A picture shown more than once is drawn once, in defs, and used by each page that shows it.
+    const ids = new Map<string, number>()
+    for (const p of list) if (!ids.has(p.paths)) ids.set(p.paths, ids.size)
+    let at = 0
     const css = list
-      .map((_, i) => {
+      .map((p, i) => {
         const isLast = i === list.length - 1
-        return `.f${i}{animation:on ${Math.round(each)}ms step-end ${Math.round(i * each)}ms ${isLast ? 'forwards' : '1'}}`
+        const rule = `.f${i}{animation:on ${Math.round(p.ms)}ms step-end ${Math.round(at)}ms ${isLast ? 'forwards' : '1'}}`
+        at += p.ms
+        return rule
       })
       .join('')
-    const body = list.map((f, i) => `<g class="f${i}">${f}</g>`).join('')
-    const svg = `${head}${css}</style>${body}</svg>`
+    const defs = [...ids].map(([paths, id]) => `<g id="u${id}">${paths}</g>`).join('')
+    const body = list.map((p, i) => `<use href="#u${ids.get(p.paths)}" class="p f${i}"/>`).join('')
+    const svg = `${head}${css}</style><defs>${defs}</defs>${body}</svg>`
     if (svg.length <= BUDGET || list.length === 1) return svg
-    list = list.filter((_, i) => i % 2 === 1 || i === list.length - 1)
+    // Too big: every other picture goes, its time given to the one before it.
+    const fewer: Page[] = []
+    list.forEach((p, i) => {
+      if (i % 2 === 0 || i === list.length - 1) fewer.push({ ...p })
+      else fewer[fewer.length - 1]!.ms += p.ms
+    })
+    list = fewer
   }
 }
