@@ -17,6 +17,15 @@
 
 set -uo pipefail
 
+# grep must read UTF-8 by character, not by byte. In the C locale (LANG and LC_ALL unset, as in some hook
+# runners) a pattern with non-ASCII letters in a bracket class matches single bytes of unrelated glyphs.
+for loc in en_US.UTF-8 C.UTF-8; do
+  if [ "$(LC_ALL=$loc locale charmap 2>/dev/null)" = UTF-8 ]; then
+    export LC_ALL=$loc
+    break
+  fi
+done
+
 LIST="${AGENT_SKILLS_FORBIDDEN:-$HOME/.config/agent-skills/forbidden.txt}"
 AUTHOR_LIST="${AGENT_SKILLS_AUTHOR:-$HOME/.config/agent-skills/author.txt}"
 # Files allowed to name the author
