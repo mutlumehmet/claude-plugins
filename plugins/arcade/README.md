@@ -333,13 +333,21 @@ between sessions; a reload of the plugin keeps what the terminal had.
 
 ## Install
 
-Needs Claude Code 2.1.287 or later (mods). Tested on 2.1.294. The commands are in
+Needs Claude Code 2.1.287 or later (mods). Tested on 2.1.294; the Desktop Code tab on 2.1.299. The commands are in
 [Quick start](#quick-start).
 
 A mod runs inside Claude Code with your permissions. Read the code before you install any mod.
 
 It draws in a terminal (including an editor's integrated terminal) and in the Code tab of the
 Desktop app; in the VS Code chat panel and `claude -p` it runs but draws nothing.
+
+**In the Desktop Code tab** (since 0.11.0) the games look the same, but run on an engine of their
+own. The terminal repaints a grid of block characters fifteen times a second; the Code tab has no
+such grid, and draws text in a proportional font, so the blocks would not line up there. Instead
+each game keeps its frames and, once a second, hands the Code tab the last second of them as one
+SVG flipbook of square pixels, which the page plays by itself. So the picture runs about a second
+behind what Claude does, and the line above the prompt is redrawn once a second rather than for
+every frame, which leaves the buttons above the game free to be pressed.
 
 **Installed a game on its own before arcade 0.2.0?** The games now live only in `arcade`. Uninstall
 the old ones (`/plugin uninstall dragon-lair@mehmetmutlu`, and the same for `jackpot`, `outlaw`, `tama`,
@@ -364,7 +372,7 @@ atoms only and never calls `$.store` (see "Scores").
 ## Known gaps
 
 - The GIFs on this page were rendered before 0.10.0, so they do not show the ◀ ▶ ☰ buttons above the game.
-- The buttons and the game menu are drawn in a terminal only; in the Desktop Code tab, use `/arcade`.
+- In the Desktop Code tab the games run about a second behind Claude's work (they arrive there as one-second flipbooks), and a busy wide scene may show every other frame to stay within the size an SVG may have.
 
 - With `all`, or several games shown, the line above the prompt gets tall; the octopus alone takes
   eight rows.
@@ -385,7 +393,7 @@ atoms only and never calls `$.store` (see "Scores").
 - **Dario**: Things queue at the right edge, so after a burst of tool calls a flag pole can take a few seconds to reach Dario.
 - **Block Town**: The town is laid out for the width of the terminal it was built in; a narrower terminal leaves out the buildings that do not fit, and a band under 64 columns has no room for the castle.
 - **Bug Command**: The sky is drawn as runs of coloured text rather than the raster the other strips use, so a busy sky redraws more than they do; a still sky does not redraw at all.
-- **Bug Command**: Only a terminal draws it; the Desktop Code tab, which draws the other games, does not show it yet.
+- **Bug Command**: In the Desktop Code tab the sky is drawn and defends itself, but cannot be clicked yet: firing by hand is the terminal's.
 - **Bug Command**: A click hands the keyboard to the sky until Esc; typing into the prompt needs Esc first.
 - **Bug Command**: A terminal that does not report the position within a cell (tmux, among others) aims a click at the lower half of the cell.
 - **Octo Invader**: The score glyphs `⌂` and `✈` are single width in most terminal fonts; a font that draws `✈` as an emoji shifts the score by one cell.

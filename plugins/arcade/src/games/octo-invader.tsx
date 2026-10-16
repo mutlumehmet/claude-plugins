@@ -5,6 +5,7 @@ import type { OctoMood as Mood, OctoScore as Score } from '../../types'
 import { BABY, FLAG, OCTO_HEIGHT, OCTO_WIDTH, PLANE, octopus } from './octo-sprite'
 import type { Legs } from './octo-sprite'
 import type { Milestone } from '../milestones'
+import { drawsGames, pixels, repaint } from '../pixels'
 import { isShown } from '../shown'
 import type { Game } from '../shown'
 
@@ -656,7 +657,7 @@ export const start: Hook<'session.start'> = async ($, e, next) => {
     step(a)
     if (sim.isBlitting) return
     sim.isBlitting = true
-    void $.ui.blit({ requestId, key: RASTER, cells: frame(a, lastStats), columns: sim.W })
+    void repaint($, { requestId, key: RASTER, cells: frame(a, lastStats), columns: sim.W })
       .then(r => {
         if (r.deny !== undefined) sim.requestId = null
       })
@@ -760,19 +761,19 @@ export const tool: Hook<'tool.call'> = async ($, e, next) => {
 // The city runs the full width of the band, above whatever else is there.
 export const render: MatchedHook<'ui.render', { component: 'AbovePrompt' }> = async ($, e, next) => {
   const below = await next(e)
-  if (e.surface !== 'terminal' || e.props.hasSurvey || !(await isShown($, ID))) {
+  if (!drawsGames(e.surface) || e.props.hasSurvey || !(await isShown($, ID))) {
     sim.requestId = null
     return below
   }
-  const { Box, Raster } = $.ui.resolve(e)
   fitCity(clamp(e.props.bodyColumns, MIN_COLUMNS, MAX_COLUMNS))
   sim.requestId = e.requestId
   const stats = statsLine(await read($, score))
   lastStats = stats
+  const { Box } = $.ui.resolve(e)
 
   return (
     <Box flexDirection="column">
-      <Raster key={RASTER} columns={sim.W} rows={ROWS} cells={frame(activity(), stats)} />
+      {pixels($, e, { key: RASTER, columns: sim.W, rows: ROWS, cells: frame(activity(), stats), alt: 'Octo Invader' })}
       {below ?? null}
     </Box>
   )

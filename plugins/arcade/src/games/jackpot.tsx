@@ -5,6 +5,7 @@ import type { Bank } from '../../types'
 import { PALETTE, SYMBOLS, SYMBOL_SIZE } from './jackpot-symbols'
 import type { SymbolId } from './jackpot-symbols'
 import type { Milestone } from '../milestones'
+import { drawsGames, pixels, repaint } from '../pixels'
 import { isShown } from '../shown'
 import type { Game } from '../shown'
 
@@ -332,7 +333,7 @@ function startLoop($: EngineInterface) {
     const requestId = sim.requestId
     if (requestId === null || sim.isBlitting) return
     sim.isBlitting = true
-    void $.ui.blit({ requestId, key: RASTER, cells: frame() })
+    void repaint($, { requestId, key: RASTER, cells: frame() })
       .then(r => {
         if (r.deny !== undefined) sim.requestId = null
       })
@@ -438,11 +439,11 @@ export const turn: Hook<'turn.complete'> = async ($, e, next) => {
 // The machine sits at the right end of the band, like the dragon, the rest of the band beside it.
 export const render: MatchedHook<'ui.render', { component: 'AbovePrompt' }> = async ($, e, next) => {
   const below = await next(e)
-  if (e.surface !== 'terminal' || e.props.hasSurvey || !(await isShown($, ID))) {
+  if (!drawsGames(e.surface) || e.props.hasSurvey || !(await isShown($, ID))) {
     sim.requestId = null
     return below
   }
-  const { Box, Raster, Text } = $.ui.resolve(e)
+  const { Box, Text } = $.ui.resolve(e)
   sim.requestId = e.requestId
   startLoop($)
   const b = await read($, bank)
@@ -454,7 +455,7 @@ export const render: MatchedHook<'ui.render', { component: 'AbovePrompt' }> = as
         {below ?? null}
       </Box>
       <Box flexDirection="column" flexShrink={0} minWidth={W} marginLeft={2}>
-        <Raster key={RASTER} columns={W} rows={ROWS} cells={frame()} />
+        {pixels($, e, { key: RASTER, columns: W, rows: ROWS, cells: frame(), alt: 'Jackpot' })}
         <Text key="stats" dimColor wrap="truncate">
           {statsLine(b, g)}
         </Text>

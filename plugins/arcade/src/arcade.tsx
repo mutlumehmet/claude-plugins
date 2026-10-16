@@ -114,6 +114,7 @@ import {
 } from './games/block-town'
 import { configureMilestones, promptMilestones, skillSeen, streakMilestones, subagentMilestones, toolMilestones, turnMilestones } from './milestones'
 import type { Milestone } from './milestones'
+import { drawsGames, redrawDesktop, startFlipbooks } from './pixels'
 import { forgetSaves } from './save'
 import { shown } from './shown'
 
@@ -456,6 +457,7 @@ export const register: Register = (on, options: PluginOptions) => {
   on('session.start', async ($, e, next) => {
     // The games keep nothing between sessions; what older versions saved goes.
     await forgetSaves($)
+    startFlipbooks($)
     await $.command.register({
       name: 'arcade',
       description: 'The Arcade\'s game menu. "/arcade <game>" plays one in this terminal, "/arcade default <game>" makes it the game new terminals start with, "/arcade next", "/arcade random|rotate|all|off", "/arcade pool <games>", "/arcade moments", "/arcade hide".',
@@ -572,16 +574,56 @@ export const register: Register = (on, options: PluginOptions) => {
   })
 
   // The games' own commands.
-  on('command.run', { command: 'dragon' }, async ($, e, next) => (await askReset($, 'dragon', e.args)) ?? withPreview('dragon', e.args, await dragonCommand($, e, next)))
-  on('command.run', { command: 'jackpot' }, async ($, e, next) => (await askReset($, 'jackpot', e.args)) ?? withPreview('jackpot', e.args, await jackpotCommand($, e, next)))
-  on('command.run', { command: 'outlaw' }, async ($, e, next) => (await askReset($, 'outlaw', e.args)) ?? withPreview('outlaw', e.args, await outlawCommand($, e, next)))
-  on('command.run', { command: 'tama' }, async ($, e, next) => (await askReset($, 'tama', e.args)) ?? withPreview('tama', e.args, await tamaCommand($, e, next)))
-  on('command.run', { command: 'tetris' }, async ($, e, next) => (await askReset($, 'tetris', e.args)) ?? withPreview('tetris', e.args, await tetrisCommand($, e, next)))
-  on('command.run', { command: 'octopus' }, async ($, e, next) => (await askReset($, 'octopus', e.args)) ?? withPreview('octopus', e.args, await octopusCommand($, e, next)))
-  on('command.run', { command: 'duck' }, async ($, e, next) => (await askReset($, 'duck', e.args)) ?? withPreview('duck', e.args, await duckCommand($, e, next)))
-  on('command.run', { command: 'bugs' }, async ($, e, next) => (await askReset($, 'bugs', e.args)) ?? withPreview('bugs', e.args, await bugsCommand($, e, next)))
-  on('command.run', { command: 'dario' }, async ($, e, next) => (await askReset($, 'dario', e.args)) ?? withPreview('dario', e.args, await darioCommand($, e, next)))
-  on('command.run', { command: 'town' }, async ($, e, next) => (await askReset($, 'town', e.args)) ?? withPreview('town', e.args, await townCommand($, e, next)))
+  on('command.run', { command: 'dragon' }, async ($, e, next) => {
+    const ran = (await askReset($, 'dragon', e.args)) ?? withPreview('dragon', e.args, await dragonCommand($, e, next))
+    redrawDesktop($)
+    return ran
+  })
+  on('command.run', { command: 'jackpot' }, async ($, e, next) => {
+    const ran = (await askReset($, 'jackpot', e.args)) ?? withPreview('jackpot', e.args, await jackpotCommand($, e, next))
+    redrawDesktop($)
+    return ran
+  })
+  on('command.run', { command: 'outlaw' }, async ($, e, next) => {
+    const ran = (await askReset($, 'outlaw', e.args)) ?? withPreview('outlaw', e.args, await outlawCommand($, e, next))
+    redrawDesktop($)
+    return ran
+  })
+  on('command.run', { command: 'tama' }, async ($, e, next) => {
+    const ran = (await askReset($, 'tama', e.args)) ?? withPreview('tama', e.args, await tamaCommand($, e, next))
+    redrawDesktop($)
+    return ran
+  })
+  on('command.run', { command: 'tetris' }, async ($, e, next) => {
+    const ran = (await askReset($, 'tetris', e.args)) ?? withPreview('tetris', e.args, await tetrisCommand($, e, next))
+    redrawDesktop($)
+    return ran
+  })
+  on('command.run', { command: 'octopus' }, async ($, e, next) => {
+    const ran = (await askReset($, 'octopus', e.args)) ?? withPreview('octopus', e.args, await octopusCommand($, e, next))
+    redrawDesktop($)
+    return ran
+  })
+  on('command.run', { command: 'duck' }, async ($, e, next) => {
+    const ran = (await askReset($, 'duck', e.args)) ?? withPreview('duck', e.args, await duckCommand($, e, next))
+    redrawDesktop($)
+    return ran
+  })
+  on('command.run', { command: 'bugs' }, async ($, e, next) => {
+    const ran = (await askReset($, 'bugs', e.args)) ?? withPreview('bugs', e.args, await bugsCommand($, e, next))
+    redrawDesktop($)
+    return ran
+  })
+  on('command.run', { command: 'dario' }, async ($, e, next) => {
+    const ran = (await askReset($, 'dario', e.args)) ?? withPreview('dario', e.args, await darioCommand($, e, next))
+    redrawDesktop($)
+    return ran
+  })
+  on('command.run', { command: 'town' }, async ($, e, next) => {
+    const ran = (await askReset($, 'town', e.args)) ?? withPreview('town', e.args, await townCommand($, e, next))
+    redrawDesktop($)
+    return ran
+  })
 
   // What a game's Client posts from the band (only Bug Command draws one).
   on('ui.message', ($, e, next) => bugsMessage($, e, next))
@@ -589,18 +631,21 @@ export const register: Register = (on, options: PluginOptions) => {
   on('prompt.submit', async ($, e, next) => {
     const ran = await dragonPrompt($, e, ((e1: typeof e) => jackpotPrompt($, e1, ((e2: typeof e) => outlawPrompt($, e2, ((e3: typeof e) => tamaPrompt($, e3, ((e4: typeof e) => tetrisPrompt($, e4, ((e5: typeof e) => octopusPrompt($, e5, ((e6: typeof e) => duckPrompt($, e6, ((e7: typeof e) => bugsPrompt($, e7, ((e8: typeof e) => darioPrompt($, e8, ((e9: typeof e) => townPrompt($, e9, next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)
     await celebrate($, promptMilestones(String(e.text ?? ''), await $.clock.now()))
+    redrawDesktop($)
     return ran
   })
 
   on('turn.complete', async ($, e, next) => {
     const ran = await dragonTurn($, e, ((e1: typeof e) => jackpotTurn($, e1, ((e2: typeof e) => outlawTurn($, e2, ((e3: typeof e) => tamaTurn($, e3, ((e4: typeof e) => tetrisTurn($, e4, ((e5: typeof e) => octopusTurn($, e5, ((e6: typeof e) => duckTurn($, e6, ((e7: typeof e) => bugsTurn($, e7, ((e8: typeof e) => darioTurn($, e8, ((e9: typeof e) => townTurn($, e9, next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)
     if (e.agentId === undefined && !e.isAborted) await celebrate($, turnMilestones(await $.clock.now()))
+    redrawDesktop($)
     return ran
   })
 
   on('tool.call', async ($, e, next) => {
     const ran = await dragonTool($, e, ((e1: typeof e) => jackpotTool($, e1, ((e2: typeof e) => outlawTool($, e2, ((e3: typeof e) => tamaTool($, e3, ((e4: typeof e) => tetrisTool($, e4, ((e5: typeof e) => octopusTool($, e5, ((e6: typeof e) => duckTool($, e6, ((e7: typeof e) => bugsTool($, e7, ((e8: typeof e) => darioTool($, e8, ((e9: typeof e) => townTool($, e9, next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)
     if (e.agentId === undefined && ran.deny === undefined) await celebrate($, toolMilestones(e, ran))
+    redrawDesktop($)
     return ran
   })
 
@@ -610,7 +655,7 @@ export const register: Register = (on, options: PluginOptions) => {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const tree = await dragonRender($, e, ((e1: typeof e) => jackpotRender($, e1, ((e2: typeof e) => outlawRender($, e2, ((e3: typeof e) => tamaRender($, e3, ((e4: typeof e) => tetrisRender($, e4, ((e5: typeof e) => octopusRender($, e5, ((e6: typeof e) => duckRender($, e6, ((e7: typeof e) => bugsRender($, e7, ((e8: typeof e) => darioRender($, e8, ((e9: typeof e) => townRender($, e9, next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)
     const ids = await read($, shown)
-    if (e.surface !== 'terminal' || e.props.hasSurvey || ids.length !== 1 || tree === null || tree === undefined) return tree
+    if (!drawsGames(e.surface) || e.props.hasSurvey || ids.length !== 1 || tree === null || tree === undefined) return tree
     const { Box, Button, Text } = $.ui.resolve(e)
     const id = ids[0] ?? ''
     const fallback = await read($, defaultGame)

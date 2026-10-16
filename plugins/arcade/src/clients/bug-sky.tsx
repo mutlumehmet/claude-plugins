@@ -279,8 +279,8 @@ const CITY_SHAPES = [
   ['#..#.', '##.##', '#####'],
 ]
 
-function draw(s: Sky, el: ClientSurface<{ sky: Sky; frame: number }>['elements']): RenderElement {
-  const { Box, Text } = el
+// The sky's pixels and letters, as the terminal's Client and the desktop's flipbook both draw them.
+function paint(s: Sky) {
   const W = s.W
   const px: (string | null)[] = new Array(W * PH).fill(null)
   const put = (x: number, y: number, c: string) => {
@@ -337,6 +337,12 @@ function draw(s: Sky, el: ClientSurface<{ sky: Sky; frame: number }>['elements']
     text(Math.floor((W - s.banner.text.length) / 2), 1, s.banner.text, s.banner.color)
   }
 
+  return { px, glyphs, W }
+}
+
+function draw(s: Sky, el: ClientSurface<{ sky: Sky; frame: number }>['elements']): RenderElement {
+  const { Box, Text } = el
+  const { px, glyphs, W } = paint(s)
   // Each row: runs of cells with the same look, one Text each.
   const rows: RenderNode[] = []
   for (let row = 0; row < ROWS; row++) {
@@ -439,5 +445,55 @@ const BugSky: ClientModule<SkyProps, State> = (props, surface) => {
   }
   return draw(sky, surface.elements)
 }
+
+// ---- The desktop ----
+// The Desktop Code tab draws text in a proportional font, so this Client's text cells do not line
+// up there. On the desktop the hooks run the same sky (create, play, step) on their own clock and
+// draw its pixels as a flipbook (pixels.tsx), packed here the way a Raster takes cells.
+
+const ink = (c: string) => parseInt(c.slice(1), 16)
+const PLAIN = 0x01000000
+
+export function skyCells(s: Sky): string {
+  const { px, glyphs, W } = paint(s)
+  const words = new Uint32Array(W * ROWS * 3)
+  for (let row = 0; row < ROWS; row++) {
+    for (let x = 0; x < W; x++) {
+      const i = (row * W + x) * 3
+      const g = glyphs.get(row * W + x)
+      const top = px[row * 2 * W + x] ?? null
+      const bottom = px[(row * 2 + 1) * W + x] ?? null
+      if (g) [words[i], words[i + 1], words[i + 2]] = [g.ch.codePointAt(0)!, ink(g.color), PLAIN]
+      else if (top === null && bottom === null) [words[i], words[i + 1], words[i + 2]] = [0x20, PLAIN, PLAIN]
+      else if (top === bottom) [words[i], words[i + 1], words[i + 2]] = [0x2588, ink(top!), PLAIN]
+      else if (bottom === null) [words[i], words[i + 1], words[i + 2]] = [0x2580, ink(top!), PLAIN]
+      else if (top === null) [words[i], words[i + 1], words[i + 2]] = [0x2584, ink(bottom), PLAIN]
+      else [words[i], words[i + 1], words[i + 2]] = [0x2580, ink(top), ink(bottom)]
+    }
+  }
+  return encode(new Uint8Array(words.buffer))
+}
+
+const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+function encode(bytes: Uint8Array): string {
+  let out = ''
+  let i = 0
+  for (; i + 2 < bytes.length; i += 3) {
+    const n = (bytes[i]! << 16) | (bytes[i + 1]! << 8) | bytes[i + 2]!
+    out += B64[(n >> 18) & 63]! + B64[(n >> 12) & 63]! + B64[(n >> 6) & 63]! + B64[n & 63]!
+  }
+  const rest = bytes.length - i
+  if (rest === 1) {
+    const n = bytes[i]! << 16
+    out += B64[(n >> 18) & 63]! + B64[(n >> 12) & 63]! + '=='
+  } else if (rest === 2) {
+    const n = (bytes[i]! << 16) | (bytes[i + 1]! << 8)
+    out += B64[(n >> 18) & 63]! + B64[(n >> 12) & 63]! + B64[(n >> 6) & 63]! + '='
+  }
+  return out
+}
+
+export { create, play, step }
+export type { Sky }
 
 export default BugSky

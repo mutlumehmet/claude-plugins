@@ -5,6 +5,7 @@ import type { DragonMood as Mood, Hoard } from '../../types'
 import { DRAGON_WIDTH, EYE, MOUTH, NOSTRIL, PIXEL_ROWS, draw, drawBaby } from './dragon-sprite'
 import type { Pose } from './dragon-sprite'
 import type { Milestone } from '../milestones'
+import { drawsGames, pixels, repaint } from '../pixels'
 import { isShown } from '../shown'
 import type { Game } from '../shown'
 
@@ -453,7 +454,7 @@ export const start: Hook<'session.start'> = async ($, e, next) => {
     step(a)
     if (sim.isBlitting) return
     sim.isBlitting = true
-    void $.ui.blit({ requestId, key: RASTER, cells: frame(a) })
+    void repaint($, { requestId, key: RASTER, cells: frame(a) })
       .then(r => {
         if (r.deny !== undefined) sim.requestId = null
       })
@@ -566,11 +567,11 @@ export const tool: Hook<'tool.call'> = async ($, e, next) => {
 // The dragon sits at the right end of the band, beside whatever else is there.
 export const render: MatchedHook<'ui.render', { component: 'AbovePrompt' }> = async ($, e, next) => {
   const below = await next(e)
-  if (e.surface !== 'terminal' || e.props.hasSurvey || !(await isShown($, ID))) {
+  if (!drawsGames(e.surface) || e.props.hasSurvey || !(await isShown($, ID))) {
     sim.requestId = null
     return below
   }
-  const { Box, Raster, Text } = $.ui.resolve(e)
+  const { Box, Text } = $.ui.resolve(e)
   sim.requestId = e.requestId
   const stash = await read($, hoard)
   sim.level = levelOf(stash.gold)
@@ -581,7 +582,7 @@ export const render: MatchedHook<'ui.render', { component: 'AbovePrompt' }> = as
         {below ?? null}
       </Box>
       <Box flexDirection="column" flexShrink={0} minWidth={COLUMNS}>
-        <Raster key={RASTER} columns={COLUMNS} rows={ROWS} cells={frame(activity())} />
+        {pixels($, e, { key: RASTER, columns: COLUMNS, rows: ROWS, cells: frame(activity()), alt: 'Dragon Lair' })}
         <Text key="stats" dimColor wrap="truncate">
           {centred(statsLine(stash))}
         </Text>
