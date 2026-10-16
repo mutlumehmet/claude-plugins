@@ -203,8 +203,7 @@ var CITY_SHAPES = [
   ["..#..", ".###.", "#####"],
   ["#..#.", "##.##", "#####"]
 ];
-function draw(s, el) {
-  const { Box, Text } = el;
+function paint(s) {
   const W = s.W;
   const px = new Array(W * PH).fill(null);
   const put = (x, y, c) => {
@@ -256,6 +255,11 @@ function draw(s, el) {
   if (s.banner && s.t < s.banner.until && (s.banner.until - s.t) % 8 > 1) {
     text(Math.floor((W - s.banner.text.length) / 2), 1, s.banner.text, s.banner.color);
   }
+  return { px, glyphs, W };
+}
+function draw(s, el) {
+  const { Box, Text } = el;
+  const { px, glyphs, W } = paint(s);
   const rows = [];
   for (let row = 0; row < ROWS; row++) {
     const runs = [];
@@ -347,7 +351,50 @@ var BugSky = (props, surface) => {
   }
   return draw(sky, surface.elements);
 };
+var ink = (c) => parseInt(c.slice(1), 16);
+var PLAIN = 16777216;
+function skyCells(s) {
+  const { px, glyphs, W } = paint(s);
+  const words = new Uint32Array(W * ROWS * 3);
+  for (let row = 0; row < ROWS; row++) {
+    for (let x = 0; x < W; x++) {
+      const i = (row * W + x) * 3;
+      const g = glyphs.get(row * W + x);
+      const top = px[row * 2 * W + x] ?? null;
+      const bottom = px[(row * 2 + 1) * W + x] ?? null;
+      if (g) [words[i], words[i + 1], words[i + 2]] = [g.ch.codePointAt(0), ink(g.color), PLAIN];
+      else if (top === null && bottom === null) [words[i], words[i + 1], words[i + 2]] = [32, PLAIN, PLAIN];
+      else if (top === bottom) [words[i], words[i + 1], words[i + 2]] = [9608, ink(top), PLAIN];
+      else if (bottom === null) [words[i], words[i + 1], words[i + 2]] = [9600, ink(top), PLAIN];
+      else if (top === null) [words[i], words[i + 1], words[i + 2]] = [9604, ink(bottom), PLAIN];
+      else [words[i], words[i + 1], words[i + 2]] = [9600, ink(top), ink(bottom)];
+    }
+  }
+  return encode(new Uint8Array(words.buffer));
+}
+var B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+function encode(bytes) {
+  let out = "";
+  let i = 0;
+  for (; i + 2 < bytes.length; i += 3) {
+    const n = bytes[i] << 16 | bytes[i + 1] << 8 | bytes[i + 2];
+    out += B64[n >> 18 & 63] + B64[n >> 12 & 63] + B64[n >> 6 & 63] + B64[n & 63];
+  }
+  const rest = bytes.length - i;
+  if (rest === 1) {
+    const n = bytes[i] << 16;
+    out += B64[n >> 18 & 63] + B64[n >> 12 & 63] + "==";
+  } else if (rest === 2) {
+    const n = bytes[i] << 16 | bytes[i + 1] << 8;
+    out += B64[n >> 18 & 63] + B64[n >> 12 & 63] + B64[n >> 6 & 63] + "=";
+  }
+  return out;
+}
 var bug_sky_default = BugSky;
 export {
-  bug_sky_default as default
+  create,
+  bug_sky_default as default,
+  play,
+  skyCells,
+  step
 };

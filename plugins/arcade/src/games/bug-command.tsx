@@ -2,8 +2,10 @@ import { read, update, atom } from 'claude-code'
 import type { EngineInterface, Hook, MatchedHook } from 'claude-code'
 
 import type { BugsScore as Score, BugsFeed as Feed } from '../../types'
-import type { SkyEvent, SkyGain, SkyProps } from '../clients/bug-sky'
+import { create, play, skyCells, step } from '../clients/bug-sky'
+import type { Sky, SkyEvent, SkyGain, SkyProps } from '../clients/bug-sky'
 import type { Milestone } from '../milestones'
+import { pixels, repaint } from '../pixels'
 import { isShown } from '../shown'
 import type { Game } from '../shown'
 
@@ -26,6 +28,9 @@ const feed = atom({ plugin: 'arcade', key: 'bugsFeed' } as const, { events: [], 
 const feat = atom({ plugin: 'arcade', key: 'bugsFeat' } as const, '')
 
 const sim = { working: 0, isTurn: false }
+// The Desktop Code tab: the hooks run the sky themselves (see the end of clients/bug-sky.tsx).
+const TICK_MS = 66
+const desk = { sky: null as Sky | null, requestId: null as string | null, isTicking: false }
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v))
 
@@ -70,6 +75,15 @@ export const start: Hook<'session.start'> = async ($, e, next) => {
   await $.command.register({
     name: 'bugs',
     description: 'Bug Command above the prompt: the score. Click the sky to fire. "/bugs shot|salvo|incoming" to show off.',
+  })
+  $.clock.every(TICK_MS, () => {
+    const sky = desk.sky
+    const requestId = desk.requestId
+    if (!sky || requestId === null || desk.isTicking) return
+    desk.isTicking = true
+    void tickDesktop($, sky, requestId).finally(() => {
+      desk.isTicking = false
+    })
   })
   return next(e)
 }
@@ -126,7 +140,12 @@ export const tool: Hook<'tool.call'> = async ($, e, next) => {
 // What the sky posted: bugs down, cities lost, a lost round; the answer is its next props.
 export const message: Hook<'ui.message'> = async ($, e, next) => {
   if (e.element !== SKY) return next(e)
-  const g = e.data as Partial<SkyGain>
+  await takeGain($, e.data as Partial<SkyGain>)
+  return { props: await skyProps($, 0) }
+}
+
+// What the sky won or lost since it last said: into the score, with a notice for the big ones.
+async function takeGain($: EngineInterface, g: Partial<SkyGain>) {
   const n = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0)
   const s = await save($, old => ({
     ...old,
@@ -138,7 +157,24 @@ export const message: Hook<'ui.message'> = async ($, e, next) => {
   }))
   if (n(g.ends) > 0) void notify($, '🚀 THE END: every city fell. New cities are up.')
   if (n(g.mine) > 0 && s.mine % 10 === 0) void notify($, `🚀 ${s.mine} bugs shot down by hand!`)
-  return { props: await skyProps($, 0) }
+}
+
+// One frame of the desktop's sky: the session's new events, a step, the score, the frame.
+async function tickDesktop($: EngineInterface, sky: Sky, requestId: string) {
+  sky.props = await skyProps($, sky.W)
+  for (const ev of sky.props.events) {
+    if (ev.id <= sky.seen) continue
+    sky.seen = ev.id
+    play(sky, ev)
+  }
+  step(sky)
+  const g = sky.gain
+  if (g.kills + g.mine + g.lost + g.ends > 0 || g.cities !== sky.props.cities) {
+    sky.gain = { kills: 0, mine: 0, lost: 0, ends: 0, cities: g.cities }
+    await takeGain($, g)
+  }
+  const r = await repaint($, { requestId, key: SKY, cells: skyCells(sky), columns: sky.W })
+  if (r.deny !== undefined) desk.requestId = null
 }
 
 async function skyProps($: EngineInterface, columns: number): Promise<SkyProps> {
@@ -150,9 +186,25 @@ async function skyProps($: EngineInterface, columns: number): Promise<SkyProps> 
 // The sky runs the full width of the band, above whatever else is there.
 export const render: MatchedHook<'ui.render', { component: 'AbovePrompt' }> = async ($, e, next) => {
   const below = await next(e)
-  if (e.surface !== 'terminal' || e.props.hasSurvey || !(await isShown($, ID))) return below
-  const { Box, Client } = $.ui.resolve(e)
+  if ((e.surface !== 'terminal' && e.surface !== 'desktop') || e.props.hasSurvey || !(await isShown($, ID))) {
+    desk.requestId = null
+    return below
+  }
   const W = clamp(e.props.bodyColumns, MIN_COLUMNS, MAX_COLUMNS)
+  if (e.surface === 'desktop') {
+    // The same sky, run by the hooks and drawn as a flipbook; clicking it is the terminal's for now.
+    const { Box } = $.ui.resolve(e)
+    if (!desk.sky || desk.sky.W !== Math.max(24, W)) desk.sky = create(await skyProps($, W))
+    desk.requestId = e.requestId
+    return (
+      <Box flexDirection="column">
+        {pixels($, e, { key: SKY, columns: desk.sky.W, rows: ROWS, cells: skyCells(desk.sky), alt: 'Bug Command' })}
+        {below ?? null}
+      </Box>
+    )
+  }
+  desk.requestId = null
+  const { Box, Client } = $.ui.resolve(e)
 
   return (
     <Box flexDirection="column">

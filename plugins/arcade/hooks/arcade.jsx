@@ -60,7 +60,7 @@ const LEGS = {
 const MOUTH = { x: 26, y: BASE + 2 };
 const NOSTRIL = { x: 25, y: BASE + 2 };
 const EYE = { x: 19, y: BASE + 2 };
-function draw(ink, columns, pose2, dx = 0, dy = 0) {
+function draw(ink2, columns, pose2, dx = 0, dy = 0) {
   const put5 = (part, frame10) => {
     const rows = part.frames[frame10] ?? Object.values(part.frames)[0] ?? [];
     rows.forEach((row, y) => {
@@ -68,7 +68,7 @@ function draw(ink, columns, pose2, dx = 0, dy = 0) {
         if (row[x] !== "#") continue;
         const px = part.x + x + dx;
         const py = BASE + part.y + y + dy;
-        if (px >= 0 && px < columns && py >= 0 && py < PIXEL_ROWS) ink[py * columns + px] = 1;
+        if (px >= 0 && px < columns && py >= 0 && py < PIXEL_ROWS) ink2[py * columns + px] = 1;
       }
     });
   };
@@ -82,15 +82,164 @@ const BABY = {
   up: [".#....", "#.#...", ".###.#", "..####", "..#..."],
   down: ["......", "....#.", ".####.", "#.###.", "..#..."]
 };
-function drawBaby(ink, columns, x, y, frame10) {
+function drawBaby(ink2, columns, x, y, frame10) {
   BABY[frame10].forEach((row, dy) => {
     for (let dx = 0; dx < row.length; dx++) {
       if (row[dx] !== "#") continue;
       const px = Math.round(x) + dx;
       const py = Math.round(y) + dy;
-      if (px >= 0 && px < columns && py >= 0 && py < PIXEL_ROWS) ink[py * columns + px] = 1;
+      if (px >= 0 && px < columns && py >= 0 && py < PIXEL_ROWS) ink2[py * columns + px] = 1;
     }
   });
+}
+
+// src/cells.ts
+const DEFAULT = 16777216;
+const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+function words(cells) {
+  const clean = cells.replace(/=+$/, "");
+  const bytes = new Uint8Array(Math.floor(clean.length * 3 / 4));
+  let o = 0;
+  for (let i = 0; i < clean.length; i += 4) {
+    const n = B64.indexOf(clean[i]) << 18 | B64.indexOf(clean[i + 1] ?? "A") << 12 | B64.indexOf(clean[i + 2] ?? "A") << 6 | B64.indexOf(clean[i + 3] ?? "A");
+    if (o < bytes.length) bytes[o++] = n >> 16 & 255;
+    if (o < bytes.length) bytes[o++] = n >> 8 & 255;
+    if (o < bytes.length) bytes[o++] = n & 255;
+  }
+  return new Uint32Array(bytes.buffer, 0, Math.floor(bytes.length / 4));
+}
+const CELL_W = 6;
+const CELL_H = 12;
+const hex = (c) => `#${(c & 16777215).toString(16).padStart(6, "0")}`;
+const escape = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+function framePaths(columns, rows, cells) {
+  const w = words(cells);
+  const half = CELL_H / 2;
+  const runs = /* @__PURE__ */ new Map();
+  const glyphs = [];
+  const rowsOfPixels = [];
+  for (let y = 0; y < rows; y++) {
+    const top = [];
+    const bottom = [];
+    for (let x = 0; x < columns; x++) {
+      const i = (y * columns + x) * 3;
+      const ch = w[i] ?? 32;
+      const fg = w[i + 1] ?? DEFAULT;
+      const bg = w[i + 2] ?? DEFAULT;
+      const back = bg === DEFAULT ? null : bg;
+      if (ch === 9608) {
+        top.push(fg);
+        bottom.push(fg);
+      } else if (ch === 9600) {
+        top.push(fg);
+        bottom.push(back);
+      } else if (ch === 9604) {
+        top.push(back);
+        bottom.push(fg);
+      } else {
+        top.push(back);
+        bottom.push(back);
+        if (ch !== 32) {
+          const ink2 = fg === DEFAULT ? 'class="d"' : `fill="${hex(fg)}"`;
+          glyphs.push(`<text x="${x * CELL_W + CELL_W / 2}" y="${y * CELL_H + CELL_H - 2}" ${ink2}>${escape(String.fromCodePoint(ch))}</text>`);
+        }
+      }
+    }
+    rowsOfPixels.push(top, bottom);
+  }
+  rowsOfPixels.forEach((row, py) => {
+    let x = 0;
+    while (x < row.length) {
+      const c = row[x];
+      let end = x + 1;
+      while (end < row.length && row[end] === c) end++;
+      if (c !== null && c !== void 0) {
+        const list2 = runs.get(c) ?? [];
+        list2.push(`M${x * CELL_W} ${py * half}h${(end - x) * CELL_W}v${half}h-${(end - x) * CELL_W}z`);
+        runs.set(c, list2);
+      }
+      x = end;
+    }
+  });
+  const paths = [...runs].map(([c, d]) => c === DEFAULT ? `<path class="d" d="${d.join("")}"/>` : `<path fill="${hex(c)}" d="${d.join("")}"/>`);
+  return paths.join("") + glyphs.join("");
+}
+const BUDGET = 12e4;
+const OVERSIZE = 2;
+function flipbook(columns, rows, pages) {
+  const W5 = columns * CELL_W;
+  const H3 = rows * CELL_H;
+  const head = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W5} ${H3}" width="${W5 * OVERSIZE}" height="${H3 * OVERSIZE}" shape-rendering="crispEdges"><style>.d{fill:#3d3d3a}@media (prefers-color-scheme:dark){.d{fill:#e8e6dc}}text{font:${CELL_H - 2}px ui-monospace,Menlo,monospace;text-anchor:middle}.p{visibility:hidden}@keyframes on{from,to{visibility:visible}}`;
+  let list2 = pages.length > 0 ? pages : [{ paths: "", ms: 66 }];
+  for (; ; ) {
+    const ids = /* @__PURE__ */ new Map();
+    for (const p of list2) if (!ids.has(p.paths)) ids.set(p.paths, ids.size);
+    let at = 0;
+    const css = list2.map((p, i) => {
+      const isLast = i === list2.length - 1;
+      const rule = `.f${i}{animation:on ${Math.round(p.ms)}ms step-end ${Math.round(at)}ms ${isLast ? "forwards" : "1"}}`;
+      at += p.ms;
+      return rule;
+    }).join("");
+    const defs = [...ids].map(([paths, id]) => `<g id="u${id}">${paths}</g>`).join("");
+    const body = list2.map((p, i) => `<use href="#u${ids.get(p.paths)}" class="p f${i}"/>`).join("");
+    const svg = `${head}${css}</style><defs>${defs}</defs>${body}</svg>`;
+    if (svg.length <= BUDGET || list2.length === 1) return svg;
+    const fewer = [];
+    list2.forEach((p, i) => {
+      if (i % 2 === 0 || i === list2.length - 1) fewer.push({ ...p });
+      else fewer[fewer.length - 1].ms += p.ms;
+    });
+    list2 = fewer;
+  }
+}
+
+// src/pixels.tsx
+const drawsGames = (surface) => surface === "terminal" || surface === "desktop";
+const sites = /* @__PURE__ */ new Map();
+const pending = /* @__PURE__ */ new Map();
+const BOOK_MS = 1e3;
+const FRAME_MS = 66;
+const onDesktop = () => [...sites.values()].includes("desktop");
+function startFlipbooks($) {
+  $.clock.every(BOOK_MS, () => {
+    const isNew = (f) => f.pages.length > 1 || f.pages.length === 1 && f.pages[0].paths !== f.shown;
+    if (onDesktop() && [...pending.values()].some(isNew)) $.ui.invalidate("ui.render");
+  });
+}
+function redrawDesktop($) {
+  if (onDesktop()) $.ui.invalidate("ui.render");
+}
+function pixels($, e, g) {
+  sites.set(e.requestId, e.surface);
+  if (e.surface === "terminal") {
+    const { Raster } = $.ui.resolve(e);
+    return <Raster key={g.key} columns={g.columns} rows={g.rows} cells={g.cells} />;
+  }
+  if (e.surface === "desktop") {
+    const { Svg } = $.ui.resolve(e);
+    const kept = pending.get(g.key);
+    const pages = kept && kept.size === g.cells.length && kept.pages.length > 0 ? kept.pages : [{ paths: framePaths(g.columns, g.rows, g.cells), ms: FRAME_MS }];
+    pending.set(g.key, { size: g.cells.length, columns: g.columns, rows: g.rows, pages: [], lastCells: "", shown: pages[pages.length - 1].paths });
+    const source = flipbook(g.columns, g.rows, pages);
+    return <Svg key={g.key} alt={g.alt} source={source} />;
+  }
+  return null;
+}
+function repaint($, args) {
+  if (sites.get(args.requestId) === "desktop") {
+    const kept = pending.get(args.key);
+    if (!kept || kept.size !== args.cells.length) return Promise.resolve({});
+    const last2 = kept.pages[kept.pages.length - 1];
+    if (last2 && args.cells === kept.lastCells) last2.ms += FRAME_MS;
+    else {
+      kept.pages.push({ paths: framePaths(kept.columns, kept.rows, args.cells), ms: FRAME_MS });
+      kept.lastCells = args.cells;
+    }
+    if (kept.pages.length > 45) kept.pages.splice(0, kept.pages.length - 45);
+    return Promise.resolve({});
+  }
+  return $.ui.blit(args);
 }
 
 // src/shown.ts
@@ -331,7 +480,7 @@ function stepBabies() {
   for (const b of sim.babies) if (b.slot < 0 && b.state === "fly") b.slot = freeSlot();
 }
 const slotOf = (b) => SLOTS[b.slot] ?? SLOTS[0];
-function drawBabies(ink, W5) {
+function drawBabies(ink2, W5) {
   let hidden = 0;
   for (const b of sim.babies) {
     if (b.slot < 0) {
@@ -349,7 +498,7 @@ function drawBabies(ink, W5) {
           if (c !== "#" || age2 > 15 && dx === 1 && dy === 1) return;
           const x = ex + dx;
           const y = ey + dy;
-          if (x >= 0 && x < W5 && y >= 0 && y < PIXEL_ROWS) ink[y * W5 + x] = 1;
+          if (x >= 0 && x < W5 && y >= 0 && y < PIXEL_ROWS) ink2[y * W5 + x] = 1;
         })
       );
       continue;
@@ -358,24 +507,24 @@ function drawBabies(ink, W5) {
     const frame10 = cycle(["up", "down"], isBusy ? 2 : 4);
     if (b.state === "home") {
       const k = Math.min(1, age2 / 14);
-      drawBaby(ink, W5, at.x + (HOME.x - at.x) * k, at.y + (HOME.y - at.y) * k, frame10);
+      drawBaby(ink2, W5, at.x + (HOME.x - at.x) * k, at.y + (HOME.y - at.y) * k, frame10);
       continue;
     }
     if (b.state === "fall") {
-      drawBaby(ink, W5, at.x, at.y + b.y, "down");
+      drawBaby(ink2, W5, at.x, at.y + b.y, "down");
       continue;
     }
     const bob = cycle(at.y === 0 ? [0, 0, 1, 1] : [0, 0, -1, -1], isBusy ? 2 : 5);
-    drawBaby(ink, W5, at.x, at.y + bob, frame10);
+    drawBaby(ink2, W5, at.x, at.y + bob, frame10);
   }
   if (hidden > 0) glyph(W5 - 2, 8, `+${Math.min(9, hidden)}`.slice(-1), 2);
 }
 function frame(a) {
   const W5 = COLUMNS;
-  const ink = new Uint8Array(W5 * PIXEL_ROWS);
+  const ink2 = new Uint8Array(W5 * PIXEL_ROWS);
   const over = /* @__PURE__ */ new Map();
-  draw(ink, W5, pose(a), shift(a), lift(a));
-  drawBabies(ink, W5);
+  draw(ink2, W5, pose(a), shift(a), lift(a));
+  drawBabies(ink2, W5);
   for (const p of sim.particles) {
     const x = Math.round(p.x);
     const y = Math.round(p.y);
@@ -385,37 +534,37 @@ function frame(a) {
       continue;
     }
     if (p.age / p.life > 0.7 && (x + sim.t) % 2 === 0) continue;
-    ink[y * W5 + x] = 1;
+    ink2[y * W5 + x] = 1;
   }
-  const words = new Uint32Array(W5 * ROWS * 3);
+  const words2 = new Uint32Array(W5 * ROWS * 3);
   for (let cy = 0; cy < ROWS; cy++) {
     for (let cx = 0; cx < W5; cx++) {
       const i = (cy * W5 + cx) * 3;
-      const top = ink[cy * 2 * W5 + cx] === 1;
-      const bottom = ink[(cy * 2 + 1) * W5 + cx] === 1;
+      const top = ink2[cy * 2 * W5 + cx] === 1;
+      const bottom = ink2[(cy * 2 + 1) * W5 + cx] === 1;
       const ch = over.get(cy * W5 + cx);
-      words[i] = ch ? ch.codePointAt(0) : top && bottom ? 9608 : top ? 9600 : bottom ? 9604 : 32;
-      words[i + 1] = INK;
-      words[i + 2] = NONE;
+      words2[i] = ch ? ch.codePointAt(0) : top && bottom ? 9608 : top ? 9600 : bottom ? 9604 : 32;
+      words2[i + 1] = INK;
+      words2[i + 2] = NONE;
     }
   }
-  return base64(new Uint8Array(words.buffer));
+  return base64(new Uint8Array(words2.buffer));
 }
-const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const B642 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 function base64(bytes) {
   let out = "";
   let i = 0;
   for (; i + 2 < bytes.length; i += 3) {
     const n = bytes[i] << 16 | bytes[i + 1] << 8 | bytes[i + 2];
-    out += B64[n >> 18 & 63] + B64[n >> 12 & 63] + B64[n >> 6 & 63] + B64[n & 63];
+    out += B642[n >> 18 & 63] + B642[n >> 12 & 63] + B642[n >> 6 & 63] + B642[n & 63];
   }
   const rest = bytes.length - i;
   if (rest === 1) {
     const n = bytes[i] << 16;
-    out += B64[n >> 18 & 63] + B64[n >> 12 & 63] + "==";
+    out += B642[n >> 18 & 63] + B642[n >> 12 & 63] + "==";
   } else if (rest === 2) {
     const n = bytes[i] << 16 | bytes[i + 1] << 8;
-    out += B64[n >> 18 & 63] + B64[n >> 12 & 63] + B64[n >> 6 & 63] + "=";
+    out += B642[n >> 18 & 63] + B642[n >> 12 & 63] + B642[n >> 6 & 63] + "=";
   }
   return out;
 }
@@ -462,7 +611,7 @@ const start = async ($, e, next) => {
     step(a);
     if (sim.isBlitting) return;
     sim.isBlitting = true;
-    void $.ui.blit({ requestId, key: RASTER, cells: frame(a) }).then((r) => {
+    void repaint($, { requestId, key: RASTER, cells: frame(a) }).then((r) => {
       if (r.deny !== void 0) sim.requestId = null;
     }).finally(() => {
       sim.isBlitting = false;
@@ -552,11 +701,11 @@ const tool = async ($, e, next) => {
 };
 const render = async ($, e, next) => {
   const below = await next(e);
-  if (e.surface !== "terminal" || e.props.hasSurvey || !await isShown($, ID)) {
+  if (!drawsGames(e.surface) || e.props.hasSurvey || !await isShown($, ID)) {
     sim.requestId = null;
     return below;
   }
-  const { Box, Raster, Text } = $.ui.resolve(e);
+  const { Box, Text } = $.ui.resolve(e);
   sim.requestId = e.requestId;
   const stash = await read2($, hoard);
   sim.level = levelOf(stash.gold);
@@ -565,7 +714,7 @@ const render = async ($, e, next) => {
         {below ?? null}
       </Box>
       <Box flexDirection="column" flexShrink={0} minWidth={COLUMNS}>
-        <Raster key={RASTER} columns={COLUMNS} rows={ROWS} cells={frame(activity())} />
+        {pixels($, e, { key: RASTER, columns: COLUMNS, rows: ROWS, cells: frame(activity()), alt: "Dragon Lair" })}
         <Text key="stats" dimColor wrap="truncate">
           {centred(statsLine(stash))}
         </Text>
@@ -851,7 +1000,7 @@ function frame2(isAsleep, stats) {
   if (sim2.banner && sim2.t < sim2.banner.until && (sim2.banner.until - sim2.t) % 8 > 1) {
     text(Math.floor((W5 - sim2.banner.text.length) / 2), 1, sim2.banner.text, sim2.banner.color);
   }
-  const words = new Uint32Array(W5 * ROWS2 * 3);
+  const words2 = new Uint32Array(W5 * ROWS2 * 3);
   for (let cy = 0; cy < ROWS2; cy++) {
     for (let cx = 0; cx < W5; cx++) {
       const i = (cy * W5 + cx) * 3;
@@ -859,49 +1008,49 @@ function frame2(isAsleep, stats) {
       const bottom = buf[(cy * 2 + 1) * W5 + cx];
       const g = over.get(cy * W5 + cx);
       if (g) {
-        words[i] = g.ch.codePointAt(0);
-        words[i + 1] = g.color;
-        words[i + 2] = NONE2;
+        words2[i] = g.ch.codePointAt(0);
+        words2[i + 1] = g.color;
+        words2[i + 2] = NONE2;
       } else if (top === EMPTY && bottom === EMPTY) {
-        words[i] = 32;
-        words[i + 1] = INK2;
-        words[i + 2] = NONE2;
+        words2[i] = 32;
+        words2[i + 1] = INK2;
+        words2[i + 2] = NONE2;
       } else if (top === bottom) {
-        words[i] = 9608;
-        words[i + 1] = top;
-        words[i + 2] = NONE2;
+        words2[i] = 9608;
+        words2[i + 1] = top;
+        words2[i + 2] = NONE2;
       } else if (bottom === EMPTY) {
-        words[i] = 9600;
-        words[i + 1] = top;
-        words[i + 2] = NONE2;
+        words2[i] = 9600;
+        words2[i + 1] = top;
+        words2[i + 2] = NONE2;
       } else if (top === EMPTY) {
-        words[i] = 9604;
-        words[i + 1] = bottom;
-        words[i + 2] = NONE2;
+        words2[i] = 9604;
+        words2[i + 1] = bottom;
+        words2[i + 2] = NONE2;
       } else {
-        words[i] = 9600;
-        words[i + 1] = top;
-        words[i + 2] = bottom;
+        words2[i] = 9600;
+        words2[i + 1] = top;
+        words2[i + 2] = bottom;
       }
     }
   }
-  return base642(new Uint8Array(words.buffer));
+  return base642(new Uint8Array(words2.buffer));
 }
-const B642 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const B643 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 function base642(bytes) {
   let out = "";
   let i = 0;
   for (; i + 2 < bytes.length; i += 3) {
     const n = bytes[i] << 16 | bytes[i + 1] << 8 | bytes[i + 2];
-    out += B642[n >> 18 & 63] + B642[n >> 12 & 63] + B642[n >> 6 & 63] + B642[n & 63];
+    out += B643[n >> 18 & 63] + B643[n >> 12 & 63] + B643[n >> 6 & 63] + B643[n & 63];
   }
   const rest = bytes.length - i;
   if (rest === 1) {
     const n = bytes[i] << 16;
-    out += B642[n >> 18 & 63] + B642[n >> 12 & 63] + "==";
+    out += B643[n >> 18 & 63] + B643[n >> 12 & 63] + "==";
   } else if (rest === 2) {
     const n = bytes[i] << 16 | bytes[i + 1] << 8;
-    out += B642[n >> 18 & 63] + B642[n >> 12 & 63] + B642[n >> 6 & 63] + "=";
+    out += B643[n >> 18 & 63] + B643[n >> 12 & 63] + B643[n >> 6 & 63] + "=";
   }
   return out;
 }
@@ -963,7 +1112,7 @@ const start2 = async ($, e, next) => {
     const isAsleep = step2();
     if (sim2.isBlitting) return;
     sim2.isBlitting = true;
-    void $.ui.blit({ requestId, key: RASTER2, cells: frame2(isAsleep, sim2.stats), columns: sim2.W }).then((r) => {
+    void repaint($, { requestId, key: RASTER2, cells: frame2(isAsleep, sim2.stats), columns: sim2.W }).then((r) => {
       if (r.deny !== void 0) sim2.requestId = null;
     }).finally(() => {
       sim2.isBlitting = false;
@@ -1016,16 +1165,16 @@ const tool2 = async ($, e, next) => {
 };
 const render2 = async ($, e, next) => {
   const below = await next(e);
-  if (e.surface !== "terminal" || e.props.hasSurvey || !await isShown($, ID2)) {
+  if (!drawsGames(e.surface) || e.props.hasSurvey || !await isShown($, ID2)) {
     sim2.requestId = null;
     return below;
   }
-  const { Box, Raster } = $.ui.resolve(e);
+  const { Box } = $.ui.resolve(e);
   fit(clamp(e.props.bodyColumns, MIN_COLUMNS, MAX_COLUMNS));
   sim2.requestId = e.requestId;
   sim2.stats = statsLine2(await read3($, score));
   return <Box flexDirection="column">
-      <Raster key={RASTER2} columns={sim2.W} rows={ROWS2} cells={frame2(false, sim2.stats)} />
+      {pixels($, e, { key: RASTER2, columns: sim2.W, rows: ROWS2, cells: frame2(false, sim2.stats), alt: "Duck Hunt" })}
       {below ?? null}
     </Box>;
 };
@@ -1077,7 +1226,7 @@ const WINDOW = SYMBOL_SIZE + 1;
 const REEL_W = 8;
 const PERIOD = SYMBOL_SIZE + 2;
 const CLEAR = -1;
-const DEFAULT = 16777216;
+const DEFAULT2 = 16777216;
 const bank = atom4({ plugin: "arcade", key: "jackpotBank" }, { chips: 0, spins: 0, jackpots: 0, best: 0, streak: 0 });
 const golden = atom4({ plugin: "arcade", key: "jackpotGolden" }, 0);
 const last = atom4({ plugin: "arcade", key: "jackpotLast" }, "");
@@ -1278,7 +1427,7 @@ function frame3() {
   } else if (sim3.queue.some((s) => s.isGolden) || sim3.spin?.isGolden) {
     "GOLDEN".split("").forEach((ch, i) => over.set(11 + i, { ch, fg: cycle2([16765773, 16773800], 4) }));
   }
-  const words = new Uint32Array(W * ROWS3 * 3);
+  const words2 = new Uint32Array(W * ROWS3 * 3);
   for (let cy = 0; cy < ROWS3; cy++) {
     for (let cx = 0; cx < W; cx++) {
       const i = (cy * W + cx) * 3;
@@ -1286,45 +1435,45 @@ function frame3() {
       const bottom = px[(cy * 2 + 1) * W + cx];
       const o = over.get(cy * W + cx);
       if (o) {
-        words[i] = o.ch.codePointAt(0);
-        words[i + 1] = o.fg;
-        words[i + 2] = bottom === CLEAR ? DEFAULT : bottom;
+        words2[i] = o.ch.codePointAt(0);
+        words2[i + 1] = o.fg;
+        words2[i + 2] = bottom === CLEAR ? DEFAULT2 : bottom;
       } else if (top === CLEAR && bottom === CLEAR) {
-        words[i] = 32;
-        words[i + 1] = DEFAULT;
-        words[i + 2] = DEFAULT;
+        words2[i] = 32;
+        words2[i + 1] = DEFAULT2;
+        words2[i + 2] = DEFAULT2;
       } else if (top === bottom) {
-        words[i] = 32;
-        words[i + 1] = DEFAULT;
-        words[i + 2] = top;
+        words2[i] = 32;
+        words2[i + 1] = DEFAULT2;
+        words2[i + 2] = top;
       } else if (top === CLEAR) {
-        words[i] = 9604;
-        words[i + 1] = bottom;
-        words[i + 2] = DEFAULT;
+        words2[i] = 9604;
+        words2[i + 1] = bottom;
+        words2[i + 2] = DEFAULT2;
       } else {
-        words[i] = 9600;
-        words[i + 1] = top;
-        words[i + 2] = bottom === CLEAR ? DEFAULT : bottom;
+        words2[i] = 9600;
+        words2[i + 1] = top;
+        words2[i + 2] = bottom === CLEAR ? DEFAULT2 : bottom;
       }
     }
   }
-  return base643(new Uint8Array(words.buffer));
+  return base643(new Uint8Array(words2.buffer));
 }
-const B643 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const B644 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 function base643(bytes) {
   let out = "";
   let i = 0;
   for (; i + 2 < bytes.length; i += 3) {
     const n = bytes[i] << 16 | bytes[i + 1] << 8 | bytes[i + 2];
-    out += B643[n >> 18 & 63] + B643[n >> 12 & 63] + B643[n >> 6 & 63] + B643[n & 63];
+    out += B644[n >> 18 & 63] + B644[n >> 12 & 63] + B644[n >> 6 & 63] + B644[n & 63];
   }
   const rest = bytes.length - i;
   if (rest === 1) {
     const n = bytes[i] << 16;
-    out += B643[n >> 18 & 63] + B643[n >> 12 & 63] + "==";
+    out += B644[n >> 18 & 63] + B644[n >> 12 & 63] + "==";
   } else if (rest === 2) {
     const n = bytes[i] << 16 | bytes[i + 1] << 8;
-    out += B643[n >> 18 & 63] + B643[n >> 12 & 63] + B643[n >> 6 & 63] + "=";
+    out += B644[n >> 18 & 63] + B644[n >> 12 & 63] + B644[n >> 6 & 63] + "=";
   }
   return out;
 }
@@ -1337,7 +1486,7 @@ function startLoop($) {
     const requestId = sim3.requestId;
     if (requestId === null || sim3.isBlitting) return;
     sim3.isBlitting = true;
-    void $.ui.blit({ requestId, key: RASTER3, cells: frame3() }).then((r) => {
+    void repaint($, { requestId, key: RASTER3, cells: frame3() }).then((r) => {
       if (r.deny !== void 0) sim3.requestId = null;
     }).finally(() => {
       sim3.isBlitting = false;
@@ -1413,11 +1562,11 @@ const turn3 = async ($, e, next) => {
 };
 const render3 = async ($, e, next) => {
   const below = await next(e);
-  if (e.surface !== "terminal" || e.props.hasSurvey || !await isShown($, ID3)) {
+  if (!drawsGames(e.surface) || e.props.hasSurvey || !await isShown($, ID3)) {
     sim3.requestId = null;
     return below;
   }
-  const { Box, Raster, Text } = $.ui.resolve(e);
+  const { Box, Text } = $.ui.resolve(e);
   sim3.requestId = e.requestId;
   startLoop($);
   const b = await read4($, bank);
@@ -1427,7 +1576,7 @@ const render3 = async ($, e, next) => {
         {below ?? null}
       </Box>
       <Box flexDirection="column" flexShrink={0} minWidth={W} marginLeft={2}>
-        <Raster key={RASTER3} columns={W} rows={ROWS3} cells={frame3()} />
+        {pixels($, e, { key: RASTER3, columns: W, rows: ROWS3, cells: frame3(), alt: "Jackpot" })}
         <Text key="stats" dimColor wrap="truncate">
           {statsLine3(b, g)}
         </Text>
@@ -1944,7 +2093,7 @@ function frame4(a, stats) {
   if (sim4.banner && sim4.t < sim4.banner.until && (sim4.banner.until - sim4.t) % 8 > 1) {
     text(Math.floor((W5 - sim4.banner.text.length) / 2), 1, sim4.banner.text, sim4.banner.color);
   }
-  const words = new Uint32Array(W5 * ROWS4 * 3);
+  const words2 = new Uint32Array(W5 * ROWS4 * 3);
   for (let cy = 0; cy < ROWS4; cy++) {
     for (let cx = 0; cx < W5; cx++) {
       const i = (cy * W5 + cx) * 3;
@@ -1952,49 +2101,49 @@ function frame4(a, stats) {
       const bottom = buf[(cy * 2 + 1) * W5 + cx];
       const g = over.get(cy * W5 + cx);
       if (g) {
-        words[i] = g.ch.codePointAt(0);
-        words[i + 1] = g.color;
-        words[i + 2] = NONE3;
+        words2[i] = g.ch.codePointAt(0);
+        words2[i + 1] = g.color;
+        words2[i + 2] = NONE3;
       } else if (top === EMPTY2 && bottom === EMPTY2) {
-        words[i] = 32;
-        words[i + 1] = INK3;
-        words[i + 2] = NONE3;
+        words2[i] = 32;
+        words2[i + 1] = INK3;
+        words2[i + 2] = NONE3;
       } else if (top === bottom) {
-        words[i] = 9608;
-        words[i + 1] = top;
-        words[i + 2] = NONE3;
+        words2[i] = 9608;
+        words2[i + 1] = top;
+        words2[i + 2] = NONE3;
       } else if (bottom === EMPTY2) {
-        words[i] = 9600;
-        words[i + 1] = top;
-        words[i + 2] = NONE3;
+        words2[i] = 9600;
+        words2[i + 1] = top;
+        words2[i + 2] = NONE3;
       } else if (top === EMPTY2) {
-        words[i] = 9604;
-        words[i + 1] = bottom;
-        words[i + 2] = NONE3;
+        words2[i] = 9604;
+        words2[i + 1] = bottom;
+        words2[i + 2] = NONE3;
       } else {
-        words[i] = 9600;
-        words[i + 1] = top;
-        words[i + 2] = bottom;
+        words2[i] = 9600;
+        words2[i + 1] = top;
+        words2[i + 2] = bottom;
       }
     }
   }
-  return base644(new Uint8Array(words.buffer));
+  return base644(new Uint8Array(words2.buffer));
 }
-const B644 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const B645 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 function base644(bytes) {
   let out = "";
   let i = 0;
   for (; i + 2 < bytes.length; i += 3) {
     const n = bytes[i] << 16 | bytes[i + 1] << 8 | bytes[i + 2];
-    out += B644[n >> 18 & 63] + B644[n >> 12 & 63] + B644[n >> 6 & 63] + B644[n & 63];
+    out += B645[n >> 18 & 63] + B645[n >> 12 & 63] + B645[n >> 6 & 63] + B645[n & 63];
   }
   const rest = bytes.length - i;
   if (rest === 1) {
     const n = bytes[i] << 16;
-    out += B644[n >> 18 & 63] + B644[n >> 12 & 63] + "==";
+    out += B645[n >> 18 & 63] + B645[n >> 12 & 63] + "==";
   } else if (rest === 2) {
     const n = bytes[i] << 16 | bytes[i + 1] << 8;
-    out += B644[n >> 18 & 63] + B644[n >> 12 & 63] + B644[n >> 6 & 63] + "=";
+    out += B645[n >> 18 & 63] + B645[n >> 12 & 63] + B645[n >> 6 & 63] + "=";
   }
   return out;
 }
@@ -2061,7 +2210,7 @@ const start4 = async ($, e, next) => {
     step3(a);
     if (sim4.isBlitting) return;
     sim4.isBlitting = true;
-    void $.ui.blit({ requestId, key: RASTER4, cells: frame4(a, lastStats), columns: sim4.W }).then((r) => {
+    void repaint($, { requestId, key: RASTER4, cells: frame4(a, lastStats), columns: sim4.W }).then((r) => {
       if (r.deny !== void 0) sim4.requestId = null;
     }).finally(() => {
       sim4.isBlitting = false;
@@ -2147,17 +2296,17 @@ const tool4 = async ($, e, next) => {
 };
 const render4 = async ($, e, next) => {
   const below = await next(e);
-  if (e.surface !== "terminal" || e.props.hasSurvey || !await isShown($, ID4)) {
+  if (!drawsGames(e.surface) || e.props.hasSurvey || !await isShown($, ID4)) {
     sim4.requestId = null;
     return below;
   }
-  const { Box, Raster } = $.ui.resolve(e);
   fitCity(clamp2(e.props.bodyColumns, MIN_COLUMNS2, MAX_COLUMNS2));
   sim4.requestId = e.requestId;
   const stats = statsLine4(await read5($, score3));
   lastStats = stats;
+  const { Box } = $.ui.resolve(e);
   return <Box flexDirection="column">
-      <Raster key={RASTER4} columns={sim4.W} rows={ROWS4} cells={frame4(activity2(), stats)} />
+      {pixels($, e, { key: RASTER4, columns: sim4.W, rows: ROWS4, cells: frame4(activity2(), stats), alt: "Octo Invader" })}
       {below ?? null}
     </Box>;
 };
@@ -2325,11 +2474,11 @@ function step4($) {
   sim5.glyphs = sim5.glyphs.filter((g) => g.until > t);
 }
 function frame5() {
-  const ink = new Uint8Array(W2 * PIXEL_ROWS2);
+  const ink2 = new Uint8Array(W2 * PIXEL_ROWS2);
   const set = (x, y) => {
     const xi = Math.round(x);
     const yi = Math.round(y);
-    if (xi >= 0 && xi < W2 && yi >= 0 && yi < PIXEL_ROWS2) ink[yi * W2 + xi] = 1;
+    if (xi >= 0 && xi < W2 && yi >= 0 && yi < PIXEL_ROWS2) ink2[yi * W2 + xi] = 1;
   };
   const stamp = (rows, x, y, isMirror) => {
     rows.forEach((row, dy) => {
@@ -2337,7 +2486,7 @@ function frame5() {
       for (let dx = 0; dx < r.length; dx++) if (r[dx] === "#") set(x + dx, y + dy);
     });
   };
-  for (const at of sim5.cactus) ink[at] = 1;
+  for (const at of sim5.cactus) ink2[at] = 1;
   for (const side of ["you", "bug"]) {
     const man = sim5.men[side];
     const isMirror = side === "bug";
@@ -2362,35 +2511,35 @@ function frame5() {
   if (sim5.bird) stamp(BIRD[Math.floor(sim5.t / 4) % 2], sim5.bird.x, sim5.bird.y, false);
   const over = /* @__PURE__ */ new Map();
   for (const g of sim5.glyphs) if (g.x >= 0 && g.x < W2 && g.y >= 0 && g.y < ROWS5) over.set(g.y * W2 + g.x, g.ch);
-  const words = new Uint32Array(W2 * ROWS5 * 3);
+  const words2 = new Uint32Array(W2 * ROWS5 * 3);
   for (let cy = 0; cy < ROWS5; cy++) {
     for (let cx = 0; cx < W2; cx++) {
       const i = (cy * W2 + cx) * 3;
-      const top = ink[cy * 2 * W2 + cx] === 1;
-      const bottom = ink[(cy * 2 + 1) * W2 + cx] === 1;
+      const top = ink2[cy * 2 * W2 + cx] === 1;
+      const bottom = ink2[(cy * 2 + 1) * W2 + cx] === 1;
       const ch = over.get(cy * W2 + cx);
-      words[i] = ch ? ch.codePointAt(0) : top && bottom ? 9608 : top ? 9600 : bottom ? 9604 : 32;
-      words[i + 1] = INK4;
-      words[i + 2] = NONE4;
+      words2[i] = ch ? ch.codePointAt(0) : top && bottom ? 9608 : top ? 9600 : bottom ? 9604 : 32;
+      words2[i + 1] = INK4;
+      words2[i + 2] = NONE4;
     }
   }
-  return base645(new Uint8Array(words.buffer));
+  return base645(new Uint8Array(words2.buffer));
 }
-const B645 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const B646 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 function base645(bytes) {
   let out = "";
   let i = 0;
   for (; i + 2 < bytes.length; i += 3) {
     const n = bytes[i] << 16 | bytes[i + 1] << 8 | bytes[i + 2];
-    out += B645[n >> 18 & 63] + B645[n >> 12 & 63] + B645[n >> 6 & 63] + B645[n & 63];
+    out += B646[n >> 18 & 63] + B646[n >> 12 & 63] + B646[n >> 6 & 63] + B646[n & 63];
   }
   const rest = bytes.length - i;
   if (rest === 1) {
     const n = bytes[i] << 16;
-    out += B645[n >> 18 & 63] + B645[n >> 12 & 63] + "==";
+    out += B646[n >> 18 & 63] + B646[n >> 12 & 63] + "==";
   } else if (rest === 2) {
     const n = bytes[i] << 16 | bytes[i + 1] << 8;
-    out += B645[n >> 18 & 63] + B645[n >> 12 & 63] + B645[n >> 6 & 63] + "=";
+    out += B646[n >> 18 & 63] + B646[n >> 12 & 63] + B646[n >> 6 & 63] + "=";
   }
   return out;
 }
@@ -2414,7 +2563,7 @@ const start5 = async ($, e, next) => {
     const requestId = sim5.requestId;
     if (requestId === null || sim5.isBlitting) return;
     sim5.isBlitting = true;
-    void $.ui.blit({ requestId, key: RASTER5, cells: frame5() }).then((r) => {
+    void repaint($, { requestId, key: RASTER5, cells: frame5() }).then((r) => {
       if (r.deny !== void 0) sim5.requestId = null;
     }).finally(() => {
       sim5.isBlitting = false;
@@ -2454,11 +2603,11 @@ const tool5 = async ($, e, next) => {
 };
 const render5 = async ($, e, next) => {
   const below = await next(e);
-  if (e.surface !== "terminal" || e.props.hasSurvey || !await isShown($, ID5)) {
+  if (!drawsGames(e.surface) || e.props.hasSurvey || !await isShown($, ID5)) {
     sim5.requestId = null;
     return below;
   }
-  const { Box, Raster, Text } = $.ui.resolve(e);
+  const { Box, Text } = $.ui.resolve(e);
   sim5.requestId = e.requestId;
   const s = await read6($, score4);
   const line = statsLine5(s);
@@ -2468,7 +2617,7 @@ const render5 = async ($, e, next) => {
         {below ?? null}
       </Box>
       <Box flexDirection="column" flexShrink={0} minWidth={W2} marginLeft={2}>
-        <Raster key={RASTER5} columns={W2} rows={ROWS5} cells={frame5()} />
+        {pixels($, e, { key: RASTER5, columns: W2, rows: ROWS5, cells: frame5(), alt: "Outlaw" })}
         <Text key="stats" dimColor wrap="truncate">
           {pad + line}
         </Text>
@@ -2632,11 +2781,11 @@ function step5() {
   sim6.particles = sim6.particles.filter((q) => q.age < q.life);
 }
 function frame6() {
-  const ink = new Uint8Array(W3 * PIXEL_ROWS3);
+  const ink2 = new Uint8Array(W3 * PIXEL_ROWS3);
   const set = (x, y) => {
     const xi = Math.round(x);
     const yi = Math.round(y);
-    if (xi > 0 && xi < W3 - 1 && yi > 0 && yi < PIXEL_ROWS3 - 1) ink[yi * W3 + xi] = 1;
+    if (xi > 0 && xi < W3 - 1 && yi > 0 && yi < PIXEL_ROWS3 - 1) ink2[yi * W3 + xi] = 1;
   };
   const stamp = (rows2, x, y) => rows2.forEach((row, dy) => [...row].forEach((c, dx) => c === "#" && set(x + dx, y + dy)));
   const over = /* @__PURE__ */ new Map();
@@ -2645,12 +2794,12 @@ function frame6() {
     if (xi > 0 && xi < W3 - 1 && cell >= 0 && cell < ROWS6) over.set(cell * W3 + xi, ch);
   };
   for (let x = 0; x < W3; x++) {
-    ink[x] = 1;
-    ink[(PIXEL_ROWS3 - 1) * W3 + x] = 1;
+    ink2[x] = 1;
+    ink2[(PIXEL_ROWS3 - 1) * W3 + x] = 1;
   }
   for (let y = 0; y < PIXEL_ROWS3; y++) {
-    ink[y * W3] = 1;
-    ink[y * W3 + W3 - 1] = 1;
+    ink2[y * W3] = 1;
+    ink2[y * W3 + W3 - 1] = 1;
   }
   const p = sim6.pet;
   const sprite = SPRITES[p.stage];
@@ -2679,35 +2828,35 @@ function frame6() {
     if (q.art === "heart") stamp(HEART, q.x, q.y);
     else glyph5(q.x, Math.floor(q.y / 2), q.ch ?? "*");
   }
-  const words = new Uint32Array(W3 * ROWS6 * 3);
+  const words2 = new Uint32Array(W3 * ROWS6 * 3);
   for (let cy = 0; cy < ROWS6; cy++) {
     for (let cx = 0; cx < W3; cx++) {
       const i = (cy * W3 + cx) * 3;
-      const top = ink[cy * 2 * W3 + cx] === 1;
-      const bottom = ink[(cy * 2 + 1) * W3 + cx] === 1;
+      const top = ink2[cy * 2 * W3 + cx] === 1;
+      const bottom = ink2[(cy * 2 + 1) * W3 + cx] === 1;
       const ch = over.get(cy * W3 + cx);
-      words[i] = ch ? ch.codePointAt(0) : top && bottom ? 9608 : top ? 9600 : bottom ? 9604 : 32;
-      words[i + 1] = INK5;
-      words[i + 2] = NONE5;
+      words2[i] = ch ? ch.codePointAt(0) : top && bottom ? 9608 : top ? 9600 : bottom ? 9604 : 32;
+      words2[i + 1] = INK5;
+      words2[i + 2] = NONE5;
     }
   }
-  return base646(new Uint8Array(words.buffer));
+  return base646(new Uint8Array(words2.buffer));
 }
-const B646 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const B647 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 function base646(bytes) {
   let out = "";
   let i = 0;
   for (; i + 2 < bytes.length; i += 3) {
     const n = bytes[i] << 16 | bytes[i + 1] << 8 | bytes[i + 2];
-    out += B646[n >> 18 & 63] + B646[n >> 12 & 63] + B646[n >> 6 & 63] + B646[n & 63];
+    out += B647[n >> 18 & 63] + B647[n >> 12 & 63] + B647[n >> 6 & 63] + B647[n & 63];
   }
   const rest = bytes.length - i;
   if (rest === 1) {
     const n = bytes[i] << 16;
-    out += B646[n >> 18 & 63] + B646[n >> 12 & 63] + "==";
+    out += B647[n >> 18 & 63] + B647[n >> 12 & 63] + "==";
   } else if (rest === 2) {
     const n = bytes[i] << 16 | bytes[i + 1] << 8;
-    out += B646[n >> 18 & 63] + B646[n >> 12 & 63] + B646[n >> 6 & 63] + "=";
+    out += B647[n >> 18 & 63] + B647[n >> 12 & 63] + B647[n >> 6 & 63] + "=";
   }
   return out;
 }
@@ -2734,7 +2883,7 @@ const start6 = async ($, e, next) => {
     const requestId = sim6.requestId;
     if (requestId === null || sim6.isBlitting) return;
     sim6.isBlitting = true;
-    void $.ui.blit({ requestId, key: RASTER6, cells: frame6() }).then((r) => {
+    void repaint($, { requestId, key: RASTER6, cells: frame6() }).then((r) => {
       if (r.deny !== void 0) sim6.requestId = null;
     }).finally(() => {
       sim6.isBlitting = false;
@@ -2829,11 +2978,11 @@ const tool6 = async ($, e, next) => {
 };
 const render6 = async ($, e, next) => {
   const below = await next(e);
-  if (e.surface !== "terminal" || e.props.hasSurvey || !await isShown($, ID6)) {
+  if (!drawsGames(e.surface) || e.props.hasSurvey || !await isShown($, ID6)) {
     sim6.requestId = null;
     return below;
   }
-  const { Box, Raster, Text } = $.ui.resolve(e);
+  const { Box, Text } = $.ui.resolve(e);
   sim6.requestId = e.requestId;
   const line = statsLine6(await read7($, pet));
   const pad = " ".repeat(Math.max(0, Math.floor((W3 - line.length) / 2)));
@@ -2842,7 +2991,7 @@ const render6 = async ($, e, next) => {
         {below ?? null}
       </Box>
       <Box flexDirection="column" flexShrink={0} minWidth={W3} marginLeft={2}>
-        <Raster key={RASTER6} columns={W3} rows={ROWS6} cells={frame6()} />
+        {pixels($, e, { key: RASTER6, columns: W3, rows: ROWS6, cells: frame6(), alt: "Tama" })}
         <Text key="stats" dimColor wrap="truncate">
           {pad + line}
         </Text>
@@ -3049,21 +3198,21 @@ function step6($) {
   }
 }
 function frame7() {
-  const ink = new Uint8Array(W4 * PIXEL_ROWS4);
+  const ink2 = new Uint8Array(W4 * PIXEL_ROWS4);
   const block = (r, c, kind) => {
     if (r < 0 || r >= H2) return;
     for (let dx = 0; dx < 2; dx++) {
       if (kind === 2 && (dx + r) % 2 === 1) continue;
-      ink[(1 + r) * W4 + 1 + c * 2 + dx] = 1;
+      ink2[(1 + r) * W4 + 1 + c * 2 + dx] = 1;
     }
   };
   for (let y = 0; y < PIXEL_ROWS4; y++) {
-    ink[y * W4] = 1;
-    ink[y * W4 + W4 - 1] = 1;
+    ink2[y * W4] = 1;
+    ink2[y * W4 + W4 - 1] = 1;
   }
   for (let x = 0; x < W4; x++) {
-    ink[x] = 1;
-    ink[(PIXEL_ROWS4 - 1) * W4 + x] = 1;
+    ink2[x] = 1;
+    ink2[(PIXEL_ROWS4 - 1) * W4 + x] = 1;
   }
   const blink = sim7.flash && Math.floor(sim7.t / 2) % 2 === 0;
   sim7.grid.forEach(
@@ -3074,34 +3223,34 @@ function frame7() {
   );
   const piece = sim7.active;
   if (piece) for (const [r, c] of piece.cells) block(piece.row + r, piece.col + c, 1);
-  const words = new Uint32Array(W4 * ROWS7 * 3);
+  const words2 = new Uint32Array(W4 * ROWS7 * 3);
   for (let cy = 0; cy < ROWS7; cy++) {
     for (let cx = 0; cx < W4; cx++) {
       const i = (cy * W4 + cx) * 3;
-      const top = ink[cy * 2 * W4 + cx] === 1;
-      const bottom = ink[(cy * 2 + 1) * W4 + cx] === 1;
-      words[i] = top && bottom ? 9608 : top ? 9600 : bottom ? 9604 : 32;
-      words[i + 1] = INK6;
-      words[i + 2] = NONE6;
+      const top = ink2[cy * 2 * W4 + cx] === 1;
+      const bottom = ink2[(cy * 2 + 1) * W4 + cx] === 1;
+      words2[i] = top && bottom ? 9608 : top ? 9600 : bottom ? 9604 : 32;
+      words2[i + 1] = INK6;
+      words2[i + 2] = NONE6;
     }
   }
-  return base647(new Uint8Array(words.buffer));
+  return base647(new Uint8Array(words2.buffer));
 }
-const B647 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const B648 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 function base647(bytes) {
   let out = "";
   let i = 0;
   for (; i + 2 < bytes.length; i += 3) {
     const n = bytes[i] << 16 | bytes[i + 1] << 8 | bytes[i + 2];
-    out += B647[n >> 18 & 63] + B647[n >> 12 & 63] + B647[n >> 6 & 63] + B647[n & 63];
+    out += B648[n >> 18 & 63] + B648[n >> 12 & 63] + B648[n >> 6 & 63] + B648[n & 63];
   }
   const rest = bytes.length - i;
   if (rest === 1) {
     const n = bytes[i] << 16;
-    out += B647[n >> 18 & 63] + B647[n >> 12 & 63] + "==";
+    out += B648[n >> 18 & 63] + B648[n >> 12 & 63] + "==";
   } else if (rest === 2) {
     const n = bytes[i] << 16 | bytes[i + 1] << 8;
-    out += B647[n >> 18 & 63] + B647[n >> 12 & 63] + B647[n >> 6 & 63] + "=";
+    out += B648[n >> 18 & 63] + B648[n >> 12 & 63] + B648[n >> 6 & 63] + "=";
   }
   return out;
 }
@@ -3119,7 +3268,7 @@ const start7 = async ($, e, next) => {
     const requestId = sim7.requestId;
     if (requestId === null || sim7.isBlitting) return;
     sim7.isBlitting = true;
-    void $.ui.blit({ requestId, key: RASTER7, cells: frame7() }).then((r) => {
+    void repaint($, { requestId, key: RASTER7, cells: frame7() }).then((r) => {
       if (r.deny !== void 0) sim7.requestId = null;
     }).finally(() => {
       sim7.isBlitting = false;
@@ -3160,11 +3309,11 @@ const tool7 = async ($, e, next) => {
 };
 const render7 = async ($, e, next) => {
   const below = await next(e);
-  if (e.surface !== "terminal" || e.props.hasSurvey || !await isShown($, ID7)) {
+  if (!drawsGames(e.surface) || e.props.hasSurvey || !await isShown($, ID7)) {
     sim7.requestId = null;
     return below;
   }
-  const { Box, Raster, Text } = $.ui.resolve(e);
+  const { Box, Text } = $.ui.resolve(e);
   sim7.requestId = e.requestId;
   const t = await read8($, tally);
   return <Box flexDirection="row" alignItems="flex-end">
@@ -3172,7 +3321,7 @@ const render7 = async ($, e, next) => {
         {below ?? null}
       </Box>
       <Box flexDirection="column" flexShrink={0} minWidth={W4} marginLeft={2}>
-        <Raster key={RASTER7} columns={W4} rows={ROWS7} cells={frame7()} />
+        {pixels($, e, { key: RASTER7, columns: W4, rows: ROWS7, cells: frame7(), alt: "Tetris" })}
         <Text key="stats" dimColor wrap="truncate">
           {centred2(`\u25A4 ${t.lines}  \u25C6 ${t.score}  Lv ${Math.floor(t.lines / 10)}`)}
         </Text>
@@ -3186,18 +3335,318 @@ const game7 = { id: ID7, title: "Tetris" };
 
 // src/games/bug-command.tsx
 import { read as read9, update as update8, atom as atom9 } from "claude-code";
+
+// src/clients/bug-sky.tsx
+const ROWS8 = 8;
+const PH3 = ROWS8 * 2;
+const GROUND2 = PH3 - 1;
+const CITY_TOP = PH3 - 4;
+const SKY_FLOOR = CITY_TOP - 1;
+const CITIES = 6;
+const SHOT_SPEED = 1.8;
+const COOLDOWN = 5;
+const SAND = "#c2a14d";
+const SILO = "#d9a441";
+const CITY = "#4dabf7";
+const RUBBLE = "#6b6b6b";
+const BUG_TRAIL = "#a8323e";
+const BUG_HEAD = "#ff6b6b";
+const SHOT_TRAIL = "#4c6ef5";
+const SHOT_HEAD = "#ffffff";
+const CROSS = "#69db7c";
+const GREY3 = "#8a8a8a";
+const GOLD = "#ffd43b";
+const BLAST = ["#ffffff", "#ffd43b", "#ff922b", "#f06595", "#cc5de8"];
+const rand5 = (a, b) => a + Math.random() * (b - a);
+const clamp3 = (v, a, b) => Math.max(a, Math.min(b, v));
+function layout(W5) {
+  const silos = [2, Math.floor(W5 / 2), W5 - 3];
+  const xs = [];
+  for (const [a, b] of [[silos[0], silos[1]], [silos[1], silos[2]]]) {
+    for (let i = 1; i <= 3; i++) xs.push(Math.round(a + (b - a) * i / 4) - 2);
+  }
+  return { silos, cityX: xs };
+}
+function create(props) {
+  const W5 = Math.max(24, props.columns);
+  const standing = clamp3(props.cities, 0, CITIES);
+  return {
+    t: 0,
+    W: W5,
+    seen: props.events.reduce((m, e) => Math.max(m, e.id), 0),
+    cities: Array.from({ length: CITIES }, (_, i) => i < standing || standing === 0),
+    silos: layout(W5).silos,
+    cooldown: [0, 0, 0],
+    bugs: [],
+    shots: [],
+    blasts: [],
+    plans: [],
+    banner: null,
+    cross: { x: Math.floor(W5 / 2), y: 4 },
+    hasFired: false,
+    nextBug: 40,
+    endAt: -1,
+    gain: { kills: 0, mine: 0, lost: 0, ends: 0, cities: standing === 0 ? CITIES : standing },
+    props
+  };
+}
+const cityX = (s, i) => layout(s.W).cityX[i];
+function banner3(s, text, color, frames) {
+  s.banner = { text, color, until: s.t + frames };
+}
+function dropBug(s, isReal, fast = false) {
+  const alive = s.cities.map((c, i) => c ? i : -1).filter((i) => i >= 0);
+  if (alive.length === 0) return;
+  const target2 = alive[Math.floor(Math.random() * alive.length)];
+  const x0 = rand5(1, s.W - 2);
+  const tx = cityX(s, target2) + 2;
+  const frames = fast ? rand5(70, 100) : rand5(130, 200);
+  const vy = (SKY_FLOOR + 2) / frames;
+  s.bugs.push({ x0, y0: 0, x: x0, y: 0, vx: (tx - x0) / frames, vy, target: target2, isReal });
+}
+function nearestSilo(s, x) {
+  let best = -1;
+  for (let i = 0; i < s.silos.length; i++) {
+    if (s.cooldown[i] > 0) continue;
+    if (best < 0 || Math.abs(s.silos[i] - x) < Math.abs(s.silos[best] - x)) best = i;
+  }
+  return best;
+}
+function fire(s, tx, ty, owner, isMiss = false, silo = nearestSilo(s, tx)) {
+  if (silo < 0) return false;
+  const sx = s.silos[silo];
+  s.cooldown[silo] = owner === "you" ? COOLDOWN : 0;
+  s.shots.push({ x0: sx, y0: SKY_FLOOR + 1, x: sx, y: SKY_FLOOR + 1, tx: clamp3(tx, 0, s.W - 1), ty: clamp3(ty, 0, SKY_FLOOR), owner, isMiss });
+  return true;
+}
+function autoShot(s, bug, owner, isMiss) {
+  const silo = s.silos.reduce((b, x, i) => Math.abs(x - bug.x) < Math.abs(s.silos[b] - bug.x) ? i : b, 0);
+  let tx = bug.x;
+  let ty = bug.y;
+  for (let k = 0; k < 3; k++) {
+    const frames = Math.hypot(tx - s.silos[silo], ty - (SKY_FLOOR + 1)) / SHOT_SPEED;
+    tx = bug.x + bug.vx * frames;
+    ty = bug.y + bug.vy * frames;
+  }
+  if (isMiss) tx += (Math.random() < 0.5 ? -1 : 1) * rand5(6, 9);
+  fire(s, tx, ty, owner, isMiss, silo);
+}
+const lowest = (s) => s.bugs.reduce((b, x) => b === void 0 || x.y > b.y ? x : b, void 0);
+function play(s, e) {
+  const owner = e.practice ? "practice" : "auto";
+  if (e.kind === "tool") {
+    const bug = lowest(s);
+    if (bug) autoShot(s, bug, owner, Math.random() < 0.4);
+  } else if (e.kind === "fail") {
+    dropBug(s, !e.practice, true);
+    banner3(s, "INCOMING", BUG_HEAD, 30);
+  } else if (e.kind === "small") {
+    const bug = lowest(s);
+    if (bug) autoShot(s, bug, owner, false);
+    else s.blasts.push({ x: rand5(4, s.W - 4), y: rand5(2, 7), age: 0, max: 2, owner: "practice" });
+  } else if (e.kind === "medium") {
+    if (s.bugs.length === 0) dropBug(s, !e.practice);
+    s.plans.push({ at: s.t + 20, kind: "sure", owner });
+  } else {
+    if (s.bugs.length === 0) {
+      dropBug(s, !e.practice);
+      dropBug(s, !e.practice);
+    }
+    s.plans.push({ at: s.t + 20, kind: "salvo", owner });
+    const ruined = s.cities.findIndex((c) => !c);
+    if (ruined >= 0 && !e.practice) {
+      s.cities[ruined] = true;
+      s.gain.cities = s.cities.filter(Boolean).length;
+      banner3(s, "BONUS CITY", GOLD, 60);
+    } else banner3(s, "SKY CLEAR!", GOLD, 60);
+  }
+}
+function step7(s) {
+  s.t += 1;
+  for (let i = 0; i < s.cooldown.length; i++) s.cooldown[i] = Math.max(0, s.cooldown[i] - 1);
+  for (const p of s.plans.filter((p2) => p2.at <= s.t)) {
+    if (p.kind === "sure") {
+      const bug = lowest(s);
+      if (bug) autoShot(s, bug, p.owner, false);
+    } else for (const bug of s.bugs) autoShot(s, bug, p.owner, false);
+  }
+  s.plans = s.plans.filter((p) => p.at > s.t);
+  if (s.props.working && s.endAt < 0 && s.t >= s.nextBug && s.bugs.length < 3) {
+    dropBug(s, true);
+    s.nextBug = s.t + Math.floor(rand5(120, 260));
+  }
+  for (const shot of s.shots) {
+    const dx = shot.tx - shot.x;
+    const dy = shot.ty - shot.y;
+    const d = Math.hypot(dx, dy);
+    if (d <= SHOT_SPEED) {
+      shot.x = shot.tx;
+      shot.y = shot.ty;
+      s.blasts.push({ x: shot.tx, y: shot.ty, age: 0, max: 3, owner: shot.owner });
+    } else {
+      shot.x += dx / d * SHOT_SPEED;
+      shot.y += dy / d * SHOT_SPEED;
+    }
+  }
+  s.shots = s.shots.filter((shot) => shot.x !== shot.tx || shot.y !== shot.ty);
+  for (const bug of s.bugs) {
+    bug.x += bug.vx;
+    bug.y += bug.vy;
+  }
+  for (const b of s.blasts) b.age += 1;
+  const radius = (b) => {
+    const r = [1, 1, 2, 2, 3, 3, 3, 3, 2, 2, 1][b.age] ?? 0;
+    return Math.min(r, b.max);
+  };
+  const chained = [];
+  s.bugs = s.bugs.filter((bug) => {
+    const hit = s.blasts.find((b) => radius(b) > 0 && Math.hypot(bug.x - b.x, bug.y - b.y) <= radius(b) + 0.5);
+    if (!hit) return true;
+    chained.push({ x: bug.x, y: bug.y, age: 0, max: 2, owner: hit.owner });
+    if (bug.isReal && hit.owner !== "practice") {
+      s.gain.kills += 1;
+      if (hit.owner === "you") s.gain.mine += 1;
+    }
+    return false;
+  });
+  s.blasts = [...s.blasts.filter((b) => b.age < 11), ...chained];
+  s.bugs = s.bugs.filter((bug) => {
+    if (bug.y < SKY_FLOOR + 1) return true;
+    s.blasts.push({ x: bug.x, y: SKY_FLOOR + 1, age: 0, max: 3, owner: "practice" });
+    if (bug.isReal && s.cities[bug.target]) {
+      s.cities[bug.target] = false;
+      s.gain.lost += 1;
+      s.gain.cities = s.cities.filter(Boolean).length;
+    }
+    return false;
+  });
+  if (s.endAt < 0 && s.cities.every((c) => !c)) {
+    s.endAt = s.t + 60;
+    s.bugs = [];
+    s.gain.ends += 1;
+    banner3(s, "THE END", BUG_HEAD, 60);
+  }
+  if (s.endAt >= 0 && s.t >= s.endAt) {
+    s.endAt = -1;
+    s.cities = s.cities.map(() => true);
+    s.gain.cities = CITIES;
+    banner3(s, "NEW CITIES", CITY, 40);
+  }
+}
+const CITY_SHAPES = [
+  [".#.#.", "#####", "#####"],
+  ["..#..", ".###.", "#####"],
+  ["#..#.", "##.##", "#####"]
+];
+function paint(s) {
+  const W5 = s.W;
+  const px = new Array(W5 * PH3).fill(null);
+  const put5 = (x, y, c) => {
+    x = Math.round(x);
+    y = Math.round(y);
+    if (x >= 0 && x < W5 && y >= 0 && y < PH3) px[y * W5 + x] = c;
+  };
+  const line = (x0, y0, x1, y1, c) => {
+    const n = Math.max(1, Math.ceil(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0))));
+    for (let i = 0; i <= n; i++) put5(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n, c);
+  };
+  const glyphs = /* @__PURE__ */ new Map();
+  const text = (x, row, str, color) => [...str].forEach((ch, i) => {
+    if (x + i >= 0 && x + i < W5 && row >= 0 && row < ROWS8) glyphs.set(row * W5 + x + i, { ch, color });
+  });
+  for (let x = 0; x < W5; x++) put5(x, GROUND2, SAND);
+  s.cities.forEach((alive, i) => {
+    const x = cityX(s, i);
+    if (alive) {
+      CITY_SHAPES[i % CITY_SHAPES.length].forEach((row, dy) => {
+        for (let dx = 0; dx < 5; dx++) if (row[dx] === "#") put5(x + dx, CITY_TOP + dy, CITY);
+      });
+    } else for (let dx = 0; dx < 5; dx += 2) put5(x + dx, GROUND2 - 1, RUBBLE);
+  });
+  for (const [i, sx] of s.silos.entries()) {
+    for (let dx = -2; dx <= 2; dx++) put5(sx + dx, GROUND2 - 1, SILO);
+    for (let dx = -1; dx <= 1; dx++) put5(sx + dx, GROUND2 - 2, s.cooldown[i] > 0 ? GREY3 : SILO);
+  }
+  for (const bug of s.bugs) {
+    line(bug.x0, bug.y0, bug.x, bug.y, BUG_TRAIL);
+    put5(bug.x, bug.y, s.t % 6 < 3 ? BUG_HEAD : SHOT_HEAD);
+  }
+  for (const shot of s.shots) {
+    line(shot.x0, shot.y0, shot.x, shot.y, SHOT_TRAIL);
+    put5(shot.x, shot.y, SHOT_HEAD);
+    if (shot.owner === "you") put5(shot.tx, shot.ty, CROSS);
+  }
+  for (const b of s.blasts) {
+    const r = Math.min([1, 1, 2, 2, 3, 3, 3, 3, 2, 2, 1][b.age] ?? 0, b.max);
+    const c = BLAST[(b.age + Math.round(b.x)) % BLAST.length];
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (dx * dx + dy * dy <= r * r + 1) put5(b.x + dx, b.y + dy, c);
+  }
+  const { x: cx, y: cy } = s.cross;
+  for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) put5(cx + dx, cy + dy, CROSS);
+  const standing = s.cities.filter(Boolean).length;
+  const stats = `${s.props.stats}  \u2302 ${standing}`;
+  text(W5 - stats.length - 1, 0, stats, GREY3);
+  if (!s.hasFired && s.bugs.some((b) => b.isReal)) text(1, 0, "click to fire", GREY3);
+  if (s.banner && s.t < s.banner.until && (s.banner.until - s.t) % 8 > 1) {
+    text(Math.floor((W5 - s.banner.text.length) / 2), 1, s.banner.text, s.banner.color);
+  }
+  return { px, glyphs, W: W5 };
+}
+const ink = (c) => parseInt(c.slice(1), 16);
+const PLAIN = 16777216;
+function skyCells(s) {
+  const { px, glyphs, W: W5 } = paint(s);
+  const words2 = new Uint32Array(W5 * ROWS8 * 3);
+  for (let row = 0; row < ROWS8; row++) {
+    for (let x = 0; x < W5; x++) {
+      const i = (row * W5 + x) * 3;
+      const g = glyphs.get(row * W5 + x);
+      const top = px[row * 2 * W5 + x] ?? null;
+      const bottom = px[(row * 2 + 1) * W5 + x] ?? null;
+      if (g) [words2[i], words2[i + 1], words2[i + 2]] = [g.ch.codePointAt(0), ink(g.color), PLAIN];
+      else if (top === null && bottom === null) [words2[i], words2[i + 1], words2[i + 2]] = [32, PLAIN, PLAIN];
+      else if (top === bottom) [words2[i], words2[i + 1], words2[i + 2]] = [9608, ink(top), PLAIN];
+      else if (bottom === null) [words2[i], words2[i + 1], words2[i + 2]] = [9600, ink(top), PLAIN];
+      else if (top === null) [words2[i], words2[i + 1], words2[i + 2]] = [9604, ink(bottom), PLAIN];
+      else [words2[i], words2[i + 1], words2[i + 2]] = [9600, ink(top), ink(bottom)];
+    }
+  }
+  return encode(new Uint8Array(words2.buffer));
+}
+const B649 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+function encode(bytes) {
+  let out = "";
+  let i = 0;
+  for (; i + 2 < bytes.length; i += 3) {
+    const n = bytes[i] << 16 | bytes[i + 1] << 8 | bytes[i + 2];
+    out += B649[n >> 18 & 63] + B649[n >> 12 & 63] + B649[n >> 6 & 63] + B649[n & 63];
+  }
+  const rest = bytes.length - i;
+  if (rest === 1) {
+    const n = bytes[i] << 16;
+    out += B649[n >> 18 & 63] + B649[n >> 12 & 63] + "==";
+  } else if (rest === 2) {
+    const n = bytes[i] << 16 | bytes[i + 1] << 8;
+    out += B649[n >> 18 & 63] + B649[n >> 12 & 63] + B649[n >> 6 & 63] + "=";
+  }
+  return out;
+}
+
+// src/games/bug-command.tsx
 const ID8 = "bugs";
 const SKY = "bug-sky";
-const ROWS8 = 8;
+const ROWS9 = 8;
 const MIN_COLUMNS3 = 24;
 const MAX_COLUMNS3 = 512;
-const CITIES = 6;
+const CITIES2 = 6;
 const KEEP = 12;
-const score5 = atom9({ plugin: "arcade", key: "bugsScore" }, { kills: 0, mine: 0, lost: 0, ends: 0, cities: CITIES, tools: 0 });
+const score5 = atom9({ plugin: "arcade", key: "bugsScore" }, { kills: 0, mine: 0, lost: 0, ends: 0, cities: CITIES2, tools: 0 });
 const feed = atom9({ plugin: "arcade", key: "bugsFeed" }, { events: [], next: 1, working: false });
 const feat4 = atom9({ plugin: "arcade", key: "bugsFeat" }, "");
 const sim8 = { working: 0, isTurn: false };
-const clamp3 = (v, a, b) => Math.max(a, Math.min(b, v));
+const TICK_MS = 66;
+const desk = { sky: null, requestId: null, isTicking: false };
+const clamp4 = (v, a, b) => Math.max(a, Math.min(b, v));
 async function notify8($, text) {
   if (await isShown($, ID8)) $.ui.toast(text);
 }
@@ -3227,6 +3676,15 @@ const start8 = async ($, e, next) => {
   await $.command.register({
     name: "bugs",
     description: 'Bug Command above the prompt: the score. Click the sky to fire. "/bugs shot|salvo|incoming" to show off.'
+  });
+  $.clock.every(TICK_MS, () => {
+    const sky = desk.sky;
+    const requestId = desk.requestId;
+    if (!sky || requestId === null || desk.isTicking) return;
+    desk.isTicking = true;
+    void tickDesktop($, sky, requestId).finally(() => {
+      desk.isTicking = false;
+    });
   });
   return next(e);
 };
@@ -3273,7 +3731,10 @@ const tool8 = async ($, e, next) => {
 };
 const message = async ($, e, next) => {
   if (e.element !== SKY) return next(e);
-  const g = e.data;
+  await takeGain($, e.data);
+  return { props: await skyProps($, 0) };
+};
+async function takeGain($, g) {
   const n = (v) => typeof v === "number" && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0;
   const s = await save3($, (old) => ({
     ...old,
@@ -3281,12 +3742,27 @@ const message = async ($, e, next) => {
     mine: old.mine + n(g.mine),
     lost: old.lost + n(g.lost),
     ends: old.ends + n(g.ends),
-    cities: clamp3(typeof g.cities === "number" ? Math.floor(g.cities) : old.cities, 0, CITIES)
+    cities: clamp4(typeof g.cities === "number" ? Math.floor(g.cities) : old.cities, 0, CITIES2)
   }));
   if (n(g.ends) > 0) void notify8($, "\u{1F680} THE END: every city fell. New cities are up.");
   if (n(g.mine) > 0 && s.mine % 10 === 0) void notify8($, `\u{1F680} ${s.mine} bugs shot down by hand!`);
-  return { props: await skyProps($, 0) };
-};
+}
+async function tickDesktop($, sky, requestId) {
+  sky.props = await skyProps($, sky.W);
+  for (const ev of sky.props.events) {
+    if (ev.id <= sky.seen) continue;
+    sky.seen = ev.id;
+    play(sky, ev);
+  }
+  step7(sky);
+  const g = sky.gain;
+  if (g.kills + g.mine + g.lost + g.ends > 0 || g.cities !== sky.props.cities) {
+    sky.gain = { kills: 0, mine: 0, lost: 0, ends: 0, cities: g.cities };
+    await takeGain($, g);
+  }
+  const r = await repaint($, { requestId, key: SKY, cells: skyCells(sky), columns: sky.W });
+  if (r.deny !== void 0) desk.requestId = null;
+}
 async function skyProps($, columns) {
   const f = await read9($, feed);
   const s = await read9($, score5);
@@ -3294,11 +3770,24 @@ async function skyProps($, columns) {
 }
 const render8 = async ($, e, next) => {
   const below = await next(e);
-  if (e.surface !== "terminal" || e.props.hasSurvey || !await isShown($, ID8)) return below;
+  if (e.surface !== "terminal" && e.surface !== "desktop" || e.props.hasSurvey || !await isShown($, ID8)) {
+    desk.requestId = null;
+    return below;
+  }
+  const W5 = clamp4(e.props.bodyColumns, MIN_COLUMNS3, MAX_COLUMNS3);
+  if (e.surface === "desktop") {
+    const { Box: Box2 } = $.ui.resolve(e);
+    if (!desk.sky || desk.sky.W !== Math.max(24, W5)) desk.sky = create(await skyProps($, W5));
+    desk.requestId = e.requestId;
+    return <Box2 flexDirection="column">
+        {pixels($, e, { key: SKY, columns: desk.sky.W, rows: ROWS9, cells: skyCells(desk.sky), alt: "Bug Command" })}
+        {below ?? null}
+      </Box2>;
+  }
+  desk.requestId = null;
   const { Box, Client } = $.ui.resolve(e);
-  const W5 = clamp3(e.props.bodyColumns, MIN_COLUMNS3, MAX_COLUMNS3);
   return <Box flexDirection="column">
-      <Client key={SKY} module="./bug-sky.js" width={W5} height={ROWS8} props={await skyProps($, W5)} />
+      <Client key={SKY} module="./bug-sky.js" width={W5} height={ROWS9} props={await skyProps($, W5)} />
       {below ?? null}
     </Box>;
 };
@@ -3312,8 +3801,8 @@ const game8 = { id: ID8, title: "Bug Command" };
 import { read as read10, update as update9, atom as atom10 } from "claude-code";
 const ID9 = "dario";
 const RASTER8 = "course";
-const ROWS9 = 8;
-const PH3 = ROWS9 * 2;
+const ROWS10 = 8;
+const PH4 = ROWS10 * 2;
 const FPS_MS8 = 66;
 const MIN_COLUMNS4 = 24;
 const MAX_COLUMNS4 = 512;
@@ -3321,11 +3810,11 @@ const SLEEP_AFTER2 = 2 * 60 * 1e3 / FPS_MS8;
 const INK7 = 16777216;
 const NONE7 = 16777216;
 const EMPTY3 = 4294967295;
-const GREY3 = 9079434;
-const GOLD = 16766011;
+const GREY4 = 9079434;
+const GOLD2 = 16766011;
 const RED2 = 15017249;
-const GROUND2 = PH3 - 2;
-const FEET = GROUND2 - 1;
+const GROUND3 = PH4 - 2;
+const FEET = GROUND3 - 1;
 const HERO_H = 7;
 const HERO_W = 6;
 const JUMP_V = -1.25;
@@ -3354,7 +3843,7 @@ const PALETTE2 = {
   // pipe
   L: 7328623,
   // pipe highlight
-  C: GOLD,
+  C: GOLD2,
   // coin
   P: 11579568,
   // flag pole
@@ -3402,23 +3891,23 @@ const sim9 = {
   gain: { coins: 0, stomps: 0, hits: 0, clears: 0 },
   stats: ""
 };
-const rand5 = (a, b) => a + Math.random() * (b - a);
+const rand6 = (a, b) => a + Math.random() * (b - a);
 const pick5 = (list2) => list2[Math.floor(Math.random() * list2.length)];
-const clamp4 = (v, a, b) => Math.max(a, Math.min(b, v));
+const clamp5 = (v, a, b) => Math.max(a, Math.min(b, v));
 const stageOf = (clears) => `${Math.floor(clears / 4) + 1}-${clears % 4 + 1}`;
 function fit2(W5) {
   if (W5 === sim9.W) return;
   sim9.W = W5;
-  sim9.hero.x = clamp4(Math.floor(W5 * 0.22), 4, 40);
+  sim9.hero.x = clamp5(Math.floor(W5 * 0.22), 4, 40);
   sim9.things = sim9.things.filter((t) => t.x < W5 + 8);
 }
-function banner3(text, color, frames) {
+function banner4(text, color, frames) {
   sim9.banner = { text, color, until: sim9.t + frames };
 }
 const glyph4 = (x, y, ch, life, color) => sim9.particles.push({ x, y, vx: 0, vy: -0.15, age: 0, life, color, ch });
 function sparkle(x, y, colors, n = 8) {
   for (let i = 0; i < n; i++) {
-    sim9.particles.push({ x, y, vx: rand5(-0.7, 0.7), vy: rand5(-0.8, 0.2), age: 0, life: Math.floor(rand5(10, 20)), color: pick5(colors), gravity: 0.05 });
+    sim9.particles.push({ x, y, vx: rand6(-0.7, 0.7), vy: rand6(-0.8, 0.2), age: 0, life: Math.floor(rand6(10, 20)), color: pick5(colors), gravity: 0.05 });
   }
 }
 function entry(gap = 10) {
@@ -3447,7 +3936,7 @@ function speed() {
   if (sim9.isTurn) return 0.6;
   return onScreen() ? 0.8 : 0;
 }
-function step7() {
+function step8() {
   sim9.t += 1;
   const isAsleep = !sim9.isTurn && sim9.working === 0 && !onScreen() && sim9.t - sim9.lastActivity > SLEEP_AFTER2;
   const v = speed();
@@ -3455,12 +3944,12 @@ function step7() {
   for (const s of sim9.scenery) s.x -= s.kind === "cloud" ? v * 0.4 : v;
   sim9.scenery = sim9.scenery.filter((s) => s.x > -10);
   if (v > 0 && sim9.t >= sim9.nextScenery) {
-    sim9.scenery.push(Math.random() < 0.6 ? { kind: "cloud", x: sim9.W + 2, y: Math.floor(rand5(1, 5)) } : { kind: "bush", x: sim9.W + 2, y: GROUND2 - 3 });
-    sim9.nextScenery = sim9.t + Math.floor(rand5(30, 80));
+    sim9.scenery.push(Math.random() < 0.6 ? { kind: "cloud", x: sim9.W + 2, y: Math.floor(rand6(1, 5)) } : { kind: "bush", x: sim9.W + 2, y: GROUND3 - 3 });
+    sim9.nextScenery = sim9.t + Math.floor(rand6(30, 80));
   }
   if (sim9.working > 0 && sim9.t >= sim9.nextPipe) {
     sim9.things.push({ kind: "pipe", x: entry(16) });
-    sim9.nextPipe = sim9.t + Math.floor(rand5(140, 260));
+    sim9.nextPipe = sim9.t + Math.floor(rand6(140, 260));
   }
   for (const t of sim9.things) {
     t.x -= v;
@@ -3490,19 +3979,19 @@ function step7() {
       t.used = true;
       t.bumpAt = sim9.t;
       sim9.hero.vy = Math.max(sim9.hero.vy, 0.2);
-      sim9.particles.push({ x: t.x, y: t.y - 3, vx: 0, vy: -0.5, age: 0, life: 12, color: GOLD, sprite: COIN, gravity: 0.06 });
+      sim9.particles.push({ x: t.x, y: t.y - 3, vx: 0, vy: -0.5, age: 0, life: 12, color: GOLD2, sprite: COIN, gravity: 0.06 });
       if (t.counts) sim9.gain.coins += 1;
     }
     if (t.kind === "bug" && t.flatAt < 0 && Math.abs(d) < 5) {
       if (sim9.hero.isAir && t.isDoomed) {
         t.flatAt = sim9.t;
         sim9.hero.vy = -0.9;
-        glyph4(t.x, GROUND2 - 6, "\u2726", 10, GOLD);
+        glyph4(t.x, GROUND3 - 6, "\u2726", 10, GOLD2);
         if (t.counts) sim9.gain.stomps += 1;
       } else if (!t.isDoomed && !t.hasHit && sim9.hero.y > -4 && Math.abs(d) < 3) {
         t.hasHit = true;
         sim9.hurtUntil = sim9.t + 30;
-        banner3("OUCH", RED2, 30);
+        banner4("OUCH", RED2, 30);
         if (t.counts) sim9.gain.hits += 1;
       }
     }
@@ -3518,13 +4007,13 @@ function step7() {
     const left = sim9.flagUntil - sim9.t;
     if (pole && left > 15) {
       sim9.hero.y = -Math.max(0, (left - 15) / 30) * 6;
-      pole.flag = Math.min(GROUND2 - 5, pole.flag + 0.35);
+      pole.flag = Math.min(GROUND3 - 5, pole.flag + 0.35);
     }
     if (left === 15) {
       sim9.hero.y = 0;
-      banner3(pole?.isWorld ? "WORLD CLEAR!" : "COURSE CLEAR!", GOLD, 60);
+      banner4(pole?.isWorld ? "WORLD CLEAR!" : "COURSE CLEAR!", GOLD2, 60);
       if (pole?.counts) sim9.gain.clears += 1;
-      if (pole?.isWorld) for (let i = 0; i < 4; i++) sparkle(rand5(4, sim9.W - 4), rand5(1, 6), [GOLD, RED2, 4170573, 5090295], 14);
+      if (pole?.isWorld) for (let i = 0; i < 4; i++) sparkle(rand6(4, sim9.W - 4), rand6(1, 6), [GOLD2, RED2, 4170573, 5090295], 14);
     }
     if (left <= 0) sim9.flagUntil = -1;
   }
@@ -3535,16 +4024,16 @@ function step7() {
     p.y += p.vy;
     p.vy += p.gravity ?? 0;
   }
-  sim9.particles = sim9.particles.filter((p) => p.age < p.life && p.x >= -3 && p.x < sim9.W && p.y >= -3 && p.y < PH3);
+  sim9.particles = sim9.particles.filter((p) => p.age < p.life && p.x >= -3 && p.x < sim9.W && p.y >= -3 && p.y < PH4);
   return isAsleep;
 }
 function put3(buf, x, y, color) {
   x = Math.round(x);
   y = Math.round(y);
-  if (x < 0 || x >= sim9.W || y < 0 || y >= PH3) return;
+  if (x < 0 || x >= sim9.W || y < 0 || y >= PH4) return;
   buf[y * sim9.W + x] = color;
 }
-function paint(buf, rows, x, y, only) {
+function paint2(buf, rows, x, y, only) {
   rows.forEach((row, dy) => {
     for (let dx = 0; dx < row.length; dx++) {
       const c = PALETTE2[row[dx]];
@@ -3553,26 +4042,26 @@ function paint(buf, rows, x, y, only) {
   });
 }
 function drawScene2(buf) {
-  for (const s of sim9.scenery) paint(buf, s.kind === "cloud" ? CLOUD : BUSH, s.x, s.y);
+  for (const s of sim9.scenery) paint2(buf, s.kind === "cloud" ? CLOUD : BUSH, s.x, s.y);
   for (let x = 0; x < sim9.W; x++) {
-    put3(buf, x, GROUND2, 13126668);
-    put3(buf, x, GROUND2 + 1, (x + Math.floor(sim9.course)) % 4 === 0 ? 8007173 : 13126668);
+    put3(buf, x, GROUND3, 13126668);
+    put3(buf, x, GROUND3 + 1, (x + Math.floor(sim9.course)) % 4 === 0 ? 8007173 : 13126668);
   }
 }
 function drawThings(buf) {
   for (const t of sim9.things) {
     if (t.kind === "block") {
       const lift2 = t.bumpAt >= 0 && sim9.t - t.bumpAt < 4 ? -1 : 0;
-      paint(buf, t.used ? BLOCK_USED : BLOCK, t.x, t.y + lift2);
+      paint2(buf, t.used ? BLOCK_USED : BLOCK, t.x, t.y + lift2);
     } else if (t.kind === "pipe") {
-      paint(buf, PIPE, t.x, GROUND2 - PIPE.length);
+      paint2(buf, PIPE, t.x, GROUND3 - PIPE.length);
     } else if (t.kind === "bug") {
-      if (t.flatAt >= 0) paint(buf, BUG_FLAT, t.x, GROUND2 - 2);
-      else paint(buf, BUG_WALK[Math.floor(sim9.t / 4) % 2], t.x, GROUND2 - 4);
+      if (t.flatAt >= 0) paint2(buf, BUG_FLAT, t.x, GROUND3 - 2);
+      else paint2(buf, BUG_WALK[Math.floor(sim9.t / 4) % 2], t.x, GROUND3 - 4);
     } else if (t.kind === "pole") {
-      for (let y = 1; y < GROUND2; y++) put3(buf, t.x + 2, y, PALETTE2.P);
-      put3(buf, t.x + 2, 0, GOLD);
-      paint(buf, ["FF", "FFF", "FF"], t.x - 1, t.flag);
+      for (let y = 1; y < GROUND3; y++) put3(buf, t.x + 2, y, PALETTE2.P);
+      put3(buf, t.x + 2, 0, GOLD2);
+      paint2(buf, ["FF", "FFF", "FF"], t.x - 1, t.flag);
     }
   }
 }
@@ -3580,83 +4069,83 @@ function drawHero(buf, isAsleep) {
   const x = sim9.hero.x;
   const y = FEET - HERO_H + 1 + Math.round(sim9.hero.y);
   if (sim9.hurtUntil > sim9.t && sim9.t % 4 < 2) return;
-  if (isAsleep) return paint(buf, HERO_SIT, x, y);
-  if (sim9.hero.isAir || sim9.flagUntil > sim9.t) return paint(buf, HERO_JUMP, x, y);
-  if (speed() === 0) return paint(buf, HERO_STAND, x, y);
-  paint(buf, HERO_RUN[Math.floor(sim9.t / 3) % 2], x, y);
+  if (isAsleep) return paint2(buf, HERO_SIT, x, y);
+  if (sim9.hero.isAir || sim9.flagUntil > sim9.t) return paint2(buf, HERO_JUMP, x, y);
+  if (speed() === 0) return paint2(buf, HERO_STAND, x, y);
+  paint2(buf, HERO_RUN[Math.floor(sim9.t / 3) % 2], x, y);
 }
 const statsLine8 = (s) => `${stageOf(s.clears)}  \u25CE ${s.coins}  \u272A ${s.stomps}  \u2717 ${s.hits}  \u2692 ${s.tools}`;
 function frame8(isAsleep, stats) {
   const W5 = sim9.W;
-  const buf = new Uint32Array(W5 * PH3).fill(EMPTY3);
+  const buf = new Uint32Array(W5 * PH4).fill(EMPTY3);
   const over = /* @__PURE__ */ new Map();
   const text = (x, row, s, color) => [...s].forEach((ch, i) => {
-    if (x + i >= 0 && x + i < W5 && row >= 0 && row < ROWS9) over.set(row * W5 + x + i, { ch, color });
+    if (x + i >= 0 && x + i < W5 && row >= 0 && row < ROWS10) over.set(row * W5 + x + i, { ch, color });
   });
   drawScene2(buf);
   drawThings(buf);
   drawHero(buf, isAsleep);
   for (const p of sim9.particles) {
-    if (p.sprite) paint(buf, p.sprite, p.x, p.y);
+    if (p.sprite) paint2(buf, p.sprite, p.x, p.y);
     else if (p.ch) text(Math.round(p.x), Math.floor(Math.round(p.y) / 2), p.ch, p.color);
     else put3(buf, p.x, p.y, p.color);
   }
-  if (isAsleep) text(sim9.hero.x + HERO_W, Math.floor((FEET - 4) / 2), "z", GREY3);
-  text(W5 - stats.length - 1, 0, stats, GREY3);
+  if (isAsleep) text(sim9.hero.x + HERO_W, Math.floor((FEET - 4) / 2), "z", GREY4);
+  text(W5 - stats.length - 1, 0, stats, GREY4);
   if (sim9.banner && sim9.t < sim9.banner.until && (sim9.banner.until - sim9.t) % 8 > 1) {
     text(Math.floor((W5 - sim9.banner.text.length) / 2), 1, sim9.banner.text, sim9.banner.color);
   }
-  const words = new Uint32Array(W5 * ROWS9 * 3);
-  for (let cy = 0; cy < ROWS9; cy++) {
+  const words2 = new Uint32Array(W5 * ROWS10 * 3);
+  for (let cy = 0; cy < ROWS10; cy++) {
     for (let cx = 0; cx < W5; cx++) {
       const i = (cy * W5 + cx) * 3;
       const topPx = buf[cy * 2 * W5 + cx];
       const bottom = buf[(cy * 2 + 1) * W5 + cx];
       const g = over.get(cy * W5 + cx);
       if (g) {
-        words[i] = g.ch.codePointAt(0);
-        words[i + 1] = g.color;
-        words[i + 2] = NONE7;
+        words2[i] = g.ch.codePointAt(0);
+        words2[i + 1] = g.color;
+        words2[i + 2] = NONE7;
       } else if (topPx === EMPTY3 && bottom === EMPTY3) {
-        words[i] = 32;
-        words[i + 1] = INK7;
-        words[i + 2] = NONE7;
+        words2[i] = 32;
+        words2[i + 1] = INK7;
+        words2[i + 2] = NONE7;
       } else if (topPx === bottom) {
-        words[i] = 9608;
-        words[i + 1] = topPx;
-        words[i + 2] = NONE7;
+        words2[i] = 9608;
+        words2[i + 1] = topPx;
+        words2[i + 2] = NONE7;
       } else if (bottom === EMPTY3) {
-        words[i] = 9600;
-        words[i + 1] = topPx;
-        words[i + 2] = NONE7;
+        words2[i] = 9600;
+        words2[i + 1] = topPx;
+        words2[i + 2] = NONE7;
       } else if (topPx === EMPTY3) {
-        words[i] = 9604;
-        words[i + 1] = bottom;
-        words[i + 2] = NONE7;
+        words2[i] = 9604;
+        words2[i + 1] = bottom;
+        words2[i + 2] = NONE7;
       } else {
-        words[i] = 9600;
-        words[i + 1] = topPx;
-        words[i + 2] = bottom;
+        words2[i] = 9600;
+        words2[i + 1] = topPx;
+        words2[i + 2] = bottom;
       }
     }
   }
-  return base648(new Uint8Array(words.buffer));
+  return base648(new Uint8Array(words2.buffer));
 }
-const B648 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const B6410 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 function base648(bytes) {
   let out = "";
   let i = 0;
   for (; i + 2 < bytes.length; i += 3) {
     const n = bytes[i] << 16 | bytes[i + 1] << 8 | bytes[i + 2];
-    out += B648[n >> 18 & 63] + B648[n >> 12 & 63] + B648[n >> 6 & 63] + B648[n & 63];
+    out += B6410[n >> 18 & 63] + B6410[n >> 12 & 63] + B6410[n >> 6 & 63] + B6410[n & 63];
   }
   const rest = bytes.length - i;
   if (rest === 1) {
     const n = bytes[i] << 16;
-    out += B648[n >> 18 & 63] + B648[n >> 12 & 63] + "==";
+    out += B6410[n >> 18 & 63] + B6410[n >> 12 & 63] + "==";
   } else if (rest === 2) {
     const n = bytes[i] << 16 | bytes[i + 1] << 8;
-    out += B648[n >> 18 & 63] + B648[n >> 12 & 63] + B648[n >> 6 & 63] + "=";
+    out += B6410[n >> 18 & 63] + B6410[n >> 12 & 63] + B6410[n >> 6 & 63] + "=";
   }
   return out;
 }
@@ -3675,7 +4164,7 @@ async function celebrate5($, label, show, isPractice = false) {
   const counts = !isPractice;
   if (show === "hop") {
     jump();
-    sparkle(sim9.hero.x + 3, FEET - HERO_H - 1, [GOLD, 16579836], 6);
+    sparkle(sim9.hero.x + 3, FEET - HERO_H - 1, [GOLD2, 16579836], 6);
     return;
   }
   if (show === "stomp") {
@@ -3718,17 +4207,17 @@ const start9 = async ($, e, next) => {
         clears: old.clears + gain.clears
       })).then((s) => {
         if (gain.coins > 0 && Math.floor(s.coins / 100) > Math.floor((s.coins - gain.coins) / 100)) {
-          banner3("1UP", 4170573, 50);
+          banner4("1UP", 4170573, 50);
           void notify9($, `\u{1F344} 1UP: ${s.coins} coins.`);
         }
       });
     }
     if (requestId === null || sim9.W === 0) return;
     sim9.course += speed();
-    const isAsleep = step7();
+    const isAsleep = step8();
     if (sim9.isBlitting) return;
     sim9.isBlitting = true;
-    void $.ui.blit({ requestId, key: RASTER8, cells: frame8(isAsleep, sim9.stats), columns: sim9.W }).then((r) => {
+    void repaint($, { requestId, key: RASTER8, cells: frame8(isAsleep, sim9.stats), columns: sim9.W }).then((r) => {
       if (r.deny !== void 0) sim9.requestId = null;
     }).finally(() => {
       sim9.isBlitting = false;
@@ -3789,16 +4278,16 @@ const tool9 = async ($, e, next) => {
 };
 const render9 = async ($, e, next) => {
   const below = await next(e);
-  if (e.surface !== "terminal" || e.props.hasSurvey || !await isShown($, ID9)) {
+  if (!drawsGames(e.surface) || e.props.hasSurvey || !await isShown($, ID9)) {
     sim9.requestId = null;
     return below;
   }
-  const { Box, Raster } = $.ui.resolve(e);
-  fit2(clamp4(e.props.bodyColumns, MIN_COLUMNS4, MAX_COLUMNS4));
+  const { Box } = $.ui.resolve(e);
+  fit2(clamp5(e.props.bodyColumns, MIN_COLUMNS4, MAX_COLUMNS4));
   sim9.requestId = e.requestId;
   sim9.stats = statsLine8(await read10($, score6));
   return <Box flexDirection="column">
-      <Raster key={RASTER8} columns={sim9.W} rows={ROWS9} cells={frame8(false, sim9.stats)} />
+      {pixels($, e, { key: RASTER8, columns: sim9.W, rows: ROWS10, cells: frame8(false, sim9.stats), alt: "Dario" })}
       {below ?? null}
     </Box>;
 };
@@ -3813,8 +4302,8 @@ const game9 = { id: ID9, title: "Dario" };
 import { read as read11, update as update10, atom as atom11 } from "claude-code";
 const ID10 = "town";
 const RASTER9 = "town";
-const ROWS10 = 8;
-const PH4 = ROWS10 * 2;
+const ROWS11 = 8;
+const PH5 = ROWS11 * 2;
 const FPS_MS9 = 66;
 const MIN_COLUMNS5 = 24;
 const MAX_COLUMNS5 = 512;
@@ -3823,10 +4312,10 @@ const HELPER_IDLE = 20 * 1e3 / FPS_MS9;
 const INK8 = 16777216;
 const NONE8 = 16777216;
 const EMPTY4 = 4294967295;
-const GREY4 = 9079434;
-const GOLD2 = 16766011;
+const GREY5 = 9079434;
+const GOLD3 = 16766011;
 const CREEPER = 5025616;
-const GRASS2 = PH4 - 3;
+const GRASS2 = PH5 - 3;
 const BASE2 = GRASS2 - 1;
 const CASTLE_ROOM = 24;
 const MIN_FOR_CASTLE = 64;
@@ -3946,9 +4435,9 @@ const sim10 = {
   stats: "",
   tools: 0
 };
-const rand6 = (a, b) => a + Math.random() * (b - a);
+const rand7 = (a, b) => a + Math.random() * (b - a);
 const pick6 = (list2) => list2[Math.floor(Math.random() * list2.length)];
-const clamp5 = (v, a, b) => Math.max(a, Math.min(b, v));
+const clamp6 = (v, a, b) => Math.max(a, Math.min(b, v));
 const HELPER_COLORS = [14721072, 11558102, 2864035, 15231634, 9159498];
 const MOB_COLORS = {
   W: 15921902,
@@ -3993,7 +4482,7 @@ function syncMobs() {
     const mine = have.filter((m) => m.kind === kind);
     const needed = want.filter((k) => k === kind).length;
     for (let i = mine.length; i < needed; i++) {
-      sim10.mobs.push({ kind, x: -6, face: 1, goal: grazeSpot(rand6(2, Math.max(4, buildable() - 6)), MOBS[kind].body[0].length), restUntil: 0, isLeaving: false });
+      sim10.mobs.push({ kind, x: -6, face: 1, goal: grazeSpot(rand7(2, Math.max(4, buildable() - 6)), MOBS[kind].body[0].length), restUntil: 0, isLeaving: false });
     }
     for (const m of mine.slice(needed)) m.isLeaving = true;
   }
@@ -4002,11 +4491,11 @@ function grazeSpot(x, w) {
   const hi = Math.max(2, buildable() - w);
   const isOpen = (at) => sim10.plots.every((p) => p.kind === "farm" || p.kind === "tree" || at + w < p.x - 1 || at > p.x + widthOf2(p.kind));
   for (let i = 0; i < 12; i++) {
-    const at = clamp5(Math.round(x + rand6(-20, 20)), 1, hi);
+    const at = clamp6(Math.round(x + rand7(-20, 20)), 1, hi);
     if (isOpen(at)) return at;
   }
   for (let at = 1; at <= hi; at++) if (isOpen(at)) return at;
-  return clamp5(Math.round(x + rand6(-14, 14)), 1, hi);
+  return clamp6(Math.round(x + rand7(-14, 14)), 1, hi);
 }
 function animalsLine() {
   const kinds = ["sheep", "pig", "chicken", "cow"];
@@ -4019,7 +4508,7 @@ function stepMobs(isAsleep) {
     const scare = sim10.creepers.find((c) => Math.abs(c.x - m.x) < 10);
     if (scare) {
       m.face = m.x < scare.x ? -1 : 1;
-      m.x = clamp5(m.x + m.face * 0.45, 0, Math.max(0, buildable() - 6));
+      m.x = clamp6(m.x + m.face * 0.45, 0, Math.max(0, buildable() - 6));
       m.restUntil = sim10.t + 40;
       continue;
     }
@@ -4029,7 +4518,7 @@ function stepMobs(isAsleep) {
       m.face = goal > m.x ? 1 : -1;
       m.x += m.face * MOBS[m.kind].speed * (m.isLeaving ? 3 : 1);
     } else if (sim10.t >= m.restUntil) {
-      m.restUntil = sim10.t + Math.floor(rand6(40, 160));
+      m.restUntil = sim10.t + Math.floor(rand7(40, 160));
       m.goal = grazeSpot(m.x, MOBS[m.kind].body[0].length);
     }
   }
@@ -4042,16 +4531,16 @@ function levelOf3(blocks) {
   if (blocks < 1500) return "Town";
   return "City";
 }
-function banner4(text, color, frames) {
+function banner5(text, color, frames) {
   sim10.banner = { text, color, until: sim10.t + frames };
 }
 function sparkle2(x, y, colors, n = 8) {
   for (let i = 0; i < n; i++) {
-    sim10.particles.push({ x, y, vx: rand6(-0.7, 0.7), vy: rand6(-0.8, 0.2), age: 0, life: Math.floor(rand6(10, 20)), color: pick6(colors), gravity: 0.05 });
+    sim10.particles.push({ x, y, vx: rand7(-0.7, 0.7), vy: rand7(-0.8, 0.2), age: 0, life: Math.floor(rand7(10, 20)), color: pick6(colors), gravity: 0.05 });
   }
 }
 function treeStage(p) {
-  return clamp5(Math.floor((sim10.tools - (p.plantedAt ?? 0)) / 8), 0, 2);
+  return clamp6(Math.floor((sim10.tools - (p.plantedAt ?? 0)) / 8), 0, 2);
 }
 const rowsOf = (p) => p.kind === "tree" ? TREE_STAGES[treeStage(p)] : BLUEPRINTS[p.kind];
 const sizeOf = (p) => p.kind === "tree" ? Infinity : blocksOf(BLUEPRINTS[p.kind]).length;
@@ -4101,8 +4590,8 @@ function finish(p, isQuiet = false) {
   p.wasDone = true;
   if (p.kind === "house" || p.kind === "bighouse") sim10.gain.houses += 1;
   if (p.kind === "castle") sim10.gain.castles += 1;
-  if (!isQuiet) banner4(`${NAMES[p.kind]} BUILT`, GOLD2, 40);
-  sparkle2(p.x + widthOf2(p.kind) / 2, BASE2 - 4, [GOLD2, 16579836], 6);
+  if (!isQuiet) banner5(`${NAMES[p.kind]} BUILT`, GOLD3, 40);
+  sparkle2(p.x + widthOf2(p.kind) / 2, BASE2 - 4, [GOLD3, 16579836], 6);
 }
 function villager(id) {
   let v = sim10.villagers.find((x) => x.id === id);
@@ -4124,7 +4613,7 @@ function work(who, n, counts = true) {
     const b = list2[Math.min(p.progress, list2.length - 1)];
     p.progress += 1;
     if (counts) sim10.gain.blocks += 1;
-    v.x = clamp5(v.x, 0, sim10.W - 3);
+    v.x = clamp6(v.x, 0, sim10.W - 3);
     sim10.particles.push({ x: p.x + b.dx, y: BASE2 + b.dy, vx: 0, vy: -0.2, age: 0, life: 4, color: 16579836 });
     if (isDone(p)) finish(p);
   }
@@ -4143,14 +4632,14 @@ function plantTree(counts = true) {
 function raiseCastle(isWhole, counts = true) {
   const x = castleX();
   if (x === Infinity) {
-    banner4("NO ROOM FOR A CASTLE", GREY4, 40);
+    banner5("NO ROOM FOR A CASTLE", GREY5, 40);
     return;
   }
   let castle = sim10.plots.find((p) => p.kind === "castle");
   if (!castle || isDone(castle) && castle.wasDone) {
     if (castle) {
-      for (let i = 0; i < 4; i++) sparkle2(rand6(x, sim10.W - 2), rand6(1, 6), [GOLD2, 15017249, 5090295, 4170573], 12);
-      banner4("LONG LIVE THE CASTLE!", GOLD2, 60);
+      for (let i = 0; i < 4; i++) sparkle2(rand7(x, sim10.W - 2), rand7(1, 6), [GOLD3, 15017249, 5090295, 4170573], 12);
+      banner5("LONG LIVE THE CASTLE!", GOLD3, 60);
       return;
     }
     castle = { kind: "castle", x, progress: 0, wasDone: false };
@@ -4163,9 +4652,9 @@ function raiseCastle(isWhole, counts = true) {
   castle.progress = goal;
   if (isDone(castle)) {
     finish(castle, true);
-    banner4("CASTLE BUILT!", GOLD2, 70);
-    for (let i = 0; i < 4; i++) sparkle2(rand6(x, sim10.W - 2), rand6(1, 6), [GOLD2, 15017249, 5090295, 4170573], 12);
-  } else banner4("THE CASTLE GROWS", GOLD2, 45);
+    banner5("CASTLE BUILT!", GOLD3, 70);
+    for (let i = 0; i < 4; i++) sparkle2(rand7(x, sim10.W - 2), rand7(1, 6), [GOLD3, 15017249, 5090295, 4170573], 12);
+  } else banner5("THE CASTLE GROWS", GOLD3, 45);
 }
 function creeper(counts = true) {
   const targets = sim10.plots.filter((p) => p.kind !== "tree" && p.progress > 4 && p.x + widthOf2(p.kind) <= sim10.W);
@@ -4175,8 +4664,8 @@ function creeper(counts = true) {
   if (counts) sim10.gain.creepers += 1;
 }
 function explode(c) {
-  sparkle2(c.x, BASE2 - 2, [16579836, GREY4, 16749099], 14);
-  banner4("BOOM", 16749099, 30);
+  sparkle2(c.x, BASE2 - 2, [16579836, GREY5, 16749099], 14);
+  banner5("BOOM", 16749099, 30);
   for (const p of sim10.plots) {
     if (p.kind === "tree") continue;
     const w = widthOf2(p.kind);
@@ -4185,7 +4674,7 @@ function explode(c) {
     }
   }
 }
-function step8() {
+function step9() {
   sim10.t += 1;
   const isAsleep = !sim10.isTurn && sim10.working === 0 && sim10.creepers.length === 0 && sim10.t - sim10.lastActivity > SLEEP_AFTER3;
   const target2 = sim10.plots.find((p) => p.kind !== "tree" && !isDone(p) && p.kind !== "castle");
@@ -4213,13 +4702,13 @@ function step8() {
     p.y += p.vy;
     p.vy += p.gravity ?? 0;
   }
-  sim10.particles = sim10.particles.filter((p) => p.age < p.life && p.x >= 0 && p.x < sim10.W && p.y >= 0 && p.y < PH4);
+  sim10.particles = sim10.particles.filter((p) => p.age < p.life && p.x >= 0 && p.x < sim10.W && p.y >= 0 && p.y < PH5);
   return isAsleep;
 }
 function put4(buf, x, y, color) {
   x = Math.round(x);
   y = Math.round(y);
-  if (x < 0 || x >= sim10.W || y < 0 || y >= PH4) return;
+  if (x < 0 || x >= sim10.W || y < 0 || y >= PH5) return;
   buf[y * sim10.W + x] = color;
 }
 function drawPlot(buf, p) {
@@ -4286,10 +4775,10 @@ function drawGround(buf) {
 const statsLine9 = (s) => `${levelOf3(s.blocks)}  \u25A6 ${s.blocks}  \u2302 ${s.houses}  \u2663 ${s.trees}  \u265C ${s.castles}  \u2692 ${s.tools}`;
 function frame9(isAsleep, stats) {
   const W5 = sim10.W;
-  const buf = new Uint32Array(W5 * PH4).fill(EMPTY4);
+  const buf = new Uint32Array(W5 * PH5).fill(EMPTY4);
   const over = /* @__PURE__ */ new Map();
   const text = (x, row, s, color) => [...s].forEach((ch, i) => {
-    if (x + i >= 0 && x + i < W5 && row >= 0 && row < ROWS10) over.set(row * W5 + x + i, { ch, color });
+    if (x + i >= 0 && x + i < W5 && row >= 0 && row < ROWS11) over.set(row * W5 + x + i, { ch, color });
   });
   drawGround(buf);
   for (const p of sim10.plots) drawPlot(buf, p);
@@ -4298,20 +4787,20 @@ function frame9(isAsleep, stats) {
     if (p.ch) text(Math.round(p.x), Math.floor(Math.round(p.y) / 2), p.ch, p.color);
     else put4(buf, p.x, p.y, p.color);
   }
-  const mobs = new Uint32Array(W5 * PH4).fill(EMPTY4);
+  const mobs = new Uint32Array(W5 * PH5).fill(EMPTY4);
   for (const m of sim10.mobs) drawMob(mobs, m, isAsleep);
   for (const c of sim10.creepers) drawCreeper(mobs, c);
   for (let i = 0; i < mobs.length; i++) if (mobs[i] !== EMPTY4) buf[i] = mobs[i];
   if (isAsleep) {
     const home = sim10.plots.find((p) => (p.kind === "house" || p.kind === "bighouse") && isDone(p));
-    if (home) text(home.x + widthOf2(home.kind), Math.floor((BASE2 - 8) / 2), "z", GREY4);
+    if (home) text(home.x + widthOf2(home.kind), Math.floor((BASE2 - 8) / 2), "z", GREY5);
   }
-  text(W5 - stats.length - 1, 0, stats, GREY4);
+  text(W5 - stats.length - 1, 0, stats, GREY5);
   if (sim10.banner && sim10.t < sim10.banner.until && (sim10.banner.until - sim10.t) % 8 > 1) {
     text(Math.floor((W5 - sim10.banner.text.length) / 2), 1, sim10.banner.text, sim10.banner.color);
   }
-  const words = new Uint32Array(W5 * ROWS10 * 3);
-  for (let cy = 0; cy < ROWS10; cy++) {
+  const words2 = new Uint32Array(W5 * ROWS11 * 3);
+  for (let cy = 0; cy < ROWS11; cy++) {
     for (let cx = 0; cx < W5; cx++) {
       const i = (cy * W5 + cx) * 3;
       const isMobTop = mobs[cy * 2 * W5 + cx] !== EMPTY4;
@@ -4320,49 +4809,49 @@ function frame9(isAsleep, stats) {
       const bottom = buf[(cy * 2 + 1) * W5 + cx];
       const g = isMobTop || isMobBottom ? void 0 : over.get(cy * W5 + cx);
       if (g) {
-        words[i] = g.ch.codePointAt(0);
-        words[i + 1] = g.color;
-        words[i + 2] = NONE8;
+        words2[i] = g.ch.codePointAt(0);
+        words2[i + 1] = g.color;
+        words2[i + 2] = NONE8;
       } else if (top === EMPTY4 && bottom === EMPTY4) {
-        words[i] = 32;
-        words[i + 1] = INK8;
-        words[i + 2] = NONE8;
+        words2[i] = 32;
+        words2[i + 1] = INK8;
+        words2[i + 2] = NONE8;
       } else if (top === bottom) {
-        words[i] = 9608;
-        words[i + 1] = top;
-        words[i + 2] = NONE8;
+        words2[i] = 9608;
+        words2[i + 1] = top;
+        words2[i + 2] = NONE8;
       } else if (bottom === EMPTY4) {
-        words[i] = 9600;
-        words[i + 1] = top;
-        words[i + 2] = NONE8;
+        words2[i] = 9600;
+        words2[i + 1] = top;
+        words2[i + 2] = NONE8;
       } else if (top === EMPTY4) {
-        words[i] = 9604;
-        words[i + 1] = bottom;
-        words[i + 2] = NONE8;
+        words2[i] = 9604;
+        words2[i + 1] = bottom;
+        words2[i + 2] = NONE8;
       } else {
-        words[i] = 9600;
-        words[i + 1] = top;
-        words[i + 2] = bottom;
+        words2[i] = 9600;
+        words2[i + 1] = top;
+        words2[i + 2] = bottom;
       }
     }
   }
-  return base649(new Uint8Array(words.buffer));
+  return base649(new Uint8Array(words2.buffer));
 }
-const B649 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const B6411 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 function base649(bytes) {
   let out = "";
   let i = 0;
   for (; i + 2 < bytes.length; i += 3) {
     const n = bytes[i] << 16 | bytes[i + 1] << 8 | bytes[i + 2];
-    out += B649[n >> 18 & 63] + B649[n >> 12 & 63] + B649[n >> 6 & 63] + B649[n & 63];
+    out += B6411[n >> 18 & 63] + B6411[n >> 12 & 63] + B6411[n >> 6 & 63] + B6411[n & 63];
   }
   const rest = bytes.length - i;
   if (rest === 1) {
     const n = bytes[i] << 16;
-    out += B649[n >> 18 & 63] + B649[n >> 12 & 63] + "==";
+    out += B6411[n >> 18 & 63] + B6411[n >> 12 & 63] + "==";
   } else if (rest === 2) {
     const n = bytes[i] << 16 | bytes[i + 1] << 8;
-    out += B649[n >> 18 & 63] + B649[n >> 12 & 63] + B649[n >> 6 & 63] + "=";
+    out += B6411[n >> 18 & 63] + B6411[n >> 12 & 63] + B6411[n >> 6 & 63] + "=";
   }
   return out;
 }
@@ -4388,7 +4877,7 @@ async function flush($) {
   sim10.stats = statsLine9(next);
   sim10.tools = next.tools;
   if (levelOf3(next.blocks) !== levelOf3(old.blocks)) {
-    banner4(levelOf3(next.blocks).toUpperCase(), GOLD2, 60);
+    banner5(levelOf3(next.blocks).toUpperCase(), GOLD3, 60);
     void notify10($, `\u{1F3F0} Your camp grew into a ${levelOf3(next.blocks).toLowerCase()}: ${next.blocks} blocks.`);
   }
 }
@@ -4432,7 +4921,7 @@ const start10 = async ($, e, next) => {
   const s = await read11($, score7);
   sim10.stats = statsLine9(s);
   sim10.tools = s.tools;
-  if (sim10.W === 0) sim10.W = clamp5(100, MIN_COLUMNS5, MAX_COLUMNS5);
+  if (sim10.W === 0) sim10.W = clamp6(100, MIN_COLUMNS5, MAX_COLUMNS5);
   await $.command.register({
     name: "town",
     description: 'Block Town above the prompt: the score. "/town build|tree|finish|castle|creeper" to show off, "/town reset" to start over.'
@@ -4441,10 +4930,10 @@ const start10 = async ($, e, next) => {
   $.clock.every(FPS_MS9, () => {
     const requestId = sim10.requestId;
     if (requestId === null || sim10.W === 0) return;
-    const isAsleep = step8();
+    const isAsleep = step9();
     if (sim10.isBlitting) return;
     sim10.isBlitting = true;
-    void $.ui.blit({ requestId, key: RASTER9, cells: frame9(isAsleep, sim10.stats), columns: sim10.W }).then((r) => {
+    void repaint($, { requestId, key: RASTER9, cells: frame9(isAsleep, sim10.stats), columns: sim10.W }).then((r) => {
       if (r.deny !== void 0) sim10.requestId = null;
     }).finally(() => {
       sim10.isBlitting = false;
@@ -4510,16 +4999,16 @@ const tool10 = async ($, e, next) => {
 };
 const render10 = async ($, e, next) => {
   const below = await next(e);
-  if (e.surface !== "terminal" || e.props.hasSurvey || !await isShown($, ID10)) {
+  if (!drawsGames(e.surface) || e.props.hasSurvey || !await isShown($, ID10)) {
     sim10.requestId = null;
     return below;
   }
-  const { Box, Raster } = $.ui.resolve(e);
-  sim10.W = clamp5(e.props.bodyColumns, MIN_COLUMNS5, MAX_COLUMNS5);
+  const { Box } = $.ui.resolve(e);
+  sim10.W = clamp6(e.props.bodyColumns, MIN_COLUMNS5, MAX_COLUMNS5);
   sim10.requestId = e.requestId;
   sim10.stats = statsLine9(await read11($, score7));
   return <Box flexDirection="column">
-      <Raster key={RASTER9} columns={sim10.W} rows={ROWS10} cells={frame9(false, sim10.stats)} />
+      {pixels($, e, { key: RASTER9, columns: sim10.W, rows: ROWS11, cells: frame9(false, sim10.stats), alt: "Block Town" })}
       {below ?? null}
     </Box>;
 };
@@ -4844,7 +5333,7 @@ async function makeDefault($, setting, id) {
   await update11($, pickedFor, () => `fixed|${pool.join(",")}`);
   await update11($, defaultGame, () => id);
 }
-async function step9($, by) {
+async function step10($, by) {
   const now = await read12($, shown);
   const at = GAMES.findIndex((g) => g.id === now[now.length - 1]);
   const id = GAMES[(at + by + GAMES.length) % GAMES.length]?.id ?? "";
@@ -4998,6 +5487,7 @@ export const register = (on, options) => {
   const setting = { mode: modeOf(options.mode), pool: poolOf(options.pool) };
   on("session.start", async ($, e, next) => {
     await forgetSaves($);
+    startFlipbooks($);
     await $.command.register({
       name: "arcade",
       description: `The Arcade's game menu. "/arcade <game>" plays one in this terminal, "/arcade default <game>" makes it the game new terminals start with, "/arcade next", "/arcade random|rotate|all|off", "/arcade pool <games>", "/arcade moments", "/arcade hide".`
@@ -5026,8 +5516,8 @@ export const register = (on, options) => {
     return ran;
   });
   on("command.run", { command: "arcade" }, async ($, e) => {
-    const words = (e.args ?? "").trim().split(/[\s,]+/).filter(Boolean);
-    const [first = "", ...rest] = words.map((w) => w.toLowerCase());
+    const words2 = (e.args ?? "").trim().split(/[\s,]+/).filter(Boolean);
+    const [first = "", ...rest] = words2.map((w) => w.toLowerCase());
     if (first === "" || first === "menu") {
       if (await openMenu($)) return { text: 'Arcade menu open: pick a game, \u2606 makes it your default. Esc closes. "/arcade help" lists the commands.' };
       return { text: await status($, setting.mode, setting.pool) };
@@ -5094,36 +5584,79 @@ export const register = (on, options) => {
     await celebrate7($, subagentMilestones());
     return ran;
   });
-  on("command.run", { command: "dragon" }, async ($, e, next) => await askReset($, "dragon", e.args) ?? withPreview("dragon", e.args, await command($, e, next)));
-  on("command.run", { command: "jackpot" }, async ($, e, next) => await askReset($, "jackpot", e.args) ?? withPreview("jackpot", e.args, await command3($, e, next)));
-  on("command.run", { command: "outlaw" }, async ($, e, next) => await askReset($, "outlaw", e.args) ?? withPreview("outlaw", e.args, await command5($, e, next)));
-  on("command.run", { command: "tama" }, async ($, e, next) => await askReset($, "tama", e.args) ?? withPreview("tama", e.args, await command6($, e, next)));
-  on("command.run", { command: "tetris" }, async ($, e, next) => await askReset($, "tetris", e.args) ?? withPreview("tetris", e.args, await command7($, e, next)));
-  on("command.run", { command: "octopus" }, async ($, e, next) => await askReset($, "octopus", e.args) ?? withPreview("octopus", e.args, await command4($, e, next)));
-  on("command.run", { command: "duck" }, async ($, e, next) => await askReset($, "duck", e.args) ?? withPreview("duck", e.args, await command2($, e, next)));
-  on("command.run", { command: "bugs" }, async ($, e, next) => await askReset($, "bugs", e.args) ?? withPreview("bugs", e.args, await command8($, e, next)));
-  on("command.run", { command: "dario" }, async ($, e, next) => await askReset($, "dario", e.args) ?? withPreview("dario", e.args, await command9($, e, next)));
-  on("command.run", { command: "town" }, async ($, e, next) => await askReset($, "town", e.args) ?? withPreview("town", e.args, await command10($, e, next)));
+  on("command.run", { command: "dragon" }, async ($, e, next) => {
+    const ran = await askReset($, "dragon", e.args) ?? withPreview("dragon", e.args, await command($, e, next));
+    redrawDesktop($);
+    return ran;
+  });
+  on("command.run", { command: "jackpot" }, async ($, e, next) => {
+    const ran = await askReset($, "jackpot", e.args) ?? withPreview("jackpot", e.args, await command3($, e, next));
+    redrawDesktop($);
+    return ran;
+  });
+  on("command.run", { command: "outlaw" }, async ($, e, next) => {
+    const ran = await askReset($, "outlaw", e.args) ?? withPreview("outlaw", e.args, await command5($, e, next));
+    redrawDesktop($);
+    return ran;
+  });
+  on("command.run", { command: "tama" }, async ($, e, next) => {
+    const ran = await askReset($, "tama", e.args) ?? withPreview("tama", e.args, await command6($, e, next));
+    redrawDesktop($);
+    return ran;
+  });
+  on("command.run", { command: "tetris" }, async ($, e, next) => {
+    const ran = await askReset($, "tetris", e.args) ?? withPreview("tetris", e.args, await command7($, e, next));
+    redrawDesktop($);
+    return ran;
+  });
+  on("command.run", { command: "octopus" }, async ($, e, next) => {
+    const ran = await askReset($, "octopus", e.args) ?? withPreview("octopus", e.args, await command4($, e, next));
+    redrawDesktop($);
+    return ran;
+  });
+  on("command.run", { command: "duck" }, async ($, e, next) => {
+    const ran = await askReset($, "duck", e.args) ?? withPreview("duck", e.args, await command2($, e, next));
+    redrawDesktop($);
+    return ran;
+  });
+  on("command.run", { command: "bugs" }, async ($, e, next) => {
+    const ran = await askReset($, "bugs", e.args) ?? withPreview("bugs", e.args, await command8($, e, next));
+    redrawDesktop($);
+    return ran;
+  });
+  on("command.run", { command: "dario" }, async ($, e, next) => {
+    const ran = await askReset($, "dario", e.args) ?? withPreview("dario", e.args, await command9($, e, next));
+    redrawDesktop($);
+    return ran;
+  });
+  on("command.run", { command: "town" }, async ($, e, next) => {
+    const ran = await askReset($, "town", e.args) ?? withPreview("town", e.args, await command10($, e, next));
+    redrawDesktop($);
+    return ran;
+  });
   on("ui.message", ($, e, next) => message($, e, next));
   on("prompt.submit", async ($, e, next) => {
     const ran = await prompt($, e, ((e1) => prompt3($, e1, ((e2) => prompt5($, e2, ((e3) => prompt6($, e3, ((e4) => prompt7($, e4, ((e5) => prompt4($, e5, ((e6) => prompt2($, e6, ((e7) => prompt8($, e7, ((e8) => prompt9($, e8, ((e9) => prompt10($, e9, next)))))))))))))))))));
     await celebrate7($, promptMilestones(String(e.text ?? ""), await $.clock.now()));
+    redrawDesktop($);
     return ran;
   });
   on("turn.complete", async ($, e, next) => {
     const ran = await turn($, e, ((e1) => turn3($, e1, ((e2) => turn5($, e2, ((e3) => turn6($, e3, ((e4) => turn7($, e4, ((e5) => turn4($, e5, ((e6) => turn2($, e6, ((e7) => turn8($, e7, ((e8) => turn9($, e8, ((e9) => turn10($, e9, next)))))))))))))))))));
     if (e.agentId === void 0 && !e.isAborted) await celebrate7($, turnMilestones(await $.clock.now()));
+    redrawDesktop($);
     return ran;
   });
   on("tool.call", async ($, e, next) => {
     const ran = await tool($, e, ((e1) => tool3($, e1, ((e2) => tool5($, e2, ((e3) => tool6($, e3, ((e4) => tool7($, e4, ((e5) => tool4($, e5, ((e6) => tool2($, e6, ((e7) => tool8($, e7, ((e8) => tool9($, e8, ((e9) => tool10($, e9, next)))))))))))))))))));
     if (e.agentId === void 0 && ran.deny === void 0) await celebrate7($, toolMilestones(e, ran));
+    redrawDesktop($);
     return ran;
   });
   on("ui.render", { component: "AbovePrompt" }, async ($, e, next) => {
     const tree = await render($, e, ((e1) => render3($, e1, ((e2) => render5($, e2, ((e3) => render6($, e3, ((e4) => render7($, e4, ((e5) => render4($, e5, ((e6) => render2($, e6, ((e7) => render8($, e7, ((e8) => render9($, e8, ((e9) => render10($, e9, next)))))))))))))))))));
     const ids = await read12($, shown);
-    if (e.surface !== "terminal" || e.props.hasSurvey || ids.length !== 1 || tree === null || tree === void 0) return tree;
+    if (!drawsGames(e.surface) || e.props.hasSurvey || ids.length !== 1 || tree === null || tree === void 0) return tree;
     const { Box, Button, Text } = $.ui.resolve(e);
     const id = ids[0] ?? "";
     const fallback = await read12($, defaultGame);
@@ -5132,9 +5665,9 @@ export const register = (on, options) => {
     return <Box flexDirection="column">
         <Box key="arcade-controls" flexDirection="row" justifyContent="flex-end" height={1}>
           {isHinted ? <Text key="arcade-hint" dimColor wrap="truncate">{"\u25B6 next game  \u2630 all games and your default    "}</Text> : null}
-          <Button key="arcade-prev" label="◀" plain dimColor onPress={() => step9($, -1)} />
+          <Button key="arcade-prev" label="◀" plain dimColor onPress={() => step10($, -1)} />
           <Text key="arcade-title" dimColor>{` ${title(id)} `}</Text>
-          <Button key="arcade-next" label="▶" plain dimColor onPress={() => step9($, 1)} />
+          <Button key="arcade-next" label="▶" plain dimColor onPress={() => step10($, 1)} />
           <Text key="arcade-gap"> </Text>
           <Button key="arcade-menu" label="☰" plain dimColor onPress={() => openMenu($)} />
           <Text key="arcade-gap3"> </Text>

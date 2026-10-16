@@ -3,6 +3,7 @@ import type { EngineInterface, Hook, MatchedHook } from 'claude-code'
 
 import type { DarioScore as Score } from '../../types'
 import type { Milestone } from '../milestones'
+import { drawsGames, pixels, repaint } from '../pixels'
 import { isShown } from '../shown'
 import type { Game } from '../shown'
 
@@ -493,7 +494,7 @@ export const start: Hook<'session.start'> = async ($, e, next) => {
     const isAsleep = step()
     if (sim.isBlitting) return
     sim.isBlitting = true
-    void $.ui.blit({ requestId, key: RASTER, cells: frame(isAsleep, sim.stats), columns: sim.W })
+    void repaint($, { requestId, key: RASTER, cells: frame(isAsleep, sim.stats), columns: sim.W })
       .then(r => {
         if (r.deny !== undefined) sim.requestId = null
       })
@@ -565,18 +566,18 @@ export const tool: Hook<'tool.call'> = async ($, e, next) => {
 // The course runs the full width of the band, above whatever else is there.
 export const render: MatchedHook<'ui.render', { component: 'AbovePrompt' }> = async ($, e, next) => {
   const below = await next(e)
-  if (e.surface !== 'terminal' || e.props.hasSurvey || !(await isShown($, ID))) {
+  if (!drawsGames(e.surface) || e.props.hasSurvey || !(await isShown($, ID))) {
     sim.requestId = null
     return below
   }
-  const { Box, Raster } = $.ui.resolve(e)
+  const { Box } = $.ui.resolve(e)
   fit(clamp(e.props.bodyColumns, MIN_COLUMNS, MAX_COLUMNS))
   sim.requestId = e.requestId
   sim.stats = statsLine(await read($, score))
 
   return (
     <Box flexDirection="column">
-      <Raster key={RASTER} columns={sim.W} rows={ROWS} cells={frame(false, sim.stats)} />
+      {pixels($, e, { key: RASTER, columns: sim.W, rows: ROWS, cells: frame(false, sim.stats), alt: 'Dario' })}
       {below ?? null}
     </Box>
   )
