@@ -135,7 +135,7 @@ test('away mode skips while a terminal is in front, but still answers a prompt',
 test('/sounds off mutes and an unknown word lists the packs', async ($, on) => {
   const { played } = engine(on)
   const off = await $.command.run({ command: 'sounds', args: 'off' })
-  expect(off.text).toBe('Sound off: no clips until /sounds on')
+  expect(off.text).toBe('Sound off in every terminal, both accounts: no clips until /sounds on')
   const night = await $.command.run({ command: 'sounds', args: 'night off' })
   expect(night.text).toBe('Quiet hours off: clips play at night too')
   await $.turn.complete(LONG)
@@ -143,6 +143,23 @@ test('/sounds off mutes and an unknown word lists the packs', async ($, on) => {
   expect(played).toEqual([])
   const bad = await $.command.run({ command: 'sounds', args: 'kazoo' })
   expect(bad.text).toContain('red-alert')
+})
+
+test('/sounds off in one terminal mutes every terminal of both accounts', async ($, on) => {
+  const { played, clock, files } = engine(on)
+  await $.command.run({ command: 'sounds', args: 'off' })
+  const shared = Object.keys(files).find((f) => f.endsWith('/sound.json'))!
+  expect(JSON.parse(files[shared])).toEqual({ isOn: false })
+  // Another terminal, maybe of the other account, ran /sounds on
+  files[shared] = JSON.stringify({ isOn: true })
+  await $.tool.call({ tool: 'AskUserQuestion', questions: [] } as any)
+  await settle()
+  expect(played.length).toBe(1)
+  clock.now += 10000
+  files[shared] = JSON.stringify({ isOn: false })
+  await $.tool.call({ tool: 'AskUserQuestion', questions: [] } as any)
+  await settle()
+  expect(played.length).toBe(1)
 })
 
 test('/sounds test plays every sound of a pack', async ($, on) => {

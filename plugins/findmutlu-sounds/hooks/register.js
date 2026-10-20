@@ -1062,6 +1062,7 @@ export function register(on) {
     }
     const updated = change.apply({ ...settings }, args)
     await $.store.set('settings', updated)
+    if (change === CHANGES[0]) await $.fs.write(await soundFile($), JSON.stringify({ isOn: updated.isOn })).catch(() => {})
     return { text: change.said(updated, args, settings) }
   })
 
@@ -1190,6 +1191,22 @@ async function readAll($) {
     return all && typeof all.pack === 'string' && Number.isFinite(all.at) ? all : undefined
   } catch {
     // Never used, or unreadable: each terminal keeps its own pack
+    return undefined
+  }
+}
+
+// Sound on or off, { "isOn": true }, shared by every terminal of both accounts: one /sounds off
+// mutes them all
+async function soundFile($) {
+  return (await $.env.get('HOME')) + '/.config/' + $.plugin.name + '/sound.json'
+}
+
+async function readSound($) {
+  try {
+    const sound = JSON.parse(await $.fs.read(await soundFile($)))
+    return typeof sound?.isOn === 'boolean' ? sound.isOn : undefined
+  } catch {
+    // Never switched since 0.1.9, or unreadable: the account's own setting stands
     return undefined
   }
 }
@@ -1399,6 +1416,8 @@ async function readSettings($) {
   // Quiet hours were on by default until 0.1.8 and every saved change kept that default, so
   // only a /sounds night on of the user's own counts: silence at night looked like a bug
   if (!settings.isNightChosen) settings.isNightQuiet = false
+  const isOn = await readSound($)
+  if (isOn !== undefined) settings.isOn = isOn
   return settings
 }
 
@@ -1419,7 +1438,7 @@ const CHANGES = [
   {
     matches: (a) => a.length === 1 && (a[0] === 'on' || a[0] === 'off'),
     apply: (s, a) => ({ ...s, isOn: a[0] === 'on' }),
-    said: (s) => (s.isOn ? 'Sound on' : 'Sound off: no clips until /sounds on'),
+    said: (s) => (s.isOn ? 'Sound on in every terminal, both accounts' : 'Sound off in every terminal, both accounts: no clips until /sounds on'),
   },
   {
     matches: (a) => a.length === 1 && (a[0] === 'always' || a[0] === 'away'),

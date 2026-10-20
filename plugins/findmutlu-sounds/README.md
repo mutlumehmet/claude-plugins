@@ -92,7 +92,7 @@ same terms.
 | `/sounds <moment> off`, `/sounds <moment> reset` | Silence one moment, or give it back to the terminal's pack |
 | `/sounds <moment>` | What that moment plays now and the names of its clips |
 | `/sounds test [pack] [moment]` | Play every sound of a pack once, or only one moment of it (`/sounds test aoe-turk pushed`), whatever the settings |
-| `/sounds off`, `/sounds on` | Mute, unmute |
+| `/sounds off`, `/sounds on` | Mute or unmute every terminal at once, open or new, in both accounts (Terminal, VS Code, any profile) |
 | `/sounds away`, `/sounds always` | Play only while no terminal or editor is the front app, or always (the default). The prompt answer still plays in away mode: you are at the keyboard |
 | `/sounds night off`, `/sounds night on` | Quiet hours: no clips from 23:00 to 07:00. Off by default |
 | `/sounds rest <minutes>` | How long after this terminal's last prompt sound the next prompt plays one; 0 (the default) plays every prompt |
@@ -137,10 +137,10 @@ scripts/packs.py`, which writes the table in `hooks/register.js` (CI checks it i
   packs folder at session start. In away mode, the name of the front app (`lsappinfo`, no
   permission needed).
 - **Does**: plays a clip (`afplay` underneath), never waiting for it, so
-  nothing slows down. Answers its own `/sounds` command and no other. Writes three files in
+  nothing slows down. Answers its own `/sounds` command and no other. Writes four files in
   `~/.config/findmutlu-sounds/`: `last-played` (the time of the last sound), so your terminals take
   turns instead of talking over each other, `all-terminals.json` (the pack and time of the last
-  `/sounds default`) and `projects.json` (each project folder you gave a pack, and the pack). Every
+  `/sounds default`), `sound.json` (whether sound is on, set by `/sounds on` and `/sounds off`) and `projects.json` (each project folder you gave a pack, and the pack). Every
   terminal reads them before a sound, and asks Claude Code which folder it runs in.
 - **Hooks**: `tool.call` (Bash, AskUserQuestion, ExitPlanMode) plays a sound and passes the
   call on; it never changes or blocks a call. `prompt.submit`, `turn.complete` and the notification, subagent and compaction
