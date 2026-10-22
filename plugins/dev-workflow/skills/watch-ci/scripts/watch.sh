@@ -16,7 +16,9 @@
 #   --repo owner/name   repository (default: the repo of the current folder)
 #   --gate-job NAME     a job that only fails because another job failed
 #                       (a "ci gate" that sums up the others); it is skipped
-#                       when explaining a failure. Repeatable.
+#                       when explaining a failure, and GREEN needs it to have
+#                       passed on the commit (missing = keep waiting).
+#                       Repeatable.
 #   --superseded-step NAME
 #                       a gate-job step that fails only because a newer
 #                       commit exists (e.g. "only main's HEAD may deploy").
@@ -45,7 +47,7 @@ while [ $# -gt 0 ]; do
     --merge-timeout) MTIMEOUT="$2"; shift 2;;
     --interval) INTERVAL="$2"; shift 2;;
     --merge) MERGE=1; shift;;
-    -h|--help) sed -n '2,35p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
+    -h|--help) sed -n '2,37p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
     -*) echo; echo "WATCH RESULT: ERROR unknown option $1 (see --help)"; exit 2;;
     *) TARGET="$1"; shift;;
   esac
@@ -62,6 +64,27 @@ newer_exists() {
   [ -n "$br" ] || return 1
   head=$(gh api "repos/$REPO/commits/$br" --jq .sha 2>/dev/null) || return 1
   [ -n "$head" ] && [ "$head" != "$SHA" ]
+}
+# Gate jobs that have not passed on $SHA, quoted and space separated (empty
+# when all passed). An Actions job is a check run named after the job; with
+# filter=latest a rerun replaces its earlier attempt.
+gates_not_passed() {
+  local g out ok n
+  for g in ${GATES[@]+"${GATES[@]}"}; do
+    out=$(gh api -X GET "repos/$REPO/commits/$SHA/check-runs" -f check_name="$g" -f filter=latest \
+      --jq '(.check_runs | map(select(.status=="completed" and .conclusion=="success")) | length | tostring) + " " + (.check_runs | length | tostring)' 2>/dev/null) || out="0 0"
+    read -r ok n <<< "$out"
+    if [ "${n:-0}" -eq 0 ] || [ "${ok:-0}" -ne "$n" ]; then printf "'%s' " "$g"; fi
+  done
+}
+# Split the latest poll into the lists the verdict reads: dep (Dependabot
+# runs), vruns (every other run) and the failures bad, badck, badst.
+classify() {
+  dep=$(printf '%s\n' "$runs" | awk -F'\t' 'NF && $6=="dynamic"')
+  vruns=$(printf '%s\n' "$runs" | awk -F'\t' 'NF && $6!="dynamic"')
+  bad=$(printf '%s\n' "$vruns" | awk -F'\t' 'NF && !($4=="success" || $4=="skipped" || $4=="neutral")')
+  badck=$(printf '%s\n' "$checks" | awk -F'\t' 'NF && !($3=="success" || $3=="skipped" || $3=="neutral")')
+  badst=$(printf '%s\n' "$stats" | awk -F'\t' 'NF && $2!="success"')
 }
 is_gated_status() { local g; for g in ${GATED[@]+"${GATED[@]}"}; do [ "$1" = "$g" ] && return 0; done; return 1; }
 is_superseded_step() { local g; for g in ${SUPERSEDED[@]+"${SUPERSEDED[@]}"}; do [ "$1" = "$g" ] && return 0; done; return 1; }
@@ -103,7 +126,8 @@ else
 fi
 
 say "Watching $LABEL in $REPO (timeout $TIMEOUT min)."
-start=$(date +%s); end=$(( start + TIMEOUT*60 )); stable=0; last=""
+start=$(date +%s); end=$(( start + TIMEOUT*60 )); stable=0; last=""; seen=""; gatelast=""
+timed_out() { [ "$(date +%s)" -ge "$end" ] && { result "TIMEOUT $LABEL $1 after $TIMEOUT min"; exit 2; }; }
 while :; do
   # 1. GitHub Actions workflow runs.
   runs=$(gh api "repos/$REPO/actions/runs?head_sha=$SHA&per_page=100" \
@@ -115,7 +139,20 @@ while :; do
   # 3. Commit statuses (deploy previews and older integrations).
   stats=$(gh api "repos/$REPO/commits/$SHA/status" \
     --jq '.statuses[] | "\(.context)\t\(.state)\t\(.target_url // "")"' 2>/dev/null | sort -u) || stats=""
-  if [ "$runs" = "__ERR__" ]; then say "GitHub API error, retrying."; sleep "$INTERVAL"; continue; fi
+  if [ "$runs" = "__ERR__" ]; then say "GitHub API error, retrying."; timed_out "GitHub API kept failing"; sleep "$INTERVAL"; continue; fi
+
+  # The runs-by-commit list sometimes comes back empty, or short, for a few
+  # minutes while CI is still going (seen 22 Oct 2026: 2 runs, then 0 for two
+  # polls, then 2 again, and the quiet polls printed a false GREEN). A run once
+  # seen does not go away, so a list without it is a bad read: log it, poll
+  # again, and never count it as quiet.
+  ids=$(printf '%s\n' "$runs" | awk -F'\t' 'NF {print $1}')
+  missing=$(comm -23 <(printf '%s\n' "$seen" | awk 'NF') <(printf '%s\n' "$ids" | awk 'NF' | sort -u) | wc -l | tr -d ' ')
+  if [ "$missing" -gt 0 ]; then
+    say "GitHub listed $(printf '%s' "$ids" | grep -c . || true) workflow runs, but $missing seen earlier are missing: a bad read, not a finish. Polling again."
+    stable=0; timed_out "workflow runs kept going missing from GitHub's list"; sleep "$INTERVAL"; continue
+  fi
+  seen=$(printf '%s\n%s\n' "$seen" "$ids" | awk 'NF' | sort -u)
 
   nruns=$(printf '%s' "$runs" | grep -c . || true)
   nchecks=$(printf '%s' "$checks" | grep -c . || true)
@@ -142,11 +179,22 @@ while :; do
     # Some workflows start only after another finishes (for example a check
     # that runs once the deploy reports). Require two quiet polls in a row.
     stable=$((stable+1))
-    if [ "$stable" -ge 2 ]; then break; fi
+    if [ "$stable" -ge 2 ]; then
+      # A failure decides now. A pass needs every --gate-job to have passed:
+      # a gate that has not reported yet means CI is not done.
+      classify
+      [ -n "$bad$badck$badst" ] && break
+      gwait=$(gates_not_passed); gwait="${gwait% }"
+      [ -z "$gwait" ] && break
+      [ "$gwait" != "$gatelast" ] && say "Everything listed has finished, but gate job $gwait has not passed on this commit yet. Waiting."
+      gatelast="$gwait"
+      timed_out "gate job $gwait never passed"
+      sleep "$INTERVAL"; continue
+    fi
   else
     stable=0
   fi
-  [ "$(date +%s)" -ge "$end" ] && { result "TIMEOUT $LABEL still running after $TIMEOUT min ($waiting not finished)"; exit 2; }
+  timed_out "still running ($waiting not finished)"
   sleep "$INTERVAL"
 done
 
@@ -154,18 +202,21 @@ mins=$(( ($(date +%s) - start) / 60 ))
 # Dependabot update jobs (event "dynamic") also run against the default
 # branch's commit. Their red is usually security_update_not_possible or the
 # cooldown, not this change, so they are listed but never decide the verdict.
-dep=$(printf '%s\n' "$runs" | awk -F'\t' 'NF && $6=="dynamic"')
-runs=$(printf '%s\n' "$runs" | awk -F'\t' 'NF && $6!="dynamic"')
-nruns=$(printf '%s' "$runs" | grep -c . || true)
+classify
+nruns=$(printf '%s' "$vruns" | grep -c . || true)
 if [ -n "$dep" ]; then
   echo "Dependabot runs on this commit (not part of the verdict):"
   printf '%s\n' "$dep" | awk -F'\t' '{printf "    %-55s %s\n", $2, $4}'
 fi
-bad=$(printf '%s\n' "$runs" | awk -F'\t' 'NF && !($4=="success" || $4=="skipped" || $4=="neutral")')
-badck=$(printf '%s\n' "$checks" | awk -F'\t' 'NF && !($3=="success" || $3=="skipped" || $3=="neutral")')
-badst=$(printf '%s\n' "$stats" | awk -F'\t' 'NF && $2!="success"')
 if [ -z "$bad" ] && [ -z "$badck" ] && [ -z "$badst" ]; then
-  result "GREEN $LABEL: $nruns workflow runs, $nchecks other checks and $nstats statuses all passed (watched ${mins} min)."
+  # Backstop: the loop never ends on a list missing a run it saw, so this
+  # cannot happen; if it ever does, it is not green.
+  if [ -z "$runs" ] && [ -n "$seen" ]; then
+    result "ERROR $LABEL: GitHub lists no workflow runs although it listed them earlier. Not green; watch again."
+    exit 2
+  fi
+  gnote=""; [ -n "${GATES[*]+x}" ] && gnote=", gate job passed"
+  result "GREEN $LABEL: $nruns workflow runs, $nchecks other checks and $nstats statuses all passed$gnote (watched ${mins} min)."
   exit 0
 fi
 

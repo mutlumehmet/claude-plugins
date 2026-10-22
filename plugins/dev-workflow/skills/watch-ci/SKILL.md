@@ -45,7 +45,7 @@ Options:
 | Option | What it does | Default |
 |---|---|---|
 | `--repo owner/name` | The repository to watch | The repo of the current folder (`gh repo view`) |
-| `--gate-job NAME` | A job that only fails because another job failed (a "gate" job that sums up the others). It is skipped when explaining a failure. Repeatable. | none |
+| `--gate-job NAME` | A job that only fails because another job failed (a "gate" job that sums up the others). It is skipped when explaining a failure, and GREEN needs it to have passed on the commit: a gate that has not reported keeps the watch waiting (until the timeout). Repeatable. | none |
 | `--superseded-step NAME` | A step of a gate job that fails only because a newer commit exists (for example a rule that lets only the branch's newest commit deploy). If that step is the only failure, the verdict is SUPERSEDED instead of RED. Repeatable. | none |
 | `--gated-status NAME` | A commit status that fails only because the gate job failed (for example a deploy that waits for the gate before going live). While a gate job has failed it does not change the verdict, so a superseded or infrastructure failure keeps its own verdict; otherwise it is a real failure. Repeatable. | none |
 | `--timeout MIN` | Give up watching CI after this many minutes | 60 |
@@ -74,6 +74,11 @@ read the output file in between: the notification will come.
 - Two quiet polls in a row before it calls it done, because some workflows only start after
   another finishes (for example a smoke test that runs once the deploy reports).
 - A rerun counts: a run that goes back to `in_progress` keeps the watch open.
+- A workflow run, once seen, never disappears. GitHub's list of runs for a commit sometimes
+  comes back empty or short for a few minutes while CI is still going; such a poll is logged
+  as a bad read and never counts as quiet, so it cannot produce a GREEN.
+- With `--gate-job`, GREEN also needs that job to have passed on the commit. A failure
+  anywhere still reports RED at once.
 - Dependabot update jobs (event `dynamic`) also run against the default branch's commit and
   are often red for reasons unrelated to the change (`security_update_not_possible`, the
   cooldown). They are listed but never decide the verdict.
