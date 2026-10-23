@@ -23,11 +23,15 @@ session when a background job ends, so the result arrives without anyone asking.
    - commit statuses (deploy previews and older integrations).
 3. **Waits for late starters.** It needs two quiet polls in a row, because some workflows only
    start after another finishes (a smoke test after the deploy reports). A rerun keeps it open.
-4. **Ignores noise.** Dependabot update jobs on the default branch are listed but never decide
+4. **Never trusts a missing run.** GitHub's list of runs for a commit sometimes comes back
+   empty for a few minutes while CI is still going. A run seen once never disappears, so such
+   a poll is logged as a bad read and cannot produce a GREEN. With `--gate-job`, GREEN also
+   needs the gate to have passed on the commit.
+5. **Ignores noise.** Dependabot update jobs on the default branch are listed but never decide
    the verdict.
-5. **Gives up honestly.** Nothing reported after 4 minutes means CI will never run, so it says
+6. **Gives up honestly.** Nothing reported after 4 minutes means CI will never run, so it says
    `NO CI` instead of waiting forever.
-6. **Explains a red.** It names the failing job and step, tells an infrastructure hiccup (only
+7. **Explains a red.** It names the failing job and step, tells an infrastructure hiccup (only
    setup, install, download, cache or service-start steps failed) from a real failure, and prints the rerun
    command.
 
@@ -55,7 +59,7 @@ No config file. Everything is an option with a default.
 | Option | What it is for | Default |
 |---|---|---|
 | `--repo owner/name` | The repository to watch | The repo of the current folder |
-| `--gate-job NAME` | A job that only fails because another failed (a "gate" that sums up the others); skipped when explaining a failure. Repeatable | none |
+| `--gate-job NAME` | A job that only fails because another failed (a "gate" that sums up the others); skipped when explaining a failure, and required to have passed before GREEN. Repeatable | none |
 | `--superseded-step NAME` | A gate-job step that fails only because a newer commit exists; if it is the only failure, the verdict is SUPERSEDED, not RED. Repeatable | none |
 | `--gated-status NAME` | A commit status that fails only because the gate failed (a deploy waiting for the gate); ignored while a gate job has failed, a real failure otherwise. Repeatable | none |
 | `--timeout MIN` | Give up watching CI after this long | 60 |

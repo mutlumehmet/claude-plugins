@@ -1,6 +1,6 @@
 {
   "name": "dev-workflow",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Skills for shipping code with Claude Code. watch-ci watches a pull request, a merge or a commit until every check has finished, then reports GREEN or RED by itself.",
   "author": {
     "name": "Mehmet Mutlu"
