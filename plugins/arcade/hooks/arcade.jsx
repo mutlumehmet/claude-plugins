@@ -5482,6 +5482,7 @@ async function askReset($, id, args) {
   for (const g of id === "arcade" ? GAMES.map((x) => x.id) : [id]) await resetGame($, g);
   return { text: `${what === title(id) ? what : "Every Arcade game"} cleared in this terminal.` };
 }
+const stops = /* @__PURE__ */ new Map();
 export const register = (on, options) => {
   configureMilestones(options);
   const setting = { mode: modeOf(options.mode), pool: poolOf(options.pool) };
@@ -5579,7 +5580,13 @@ export const register = (on, options) => {
     skillSeen(e.skill);
     return next(e);
   });
+  on("agent.spawn", async ($, e, next) => {
+    const out = await next(e);
+    if (out.agentId !== void 0 && out.teammateId === void 0 && !stops.has(out.agentId)) stops.set(out.agentId, "waiting");
+    return out;
+  });
   on("classic.SubagentStop", async ($, e, next) => {
+    stops.set(e.agent_id, "heard");
     const ran = await next(e);
     await celebrate7($, subagentMilestones());
     return ran;
@@ -5644,6 +5651,11 @@ export const register = (on, options) => {
   on("turn.complete", async ($, e, next) => {
     const ran = await turn($, e, ((e1) => turn3($, e1, ((e2) => turn5($, e2, ((e3) => turn6($, e3, ((e4) => turn7($, e4, ((e5) => turn4($, e5, ((e6) => turn2($, e6, ((e7) => turn8($, e7, ((e8) => turn9($, e8, ((e9) => turn10($, e9, next)))))))))))))))))));
     if (e.agentId === void 0 && !e.isAborted) await celebrate7($, turnMilestones(await $.clock.now()));
+    if (e.agentId !== void 0) {
+      const stop = stops.get(e.agentId);
+      stops.delete(e.agentId);
+      if (stop === "waiting" && e.reason === "answer") await celebrate7($, subagentMilestones());
+    }
     redrawDesktop($);
     return ran;
   });

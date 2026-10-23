@@ -367,3 +367,46 @@ test('the opening check says nothing when GitHub cannot be reached or has the sa
   expect(await ui.find({ type: 'Text', text: /●/ })).toBeUndefined()
   await ui.unmount()
 })
+
+// A subagent as a session raises it: agent.spawn answers its id, its loop's turn.complete carries it.
+const STOP = { agent_id: 'a1', agent_type: 'Explore', agent_transcript_path: '/t/a1.jsonl', stop_hook_active: false } as never
+const SUB_TURN = { answer: 'x', durationMs: 4000, isAborted: false, turnId: 's', reason: 'answer', agentId: 'a1' } as never
+function subagentWorld(on: On, toasts: string[], opts: { teammate?: boolean } = {}) {
+  rawWorld(on, {}, toasts)
+  on('agent.spawn', () => ({ model: 'haiku', agentId: 'a1', ...(opts.teammate ? { teammateId: 'a1@team' } : {}) }) as never)
+  on('classic.SubagentStop', () => ({}) as never)
+  on('turn.complete', () => ({ text: '' }) as never)
+}
+const finished = (toasts: string[]) => toasts.filter(t => t.includes('A subagent finished')).length
+
+test('a finished subagent celebrates once where the classic hook runs', async ($, on) => {
+  const toasts: string[] = []
+  pin({ mode: 'fixed', pool: 'jackpot' })
+  subagentWorld(on, toasts)
+  await begin($, on)
+  await $.agent.spawn({ prompt: 'look' })
+  await $.classic.SubagentStop(STOP)
+  await $.turn.complete(SUB_TURN)
+  expect(finished(toasts)).toBe(1)
+})
+
+test('a finished subagent still celebrates when a plugin above skips the classic hook', async ($, on) => {
+  const toasts: string[] = []
+  pin({ mode: 'fixed', pool: 'jackpot' })
+  subagentWorld(on, toasts)
+  await begin($, on)
+  await $.agent.spawn({ prompt: 'look' })
+  await $.turn.complete(SUB_TURN)
+  await $.turn.complete(SUB_TURN)
+  expect(finished(toasts)).toBe(1)
+})
+
+test('a teammate gets no stand in celebration', async ($, on) => {
+  const toasts: string[] = []
+  pin({ mode: 'fixed', pool: 'jackpot' })
+  subagentWorld(on, toasts, { teammate: true })
+  await begin($, on)
+  await $.agent.spawn({ prompt: 'look' })
+  await $.turn.complete(SUB_TURN)
+  expect(finished(toasts)).toBe(0)
+})
