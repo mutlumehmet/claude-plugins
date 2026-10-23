@@ -10,6 +10,8 @@ function engine(on) {
   on('session.measure', ($, e) => ({ changed: e.changed }))
   on('turn.complete', () => ({ text: '' }))
   on('skill.prompt', ($, e) => ({ text: e.text }))
+  on('tool.call', { tool: 'Skill' }, () => ({ result: {}, text: 'ok' }) as never)
+  on('prompt.submit', ($, e) => ({ text: e.text }))
   on('session.compact', () => ({ skip: 'test engine' }))
   return { seen, clock }
 }
@@ -59,6 +61,24 @@ test('after save-context it stops suggesting and says so in the status', async (
   await turnEnd($)
   await clock.advance(1000)
   expect(seen.suggested).toEqual([])
+  expect(seen.status.at(-1)).toBe('Context 85% · save-context ran')
+})
+
+// On Team accounts a managed plugin above skips skill.prompt: the Skill tool
+// and a typed command still say save-context ran
+test('save-context through the Skill tool counts without skill.prompt', async ($, on) => {
+  const { seen } = engine(on)
+  await measure($, 85)
+  await $.tool.call({ tool: 'Skill', skill: 'project-workflow:save-context' } as never)
+  expect(seen.status.at(-1)).toBe('Context 85% · save-context ran')
+})
+
+test('a typed /save-context counts without skill.prompt, another skill does not', async ($, on) => {
+  const { seen } = engine(on)
+  await measure($, 85)
+  await $.prompt.submit({ text: '/weekly-report', command: { name: 'weekly-report', args: '' } } as never)
+  expect(seen.status.at(-1)).toBe('Context 85% · /save-context suggested')
+  await $.prompt.submit({ text: '/save-context', command: { name: 'project-workflow:save-context', args: '' } } as never)
   expect(seen.status.at(-1)).toBe('Context 85% · save-context ran')
 })
 

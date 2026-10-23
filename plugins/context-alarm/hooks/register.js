@@ -51,9 +51,22 @@ export function register(on, options) {
     return result
   })
 
-  on('skill.prompt', { skill: 'save-context' }, async ($, e, next) => {
-    saved = true
-    if (percent !== null) $.ui.status(statusText())
+  // A managed plugin above every user plugin (cc-plugin-sec-default, on Team and
+  // Enterprise accounts) skips skill.prompt, so the Skill tool and a typed
+  // /save-context count too. Marking it twice is harmless.
+  on('skill.prompt', async ($, e, next) => {
+    if (isSaveContext(e.skill)) markSaved($)
+    return next(e)
+  })
+
+  on('tool.call', async ($, e, next) => {
+    const ran = await next(e)
+    if (e.tool === 'Skill' && isSaveContext(e.skill) && ran.deny === undefined) markSaved($)
+    return ran
+  })
+
+  on('prompt.submit', async ($, e, next) => {
+    if (e.command && isSaveContext(e.command.name)) markSaved($)
     return next(e)
   })
 
@@ -85,6 +98,16 @@ async function onPercent($, p) {
   }
 
   if (level > 0) $.ui.status(statusText())
+}
+
+// save-context, or a plugin's project-workflow:save-context
+function isSaveContext(name) {
+  return String(name ?? '').replace(/^.*:/, '') === 'save-context'
+}
+
+function markSaved($) {
+  saved = true
+  if (percent !== null) $.ui.status(statusText())
 }
 
 function statusText() {

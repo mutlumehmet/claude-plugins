@@ -5482,6 +5482,14 @@ async function askReset($, id, args) {
   for (const g of id === "arcade" ? GAMES.map((x) => x.id) : [id]) await resetGame($, g);
   return { text: `${what === title(id) ? what : "Every Arcade game"} cleared in this terminal.` };
 }
+async function isSkillCommand($, name) {
+  try {
+    const info = (await $.command.list()).find((c) => c.name === name);
+    return info !== void 0 && (info.source === "plugin" || info.source === "user");
+  } catch {
+    return false;
+  }
+}
 const stops = /* @__PURE__ */ new Map();
 export const register = (on, options) => {
   configureMilestones(options);
@@ -5644,7 +5652,8 @@ export const register = (on, options) => {
   on("ui.message", ($, e, next) => message($, e, next));
   on("prompt.submit", async ($, e, next) => {
     const ran = await prompt($, e, ((e1) => prompt3($, e1, ((e2) => prompt5($, e2, ((e3) => prompt6($, e3, ((e4) => prompt7($, e4, ((e5) => prompt4($, e5, ((e6) => prompt2($, e6, ((e7) => prompt8($, e7, ((e8) => prompt9($, e8, ((e9) => prompt10($, e9, next)))))))))))))))))));
-    await celebrate7($, promptMilestones(String(e.text ?? ""), await $.clock.now()));
+    if (!e.isMeta) await celebrate7($, promptMilestones(String(e.text ?? ""), await $.clock.now()));
+    if (e.command && await isSkillCommand($, e.command.name)) skillSeen(e.command.name);
     redrawDesktop($);
     return ran;
   });
@@ -5662,6 +5671,7 @@ export const register = (on, options) => {
   on("tool.call", async ($, e, next) => {
     const ran = await tool($, e, ((e1) => tool3($, e1, ((e2) => tool5($, e2, ((e3) => tool6($, e3, ((e4) => tool7($, e4, ((e5) => tool4($, e5, ((e6) => tool2($, e6, ((e7) => tool8($, e7, ((e8) => tool9($, e8, ((e9) => tool10($, e9, next)))))))))))))))))));
     if (e.agentId === void 0 && ran.deny === void 0) await celebrate7($, toolMilestones(e, ran));
+    if (e.tool === "Skill" && ran.deny === void 0) skillSeen(e.skill);
     redrawDesktop($);
     return ran;
   });

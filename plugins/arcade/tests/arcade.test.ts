@@ -410,3 +410,59 @@ test('a teammate gets no stand in celebration', async ($, on) => {
   await $.turn.complete(SUB_TURN)
   expect(finished(toasts)).toBe(0)
 })
+
+// A managed plugin above can skip skill.prompt too: the Skill tool and a typed skill command stand in.
+const MAIN_TURN = { answer: 'x', durationMs: 4000, isAborted: false, turnId: 'm', reason: 'answer' } as never
+function skillWorld($: Parameters<Parameters<typeof test>[1]>[0], on: On, toasts: string[], raises: boolean) {
+  rawWorld(on, {}, toasts)
+  on('skill.prompt', (_$, e) => ({ text: e.text }))
+  on('command.list', () => ({ value: [
+    { name: 'office:weekly-report', description: '', source: 'plugin', plugin: 'office' },
+    { name: 'review', description: '', source: 'builtin' },
+  ] }) as never)
+  on('tool.call', { tool: 'Skill' }, async (_$, e) => {
+    if (raises) await $.skill.prompt({ skill: e.skill, text: 'body' })
+    return { result: {}, text: 'ok' } as never
+  })
+  on('prompt.submit', async (_$, e) => {
+    if (raises && e.command?.name === 'office:weekly-report') await $.skill.prompt({ skill: 'office:weekly-report', text: 'body' })
+    return { text: e.text }
+  })
+  on('turn.complete', () => ({ text: '' }) as never)
+}
+const skillToasts = (toasts: string[]) => toasts.filter(t => t.includes('Skill: weekly-report')).length
+
+for (const raises of [true, false]) {
+  test(`a typed skill celebrates once at the turn's end (skill.prompt ${raises ? 'raised' : 'skipped'})`, async ($, on) => {
+    const toasts: string[] = []
+    pin({ mode: 'fixed', pool: 'jackpot' })
+    skillWorld($, on, toasts, raises)
+    await begin($, on)
+    await $.prompt.submit({ text: '/office:weekly-report', command: { name: 'office:weekly-report', args: '' } } as never)
+    await $.turn.complete(MAIN_TURN)
+    expect(skillToasts(toasts)).toBe(1)
+  })
+
+  test(`a skill through the Skill tool celebrates once (skill.prompt ${raises ? 'raised' : 'skipped'})`, async ($, on) => {
+    const toasts: string[] = []
+    pin({ mode: 'fixed', pool: 'jackpot' })
+    skillWorld($, on, toasts, raises)
+    await begin($, on)
+    await $.prompt.submit({ text: 'do the report' } as never)
+    await $.tool.call({ tool: 'Skill', skill: 'office:weekly-report' } as never)
+    // The engine's own notice, delivered into the running turn
+    await $.prompt.submit({ text: '<task-notification>', isMeta: true, turnId: 'm' } as never)
+    await $.turn.complete(MAIN_TURN)
+    expect(skillToasts(toasts)).toBe(1)
+  })
+}
+
+test('a typed built-in that asks the model is no skill', async ($, on) => {
+  const toasts: string[] = []
+  pin({ mode: 'fixed', pool: 'jackpot' })
+  skillWorld($, on, toasts, false)
+  await begin($, on)
+  await $.prompt.submit({ text: '/review', command: { name: 'review', args: '' } } as never)
+  await $.turn.complete(MAIN_TURN)
+  expect(toasts.filter(t => t.includes('Skill:'))).toHaveLength(0)
+})
