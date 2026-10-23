@@ -20,7 +20,7 @@ It installs `project-workflow` from the same marketplace as a dependency, which 
 
 - **Reads**: how full the context window is, whether `/save-context` ran, and when an automatic compaction starts.
 - **Does**: notices, a status line under the prompt, and `/save-context` suggested in the empty prompt box. It never runs save-context itself.
-- **Hooks**: `skill.prompt` (save-context only) notes that it ran and passes the skill's prompt on unchanged. `session.compact` only warns; the compaction still runs. `command.run` answers its own `/context-alarm` command and no other.
+- **Hooks**: `skill.prompt` (save-context only) notes that it ran and passes the skill's prompt on unchanged. Where a managed plugin skips `skill.prompt` (Claude Code's own `cc-plugin-sec-default` on Team and Enterprise accounts), a Skill tool call (`tool.call`) or a typed `/save-context` (`prompt.submit`) notes it instead; both pass on unchanged. `session.compact` only warns; the compaction still runs. `command.run` answers its own `/context-alarm` command and no other.
 - **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
 - **Never**: sends anything anywhere (no network calls, no telemetry).
 

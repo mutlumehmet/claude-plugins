@@ -68,6 +68,22 @@ when a task calls for them) or one mod (a hooks module that runs inside Claude C
   only. Counting must not depend on the game being shown. No top-level `let` in `src/`: the build
   turns top-level `var` into `const`.
 - `claude plugin validate` and `claude plugin test` pass before every push; CI runs both.
+- **A hook can be skipped by a plugin above it, so check every event a mod leans on.** Found 23 October 2026 (arcade
+  0.11.1, the sounds mod 0.1.10): for Team and Enterprise organizations, and on any machine with
+  managed settings, Claude Code seats its own `cc-plugin-sec-default@builtin` outermost (tier
+  `prepend`), and it sends `classic.SubagentStart` and `classic.SubagentStop` on past every user
+  plugin (`next.to`), so those hooks never run there. A user plugin cannot stop that. The debug
+  log says `<plugin>: classic.SubagentStop bypassed by cc-plugin-sec-default (tier user)`. Seen on
+  a Team account with `claude -p --debug`: the subagent sounds and celebrations had been
+  silent there since 2.1.285 (29 September 2026). The native events were not skipped: `agent.spawn`
+  (the id as `agentId`, `teammateId` for a teammate) and the subagent's own `turn.complete`
+  (`e.agentId`, foreground and background alike). So a mod hooks the native event as well, and
+  dedupes by agent id: the classic hook, where it runs, runs first and marks the agent heard, the
+  native one plays only for an agent still waiting. Test both ways: with the classic event raised
+  (once, never twice) and without it (still once). Not only classic events: the same check showed
+  `classic.PostCompact` and the native `session.compact` skipped too (the sounds mod's compacted
+  clip and context-alarm's warning before an auto compaction, both still open). Before shipping a
+  mod, run it once on a Team account with `--debug` and grep for `bypassed by`.
 - **What the Anthropic Directory refuses** (found on the Arcade, 6 October 2026), though Claude Code
   accepts it: a `userConfig` field with `options` (use a plain string and document the values), and
   any variable, parameter or function named like the hook API's own names (`on`, `$`, a hook's

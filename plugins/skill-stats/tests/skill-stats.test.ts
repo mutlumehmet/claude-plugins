@@ -89,6 +89,44 @@ test('a skill prompt adds one to the live count', async ($, on) => {
   expect((saved.get('live') as any)['weekly-report'].n).toBe(2)
 })
 
+// On Team accounts a managed plugin above skips skill.prompt. The Skill tool
+// and a typed skill command stand in, and count once where skill.prompt runs too.
+function skillEngine($, on, raises: boolean) {
+  on('skill.prompt', ($, e) => ({ text: e.text }))
+  on('command.list', () => ({ value: [
+    { name: 'weekly-report', description: '', source: 'user' },
+    { name: 'review', description: '', source: 'builtin' },
+  ] }))
+  on('tool.call', { tool: 'Skill' }, async (_, e) => {
+    if (raises) await $.skill.prompt({ skill: e.skill, text: 'body' })
+    return { result: {}, text: 'ok' }
+  })
+  on('prompt.submit', async (_, e) => {
+    if (raises && e.command?.name === 'weekly-report') await $.skill.prompt({ skill: 'weekly-report', text: 'body' })
+    return { text: e.text }
+  })
+}
+
+for (const raises of [true, false]) {
+  test(`the Skill tool and a typed skill count once each (skill.prompt ${raises ? 'raised' : 'skipped'})`, async ($, on) => {
+    const saved = new Map<string, unknown>()
+    engine(on, { saved })
+    skillEngine($, on, raises)
+    await $.tool.call({ tool: 'Skill', skill: 'weekly-report' } as never)
+    await $.prompt.submit({ text: '/weekly-report', command: { name: 'weekly-report', args: '' } } as never)
+    expect((saved.get('live') as any)['weekly-report'].n).toBe(2)
+  })
+}
+
+test('a typed built-in that asks the model is not a skill', async ($, on) => {
+  const saved = new Map<string, unknown>()
+  engine(on, { saved })
+  skillEngine($, on, false)
+  await $.prompt.submit({ text: '/review', command: { name: 'review', args: '' } } as never)
+  await $.prompt.submit({ text: 'hello' } as never)
+  expect((saved.get('live') as any)?.review).toBeUndefined()
+})
+
 test('/skill-fix fills a skill-creator request and never sends it', async ($, on) => {
   const filled: string[] = []
   engine(on, { filled })

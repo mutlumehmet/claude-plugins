@@ -450,6 +450,25 @@ async function askReset($: EngineInterface, id: string, args: string | undefined
 
 // A plugin hooks each event once, so register chains the games' hooks for it: each game's next
 // is the following game's hook and the last one's is the engine, the order separate plugins would run in.
+// Subagents still owed their finish, by id. A managed plugin seated above this one (Claude Code's own
+// sec-default, for Team and Enterprise organizations) can send classic.SubagentStop on past it, so
+// the subagent's own turn.complete stands in. The classic hook runs first wherever it runs and marks
+// the subagent heard, so nothing celebrates twice; teammates keep the classic hook alone.
+// A managed plugin above every user plugin (cc-plugin-sec-default, on Team and Enterprise
+// accounts) skips skill.prompt, so the Skill tool and a typed skill command stand in for it. A
+// skill seen twice in a turn still counts once (turnMilestones). A typed command reaches
+// prompt.submit when it asks the model: a skill, a markdown command, or a built-in like /review.
+async function isSkillCommand($: EngineInterface, name: string) {
+  try {
+    const info = (await $.command.list()).find(c => c.name === name)
+    return info !== undefined && (info.source === 'plugin' || info.source === 'user')
+  } catch {
+    return false
+  }
+}
+
+const stops = new Map<string, 'waiting' | 'heard'>()
+
 export const register: Register = (on, options: PluginOptions) => {
   configureMilestones(options)
   const setting = { mode: modeOf(options.mode), pool: poolOf(options.pool) }
@@ -567,7 +586,14 @@ export const register: Register = (on, options: PluginOptions) => {
     return next(e)
   })
 
+  on('agent.spawn', async ($, e, next) => {
+    const out = await next(e)
+    if (out.agentId !== undefined && out.teammateId === undefined && !stops.has(out.agentId)) stops.set(out.agentId, 'waiting')
+    return out
+  })
+
   on('classic.SubagentStop', async ($, e, next) => {
+    stops.set(e.agent_id, 'heard')
     const ran = await next(e)
     await celebrate($, subagentMilestones())
     return ran
@@ -630,7 +656,10 @@ export const register: Register = (on, options: PluginOptions) => {
 
   on('prompt.submit', async ($, e, next) => {
     const ran = await dragonPrompt($, e, ((e1: typeof e) => jackpotPrompt($, e1, ((e2: typeof e) => outlawPrompt($, e2, ((e3: typeof e) => tamaPrompt($, e3, ((e4: typeof e) => tetrisPrompt($, e4, ((e5: typeof e) => octopusPrompt($, e5, ((e6: typeof e) => duckPrompt($, e6, ((e7: typeof e) => bugsPrompt($, e7, ((e8: typeof e) => darioPrompt($, e8, ((e9: typeof e) => townPrompt($, e9, next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)
-    await celebrate($, promptMilestones(String(e.text ?? ''), await $.clock.now()))
+    // A hidden prompt (a notice the engine delivers into the running turn) starts no new turn.
+    if (!e.isMeta) await celebrate($, promptMilestones(String(e.text ?? ''), await $.clock.now()))
+    // After promptMilestones, which starts the turn's skill list afresh.
+    if (e.command && (await isSkillCommand($, e.command.name))) skillSeen(e.command.name)
     redrawDesktop($)
     return ran
   })
@@ -638,6 +667,11 @@ export const register: Register = (on, options: PluginOptions) => {
   on('turn.complete', async ($, e, next) => {
     const ran = await dragonTurn($, e, ((e1: typeof e) => jackpotTurn($, e1, ((e2: typeof e) => outlawTurn($, e2, ((e3: typeof e) => tamaTurn($, e3, ((e4: typeof e) => tetrisTurn($, e4, ((e5: typeof e) => octopusTurn($, e5, ((e6: typeof e) => duckTurn($, e6, ((e7: typeof e) => bugsTurn($, e7, ((e8: typeof e) => darioTurn($, e8, ((e9: typeof e) => townTurn($, e9, next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)
     if (e.agentId === undefined && !e.isAborted) await celebrate($, turnMilestones(await $.clock.now()))
+    if (e.agentId !== undefined) {
+      const stop = stops.get(e.agentId)
+      stops.delete(e.agentId)
+      if (stop === 'waiting' && e.reason === 'answer') await celebrate($, subagentMilestones())
+    }
     redrawDesktop($)
     return ran
   })
@@ -645,6 +679,8 @@ export const register: Register = (on, options: PluginOptions) => {
   on('tool.call', async ($, e, next) => {
     const ran = await dragonTool($, e, ((e1: typeof e) => jackpotTool($, e1, ((e2: typeof e) => outlawTool($, e2, ((e3: typeof e) => tamaTool($, e3, ((e4: typeof e) => tetrisTool($, e4, ((e5: typeof e) => octopusTool($, e5, ((e6: typeof e) => duckTool($, e6, ((e7: typeof e) => bugsTool($, e7, ((e8: typeof e) => darioTool($, e8, ((e9: typeof e) => townTool($, e9, next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)
     if (e.agentId === undefined && ran.deny === undefined) await celebrate($, toolMilestones(e, ran))
+    // Stands in for skill.prompt where a managed plugin skips it (see isSkillCommand).
+    if (e.tool === 'Skill' && ran.deny === undefined) skillSeen(e.skill)
     redrawDesktop($)
     return ran
   })
