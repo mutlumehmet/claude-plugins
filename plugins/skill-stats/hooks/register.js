@@ -8,8 +8,7 @@
 //   transcripts after cleanupPeriodDays.
 // "Your" skills are the ones from a skills folder, plus the plugin skills from the
 // marketplaces the own_marketplaces setting names.
-// - live: every skill.prompt event from now on (or the Skill tool call or typed
-//   command standing in for it where a managed plugin skips it), kept in
+// - live: every Skill tool call and typed skill command from now on, kept in
 //   $.store, which is per account and survives transcript cleanup.
 
 // Settings, read once in register
@@ -44,40 +43,19 @@ export function register(on, options) {
     return next(e)
   })
 
-  // Live count: fires for /name, the Skill tool, and skills preloaded into a subagent.
-  // A managed plugin above every user plugin (cc-plugin-sec-default, on Team and
-  // Enterprise accounts) skips it, so the Skill tool and a typed skill command
-  // count too. Where skill.prompt runs, it runs inside them, so it leaves the
-  // count to them while one waits.
-  on('skill.prompt', async ($, e, next) => {
-    if (!waiting.has(e.skill)) await countUse($, e.skill)
-    return next(e)
-  })
-
+  // Live count: a Skill tool call or a typed skill command. Not skill.prompt: a
+  // managed plugin above every user plugin (cc-plugin-sec-default, on Team and
+  // Enterprise accounts) skips it and says so in the transcript. Skills preloaded
+  // into a subagent are not counted.
   on('tool.call', async ($, e, next) => {
-    if (e.tool !== 'Skill') return next(e)
-    hold(e.skill)
-    let ran
-    try {
-      ran = await next(e)
-    } finally {
-      release(e.skill)
-    }
-    if (ran.deny === undefined && !ran.isError) await countUse($, e.skill)
+    const ran = await next(e)
+    if (e.tool === 'Skill' && ran.deny === undefined && !ran.isError) await countUse($, e.skill)
     return ran
   })
 
   on('prompt.submit', async ($, e, next) => {
-    if (!e.command || !(await isSkillCommand($, e.command.name))) return next(e)
-    const name = e.command.name
-    hold(name)
-    let ran
-    try {
-      ran = await next(e)
-    } finally {
-      release(name)
-    }
-    await countUse($, name)
+    const ran = await next(e)
+    if (e.command && (await isSkillCommand($, e.command.name))) await countUse($, e.command.name)
     return ran
   })
 
@@ -97,19 +75,6 @@ export function register(on, options) {
     const filled = await $.prompt.fill({ text: fixPrompt(row, rows.listing, source) })
     return { text: filled.isFilled ? 'The skill-creator request is in the prompt box. Read it, then press Enter.' : fixPrompt(row, rows.listing, source) }
   })
-}
-
-// Skill tool calls and typed skill commands in flight, by skill name
-const waiting = new Map()
-
-function hold(name) {
-  waiting.set(name, (waiting.get(name) ?? 0) + 1)
-}
-
-function release(name) {
-  const n = (waiting.get(name) ?? 1) - 1
-  if (n > 0) waiting.set(name, n)
-  else waiting.delete(name)
 }
 
 async function countUse($, name) {

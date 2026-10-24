@@ -80,12 +80,12 @@ test('live counts come from the store', async ($, on) => {
   expect(out.text).toContain('Every listed skill has triggered at least once.')
 })
 
-test('a skill prompt adds one to the live count', async ($, on) => {
+test('a Skill tool call adds one to the live count', async ($, on) => {
   const saved = new Map<string, unknown>()
   engine(on, { saved })
-  on('skill.prompt', ($, e) => ({ text: e.text }))
-  await $.skill.prompt({ skill: 'weekly-report', text: 'body' })
-  await $.skill.prompt({ skill: 'weekly-report', text: 'body' })
+  on('tool.call', { tool: 'Skill' }, () => ({ result: {}, text: 'ok' }) as never)
+  await $.tool.call({ tool: 'Skill', skill: 'weekly-report' } as never)
+  await $.tool.call({ tool: 'Skill', skill: 'weekly-report' } as never)
   expect((saved.get('live') as any)['weekly-report'].n).toBe(2)
 })
 

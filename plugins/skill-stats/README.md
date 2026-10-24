@@ -27,7 +27,7 @@ Claude without their description, and hands a weak description to skill-creator.
 
 - **Reads**: skill names in your local Claude Code transcripts (`projects/*.jsonl` under your config directory, or the folders in `config_dirs`) and those files' dates, the skills listed in this session with their size, and the marketplaces in your settings.
 - **Does**: shows use counts in `/skill-stats`; `/skill-fix` fills the prompt box with a skill-creator request and never sends it.
-- **Hooks**: `skill.prompt` counts a skill as used and passes its prompt on unchanged. Where a managed plugin skips it (Claude Code's own `cc-plugin-sec-default` on Team and Enterprise accounts), a Skill tool call (`tool.call`) or a typed skill command (`prompt.submit`, checked against `$.command.list`) counts instead, once either way. `command.run` answers its own `/skill-stats` and `/skill-fix` commands and no other.
+- **Hooks**: A Skill tool call (`tool.call`) or a typed skill command (`prompt.submit`, checked against `$.command.list`) counts a skill as used and passes on unchanged. It does not hook `skill.prompt`, which Claude Code's own `cc-plugin-sec-default` skips on Team and Enterprise accounts, so skills preloaded into a subagent are not counted. `command.run` answers its own `/skill-stats` and `/skill-fix` commands and no other.
 - **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
 - **Never**: sends anything anywhere (no network calls, no telemetry).
 

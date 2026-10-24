@@ -5584,10 +5584,6 @@ export const register = (on, options) => {
     await apply($, next, pool);
     return { text: await status($, next, pool) };
   });
-  on("skill.prompt", (_$, e, next) => {
-    skillSeen(e.skill);
-    return next(e);
-  });
   on("agent.spawn", async ($, e, next) => {
     const out = await next(e);
     if (out.agentId !== void 0 && out.teammateId === void 0 && !stops.has(out.agentId)) stops.set(out.agentId, "waiting");

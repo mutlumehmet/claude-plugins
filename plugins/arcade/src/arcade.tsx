@@ -454,9 +454,9 @@ async function askReset($: EngineInterface, id: string, args: string | undefined
 // sec-default, for Team and Enterprise organizations) can send classic.SubagentStop on past it, so
 // the subagent's own turn.complete stands in. The classic hook runs first wherever it runs and marks
 // the subagent heard, so nothing celebrates twice; teammates keep the classic hook alone.
-// A managed plugin above every user plugin (cc-plugin-sec-default, on Team and Enterprise
-// accounts) skips skill.prompt, so the Skill tool and a typed skill command stand in for it. A
-// skill seen twice in a turn still counts once (turnMilestones). A typed command reaches
+// A skill is seen through the Skill tool or a typed skill command. Not skill.prompt: a managed
+// plugin above every user plugin (cc-plugin-sec-default, on Team and Enterprise accounts) skips
+// it and says so in the transcript. A typed command reaches
 // prompt.submit when it asks the model: a skill, a markdown command, or a built-in like /review.
 async function isSkillCommand($: EngineInterface, name: string) {
   try {
@@ -581,11 +581,6 @@ export const register: Register = (on, options: PluginOptions) => {
     return { text: await status($, next, pool) }
   })
 
-  on('skill.prompt', (_$, e, next) => {
-    skillSeen(e.skill)
-    return next(e)
-  })
-
   on('agent.spawn', async ($, e, next) => {
     const out = await next(e)
     if (out.agentId !== undefined && out.teammateId === undefined && !stops.has(out.agentId)) stops.set(out.agentId, 'waiting')
@@ -679,7 +674,7 @@ export const register: Register = (on, options: PluginOptions) => {
   on('tool.call', async ($, e, next) => {
     const ran = await dragonTool($, e, ((e1: typeof e) => jackpotTool($, e1, ((e2: typeof e) => outlawTool($, e2, ((e3: typeof e) => tamaTool($, e3, ((e4: typeof e) => tetrisTool($, e4, ((e5: typeof e) => octopusTool($, e5, ((e6: typeof e) => duckTool($, e6, ((e7: typeof e) => bugsTool($, e7, ((e8: typeof e) => darioTool($, e8, ((e9: typeof e) => townTool($, e9, next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)) as typeof next)
     if (e.agentId === undefined && ran.deny === undefined) await celebrate($, toolMilestones(e, ran))
-    // Stands in for skill.prompt where a managed plugin skips it (see isSkillCommand).
+    // A skill the model ran (see isSkillCommand).
     if (e.tool === 'Skill' && ran.deny === undefined) skillSeen(e.skill)
     redrawDesktop($)
     return ran

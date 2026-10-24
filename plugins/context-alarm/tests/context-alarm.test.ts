@@ -57,7 +57,7 @@ test('a second warning at 90%, and none after that', async ($, on) => {
 test('after save-context it stops suggesting and says so in the status', async ($, on) => {
   const { seen, clock } = engine(on)
   await measure($, 85)
-  await $.skill.prompt({ skill: 'save-context', text: '...' })
+  await $.tool.call({ tool: 'Skill', skill: 'save-context' } as never)
   await turnEnd($)
   await clock.advance(1000)
   expect(seen.suggested).toEqual([])
