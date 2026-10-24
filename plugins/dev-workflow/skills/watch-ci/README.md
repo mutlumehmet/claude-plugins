@@ -36,8 +36,9 @@ session when a background job ends, so the result arrives without anyone asking.
    command.
 
 The last line is always `WATCH RESULT: GREEN | RED | SUPERSEDED | NO CI | TIMEOUT | ERROR`. Exit
-code 0 is green, 1 red, 3 superseded (only a `--superseded-step` failed, because a newer commit
-exists), 2 anything else.
+code 0 is green, 1 red, 3 superseded (only a `--superseded-step` failed, or the run was
+cancelled, and a newer commit now heads the branch), 2 anything else. A cancelled run with no
+newer commit stays red: nothing replaced it.
 
 ## Use
 
