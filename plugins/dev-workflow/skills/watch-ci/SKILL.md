@@ -46,7 +46,7 @@ Options:
 |---|---|---|
 | `--repo owner/name` | The repository to watch | The repo of the current folder (`gh repo view`) |
 | `--gate-job NAME` | A job that only fails because another job failed (a "gate" job that sums up the others). It is skipped when explaining a failure, and GREEN needs it to have passed on the commit: a gate that has not reported keeps the watch waiting (until the timeout). Repeatable. | none |
-| `--superseded-step NAME` | A step of a gate job that fails only because a newer commit exists (for example a rule that lets only the branch's newest commit deploy). If that step is the only failure, the verdict is SUPERSEDED instead of RED. Repeatable. | none |
+| `--superseded-step NAME` | A step of a gate job that fails only because a newer commit exists (for example a rule that lets only the branch's newest commit deploy). If that step is the only failure, the verdict is SUPERSEDED instead of RED. Repeatable. A cancelled run needs no option: it is SUPERSEDED by itself when a newer commit exists. | none |
 | `--gated-status NAME` | A commit status that fails only because the gate job failed (for example a deploy that waits for the gate before going live). While a gate job has failed it does not change the verdict, so a superseded or infrastructure failure keeps its own verdict; otherwise it is a real failure. Repeatable. | none |
 | `--timeout MIN` | Give up watching CI after this many minutes | 60 |
 | `--merge-timeout MIN` | Give up waiting for the merge after this many minutes | 240 |
@@ -101,10 +101,16 @@ timeout or error, 3 = SUPERSEDED.
   (`gh run view <id> --log-failed`), and explain before suggesting anything. For a failed
   check run or status from another app, open the link it printed. Do not rerun a real
   failure hoping it goes away.
-- **SUPERSEDED**: not a failure. The only thing that failed is the `--superseded-step`,
-  because a newer commit exists and its own run decides what deploys. Say so, then watch
-  the newer commit. Never rerun or revert a superseded commit. Any real failure on the same
-  commit makes the verdict RED instead.
+- **SUPERSEDED**: not a failure. Either the only thing that failed is the
+  `--superseded-step`, or the run was **cancelled** (for example by a newer push to the same
+  branch, with `cancel-in-progress`), and in both cases a newer commit now heads the branch
+  (or the PR). A `--gate-job` that still ran (`if: always()`) and failed only because the
+  suite was cancelled counts as part of the cancel. Say so, then **watch the newer commit
+  (the result prints its sha); never rerun or revert this one**: its result would describe
+  code nobody will merge. Any real failure on the same commit makes the verdict RED instead.
+- **RED (cancelled, no newer commit)**: the run was cancelled but the branch still points at
+  this commit, so nothing replaced it (cancelled by hand, or a newer push was force-pushed
+  away). Find out why before rerunning.
 - **NO CI / TIMEOUT / ERROR**: report it as is. Never turn it into "probably fine".
 
 ## Boundaries
