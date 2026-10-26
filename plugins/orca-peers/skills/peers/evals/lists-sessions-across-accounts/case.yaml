@@ -1,0 +1,5 @@
+schema_version: "1.1"
+name: lists-sessions-across-accounts
+expected_outcome: |
+  A short list of live sessions from every account found on the machine, each with account,
+  project, title, state and a uds: address, with the asking session marked and no message sent.

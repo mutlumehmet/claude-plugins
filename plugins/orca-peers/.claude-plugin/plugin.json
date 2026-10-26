@@ -1,0 +1,11 @@
+{
+  "name": "orca-peers",
+  "version": "0.1.0",
+  "description": "Part of Orca Strator. Lists every live Claude Code session on this machine, in every account, with the address to message it across accounts.",
+  "author": {
+    "name": "Mehmet Mutlu"
+  },
+  "homepage": "https://github.com/mutlumehmet/claude-plugins/tree/main/plugins/orca-peers",
+  "license": "MIT",
+  "repository": "https://github.com/mutlumehmet/claude-plugins"
+}

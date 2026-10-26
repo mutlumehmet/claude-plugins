@@ -116,7 +116,7 @@ Small mods for long sessions. Install them all with `/plugin install toolkit@meh
 
 ## Skills
 
-Skills come grouped in plugins: [`project-workflow`](plugins/project-workflow) for starting and closing work, [`dev-workflow`](plugins/dev-workflow) for shipping code. Install a group with `/plugin install <plugin>@mehmetmutlu`.
+Skills come grouped in plugins: [`project-workflow`](plugins/project-workflow) for starting and closing work, [`dev-workflow`](plugins/dev-workflow) for shipping code, [`orca-peers`](plugins/orca-peers) for running many sessions at once (the first of the Orca Strator plugins). Install a group with `/plugin install <plugin>@mehmetmutlu`.
 
 <table>
 <tr>
@@ -135,6 +135,8 @@ Skills come grouped in plugins: [`project-workflow`](plugins/project-workflow) f
 <b><a href="plugins/dev-workflow/skills/watch-ci"><code>watch-ci</code></a></b>: Watches a pull request or a merge until every check has finished, then reports GREEN or RED by itself
 </td>
 <td valign="top" width="50%">
+<a href="plugins/orca-peers/skills/peers"><img src="docs/images/orca-peers-flow.png" width="360" alt="peers: every live session in every account, with the address to message it"></a><br>
+<b><a href="plugins/orca-peers/skills/peers"><code>peers</code></a></b>: Lists every live Claude Code session in every account, with the address to message it (Orca Strator)
 </td>
 </tr>
 </table>
