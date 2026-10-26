@@ -99,6 +99,8 @@ test('on the desktop a game never blits: a second of frames comes as one flipboo
   await clock.advance(1000)
   const svg = (await ui.find({ type: 'Svg' } as never)) as unknown as SvgFound
   expect(blits.n).toBe(0)
-  expect(svg!.props.source).toMatch(/"p f5"/)
+  // Several frames in the one book. How many depends on the random piece and how far it falls
+  // (alike frames merge), so not an exact count: f5 failed on CI when the piece landed sooner.
+  expect(svg!.props.source).toMatch(/"p f2"/)
   await ui.unmount()
 })
