@@ -117,7 +117,13 @@ const FILE_PACKS = {
   "air-traffic": {
     "label": "Air traffic control radio: cleared for takeoff, hold short, cleared to land",
     "ordered": [
-      "taxi-into-position.m4a"
+      "taxi-into-position.m4a",
+      "contact-tower.m4a",
+      "descend-maintain.m4a",
+      "turn-left-130.m4a",
+      "intercept-localizer.m4a",
+      "three-mile-final.m4a",
+      "clear-for-departure.m4a"
     ],
     "needsYou": [
       "hold-short.m4a",
@@ -136,8 +142,7 @@ const FILE_PACKS = {
       "whats-that.m4a"
     ],
     "pushed": [
-      "clear-for-takeoff.m4a",
-      "cleared-takeoff.m4a"
+      "clear-for-takeoff.m4a"
     ],
     "compacted": [
       "maintain-altitude.m4a"
