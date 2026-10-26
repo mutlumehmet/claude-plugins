@@ -1,0 +1,22 @@
+# air-traffic: credits
+
+Air traffic control radio calls, every one with the radio sound already in the recording. Two sources, each with its own terms:
+
+- **X-Plane 5** radio chatter © Laminar Research. Not licensed: shared as non-commercial fan use, not endorsed by or affiliated with the rights holder. If you hold the rights and want them removed, open an issue and the clips go.
+- **Stock "Air Traffic Control Radio" clips** from the "Air traffic SFX Library", "Air traffic radio SFX Library" and "Air traffic control SFX Library" boards on 101soundboards. The boards do not name the library or the rights holder, so the owner is unknown. Not licensed: shared as non-commercial fan use, removed on request.
+
+Processing for all: silence trimmed, loudness normalised (ffmpeg loudnorm I=-16, TP=-1.5), limited, mono, 44.1 kHz, AAC 64 kbps, an 8 ms fade in, a 50 ms fade out and 150 ms of silence after. The lines are otherwise untouched.
+
+| File | Moment | Line | Source page | Source file | Trim used |
+| :- | :- | :- | :- | :- | :- |
+| taxi-into-position.m4a | ordered | Runway 1, taxi in position and hold. | https://www.101soundboards.com/sounds/58486610-radio-chatter-43-7-clobber-romeo-runway-1-taxi-in-position-and-hold (X-Plane 5, Radio Chatter 43) | https://hoovers.101soundboards.com/sb/board_sounds/egzlvzpa.mp3 | 0.00s to end |
+| hold-short.m4a | needsYou | Hold short of runway one for me. | https://www.101soundboards.com/sounds/58486675-radio-chatter-44-its-9529-up-two-and-hold-short-of-runway-one-for-me (X-Plane 5, Radio Chatter 44) | https://hoovers.101soundboards.com/sb/board_sounds/rneygxzj.mp3 | 0.00s to end |
+| new-york-approach.m4a | needsYou | Delta 1990, New York approach, good afternoon. | https://www.101soundboards.com/sounds/58486033-radio-chatter-39-delta-1990-new-york-approach-good-afternoon (X-Plane 5, Radio Chatter 39) | https://hoovers.101soundboards.com/sb/board_sounds/kbewvroa.mp3 | 0.00s to end |
+| clear-for-landing.m4a | longDone | Flight 807, you're clear for landing, runway 7 Bravo. | https://www.101soundboards.com/sounds/27438982-air-traffic-control-radio-middle-age-female-flight-807-your-clear-for-landing-ruway-7 (Air traffic control SFX Library) | https://hoovers.101soundboards.com/sb/board_sounds_rendered/dragwlzy.mp3 | 0.36s to end (cut the site's 0.34 s intro beep) |
+| cleared-to-land.m4a | longDone | Runway 31L, you are cleared to land. | https://www.101soundboards.com/sounds/58487113-radio-chatter-47-zero-is-four-runway-31l-you-are-cleared-to-land (X-Plane 5, Radio Chatter 47) | https://hoovers.101soundboards.com/sb/board_sounds/bjdlgzzd.mp3 | 0.00s to end |
+| leveling-190.m4a | subagent | Approach, United 8 heavy, leveling 190. | https://www.101soundboards.com/sounds/58484779-radio-chatter-32-approach-united-8-heavy-is-leveling-190 (X-Plane 5, Radio Chatter 32) | https://hoovers.101soundboards.com/sb/board_sounds/vbdygjpb.mp3 | 0.00s to end |
+| safe-departure.m4a | subagent | Flight 259, have a safe departure, good day. | https://www.101soundboards.com/sounds/27586490-air-traffic-control-radio-announcement-man-says-flight-259-have-a-safe-departure-good-day (Air traffic radio SFX Library) | https://hoovers.101soundboards.com/sb/board_sounds_rendered/ywezbxxn.mp3 | 0.00s to end |
+| whats-that.m4a | failed | What's that? | https://www.101soundboards.com/sounds/58482944-radio-chatter-20-whats-that (X-Plane 5, Radio Chatter 20) | https://hoovers.101soundboards.com/sb/board_sounds/egzllrgl.mp3 | 0.00s to end |
+| clear-for-takeoff.m4a | pushed | Flight 229, you're clear for take off. | https://www.101soundboards.com/sounds/27597482-air-traffic-control-radio-announcement-man-says-flight-229-you-re-clear-for-take-off (Air traffic SFX Library) | https://hoovers.101soundboards.com/sb/board_sounds_rendered/dravvnjg.mp3 | 0.36s to end (cut the site's 0.34 s intro beep) |
+| cleared-takeoff.m4a | pushed | King 7 Papa Romeo, runway 1, cleared takeoff. | https://www.101soundboards.com/sounds/58482185-radio-chatter-15-king-7-papa-romeo-runway-1-cleared-takeoff (X-Plane 5, Radio Chatter 15) | https://hoovers.101soundboards.com/sb/board_sounds/apvllzgz.mp3 | 0.00s to end |
+| maintain-altitude.m4a | compacted | Flight, maintain an altitude of ... feet. | https://www.101soundboards.com/sounds/27172714-air-traffic-control-radio-announcement-man-says-flight-maintain-an-altitude-of-feet (Air traffic SFX Library) | https://hoovers.101soundboards.com/sb/board_sounds_rendered/draagydl.mp3 | 0.00s to end |

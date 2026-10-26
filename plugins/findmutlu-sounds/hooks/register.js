@@ -114,6 +114,36 @@ const FILE_PACKS = {
     ],
     "mcp": []
   },
+  "air-traffic": {
+    "label": "Air traffic control radio: cleared for takeoff, hold short, cleared to land",
+    "ordered": [
+      "taxi-into-position.m4a"
+    ],
+    "needsYou": [
+      "hold-short.m4a",
+      "new-york-approach.m4a"
+    ],
+    "longDone": [
+      "clear-for-landing.m4a",
+      "cleared-to-land.m4a"
+    ],
+    "subagentStart": [],
+    "subagent": [
+      "leveling-190.m4a",
+      "safe-departure.m4a"
+    ],
+    "failed": [
+      "whats-that.m4a"
+    ],
+    "pushed": [
+      "clear-for-takeoff.m4a",
+      "cleared-takeoff.m4a"
+    ],
+    "compacted": [
+      "maintain-altitude.m4a"
+    ],
+    "mcp": []
+  },
   "aoe": {
     "label": "Age of Empires II: wololo, the horn and the taunts (Microsoft Game Content Usage Rules)",
     "ordered": [

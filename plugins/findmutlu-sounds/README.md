@@ -65,6 +65,7 @@ may leave a moment silent.
 | `sheogorath` | The Prince of Madness: "Good choice", "I've been waiting for you", "Cheese for everyone", "Boring, boring, boring" at a failed test | The Elder Scrolls IV: Oblivion, Bethesda (ZeniMax), via the [openpeon pack](https://openpeon.com/packs/sheogorath) |
 | `lebowski` | The clean lines: "The Dude abides", "Phone's ringing, Dude", "That rug really tied the room together", "Over the line!", "Mark it zero!" | The Big Lebowski (1998), Universal Pictures, via the [openpeon pack](https://openpeon.com/packs/the-big-lebowski) |
 | `nasa` | "The Eagle has landed", "And the liftoff!", "Okay Houston, we have had a problem here", a Quindar beep | NASA recordings on [Wikimedia Commons](https://commons.wikimedia.org), public domain |
+| `air-traffic` | Tower radio calls: "Taxi in position and hold", "Hold short of runway one for me" when Claude needs you, "You are cleared to land" after a long job, "What's that?" at a failed test, "Cleared for takeoff" on a push | X-Plane 5 (Laminar Research) and stock ATC radio clips on [101soundboards](https://www.101soundboards.com) |
 
 Each pack's folder under [`sounds/`](sounds) has a `CREDITS.md` with the source of every clip and
 who holds its rights. The game clips are the original files as shared on
