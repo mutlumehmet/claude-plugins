@@ -5490,7 +5490,7 @@ async function isSkillCommand($, name) {
     return false;
   }
 }
-const stops = /* @__PURE__ */ new Map();
+const stops = /* @__PURE__ */ new Set();
 export const register = (on, options) => {
   configureMilestones(options);
   const setting = { mode: modeOf(options.mode), pool: poolOf(options.pool) };
@@ -5586,14 +5586,8 @@ export const register = (on, options) => {
   });
   on("agent.spawn", async ($, e, next) => {
     const out = await next(e);
-    if (out.agentId !== void 0 && out.teammateId === void 0 && !stops.has(out.agentId)) stops.set(out.agentId, "waiting");
+    if (out.agentId !== void 0 && out.teammateId === void 0) stops.add(out.agentId);
     return out;
-  });
-  on("classic.SubagentStop", async ($, e, next) => {
-    stops.set(e.agent_id, "heard");
-    const ran = await next(e);
-    await celebrate7($, subagentMilestones());
-    return ran;
   });
   on("command.run", { command: "dragon" }, async ($, e, next) => {
     const ran = await askReset($, "dragon", e.args) ?? withPreview("dragon", e.args, await command($, e, next));
@@ -5657,9 +5651,7 @@ export const register = (on, options) => {
     const ran = await turn($, e, ((e1) => turn3($, e1, ((e2) => turn5($, e2, ((e3) => turn6($, e3, ((e4) => turn7($, e4, ((e5) => turn4($, e5, ((e6) => turn2($, e6, ((e7) => turn8($, e7, ((e8) => turn9($, e8, ((e9) => turn10($, e9, next)))))))))))))))))));
     if (e.agentId === void 0 && !e.isAborted) await celebrate7($, turnMilestones(await $.clock.now()));
     if (e.agentId !== void 0) {
-      const stop = stops.get(e.agentId);
-      stops.delete(e.agentId);
-      if (stop === "waiting" && e.reason === "answer") await celebrate7($, subagentMilestones());
+      if (stops.delete(e.agentId) && e.reason === "answer") await celebrate7($, subagentMilestones());
     }
     redrawDesktop($);
     return ran;

@@ -5,8 +5,8 @@
 //   needsYou     Claude waits for you: a permission prompt,   classic.Notification,
 //                a question, a plan to approve                tool.call (AskUserQuestion, ExitPlanMode)
 //   longDone     a turn of 60 s or more answered              turn.complete (main loop)
-//   subagentStart a subagent started                          classic.SubagentStart, else agent.spawn
-//   subagent     a subagent finished                          classic.SubagentStop, else its turn.complete
+//   subagentStart a subagent started                          agent.spawn
+//   subagent     a subagent finished                          its turn.complete
 //   failed       a test, build, lint or type check failed     tool.call (Bash, isError; the step run, not heredoc text)
 //   pushed       git push went through                        tool.call (Bash)
 //   compacted    the conversation was compacted               classic.PostCompact
@@ -996,12 +996,11 @@ const VOICE_PACKS = {}
 // starts them over, which only costs this terminal's /sounds <pack> choice.
 // pack and packAt: this terminal's /sounds <pack>; all: the last /sounds default <pack> of any terminal;
 // project: the folder this session runs in and the pack /sounds project gave it (or its parent)
-// Subagents by id, for the two subagent moments. A managed plugin seated above this one (Claude
-// Code's own sec-default, for Team and Enterprise organizations) can send classic.SubagentStart and
-// classic.SubagentStop on past it, so agent.spawn and the subagent's own turn.complete stand in. The
-// classic hook runs first wherever it runs and marks the subagent heard, so nothing plays twice;
-// teammates keep the classic hooks alone
-const subagents = { started: new Set(), stops: new Map() }
+// Subagents by id, waiting for their own turn.complete. Not classic.SubagentStart or
+// classic.SubagentStop: a managed plugin seated above this one (Claude Code's own sec-default, for
+// Team and Enterprise organizations) sends them on past it and says so in the transcript.
+// Teammates of an agent team play no subagent sound
+const subagents = { stops: new Set() }
 
 const here = { pack: undefined, packAt: -1, all: undefined, cwd: '', project: undefined, playedAt: 0, orderedAt: 0, yourPacks: {}, lastClip: {} }
 
@@ -1119,27 +1118,14 @@ export function register(on) {
     return next(e)
   })
 
-  on('classic.SubagentStart', async ($, e, next) => {
-    subagents.started.add(e.agent_id)
-    await cue($, 'subagentStart').catch(() => {})
-    return next(e)
-  })
-
   on('agent.spawn', async ($, e, next) => {
     const out = await next(e)
     const id = out.agentId
     if (id === undefined) return out
-    const isHeard = subagents.started.delete(id)
     if (out.teammateId !== undefined) return out
-    if (!subagents.stops.has(id)) subagents.stops.set(id, 'waiting')
-    if (!isHeard) await cue($, 'subagentStart')
+    subagents.stops.add(id)
+    await cue($, 'subagentStart')
     return out
-  })
-
-  on('classic.SubagentStop', async ($, e, next) => {
-    subagents.stops.set(e.agent_id, 'heard')
-    await cue($, 'subagent')
-    return next(e)
   })
 
   on('classic.PostCompact', async ($, e, next) => {
@@ -1151,9 +1137,7 @@ export function register(on) {
     const out = await next(e)
     if (!e.agentId && e.reason === 'answer' && e.durationMs >= LONG_TURN_MS) await cue($, 'longDone')
     if (e.agentId) {
-      const stop = subagents.stops.get(e.agentId)
-      subagents.stops.delete(e.agentId)
-      if (stop === 'waiting' && e.reason === 'answer') await cue($, 'subagent')
+      if (subagents.stops.delete(e.agentId) && e.reason === 'answer') await cue($, 'subagent')
     }
     return out
   })

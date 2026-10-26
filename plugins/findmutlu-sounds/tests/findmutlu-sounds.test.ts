@@ -442,28 +442,10 @@ test('a mistyped or shortened moment gets the moment it meant', async ($, on) =>
 // A subagent as a session raises it: agent.spawn answers its id, its loop's turn.complete carries it
 function subagent(on, id: string, opts: { teammate?: boolean } = {}) {
   on('agent.spawn', () => ({ model: 'haiku', agentId: id, ...(opts.teammate ? { teammateId: id + '@team' } : {}) }))
-  on('classic.SubagentStart', () => ({}))
-  on('classic.SubagentStop', () => ({}))
 }
-const STOP = { agent_id: 'a1', agent_type: 'Explore', agent_transcript_path: '/t/a1.jsonl', stop_hook_active: false }
 const SUB_TURN = { answer: 'x', durationMs: 4000, isAborted: false, turnId: 's', reason: 'answer', agentId: 'a1' } as const
 
-test('a subagent plays its start and its finish once each where the classic hooks run', async ($, on) => {
-  const { played, clock } = engine(on)
-  subagent(on, 'a1')
-  await $.classic.SubagentStart({ agent_id: 'a1', agent_type: 'Explore' })
-  await $.agent.spawn({ prompt: 'look' })
-  await settle()
-  clock.now += 5000
-  await $.classic.SubagentStop(STOP)
-  await settle()
-  clock.now += 5000
-  await $.turn.complete(SUB_TURN)
-  await settle()
-  expect(played.length).toBe(2)
-})
-
-test('a subagent still plays its start and finish when a plugin above skips the classic hooks', async ($, on) => {
+test('a subagent plays its start and its finish once each', async ($, on) => {
   const { played, clock } = engine(on)
   subagent(on, 'a1')
   await $.agent.spawn({ prompt: 'look' })
@@ -480,7 +462,7 @@ test('a subagent still plays its start and finish when a plugin above skips the 
   expect(played.length).toBe(2)
 })
 
-test('the stand in finish waits for an answer: an aborted subagent plays nothing', async ($, on) => {
+test('the finish waits for an answer: an aborted subagent plays nothing', async ($, on) => {
   const { played, clock } = engine(on)
   subagent(on, 'a1')
   await $.agent.spawn({ prompt: 'look' })
@@ -491,7 +473,7 @@ test('the stand in finish waits for an answer: an aborted subagent plays nothing
   expect(played.length).toBe(1)
 })
 
-test('a teammate keeps the classic hooks alone: no stand in plays for it', async ($, on) => {
+test('a teammate plays no subagent sound', async ($, on) => {
   const { played, clock } = engine(on)
   subagent(on, 'a1', { teammate: true })
   await $.agent.spawn({ prompt: 'look' })
