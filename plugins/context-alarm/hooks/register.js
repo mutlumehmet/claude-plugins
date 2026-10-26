@@ -100,9 +100,12 @@ function isSaveContext(name) {
   return String(name ?? '').replace(/^.*:/, '') === 'save-context'
 }
 
+// Only a save after the first warning counts: an early one leaves the status
+// line alone, and later turns still need saving when the warning comes
 function markSaved($) {
+  if (level === 0) return
   saved = true
-  if (percent !== null) $.ui.status(statusText())
+  $.ui.status(statusText())
 }
 
 function statusText() {

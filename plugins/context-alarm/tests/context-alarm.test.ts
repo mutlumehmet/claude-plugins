@@ -82,6 +82,19 @@ test('a typed /save-context counts without skill.prompt, another skill does not'
   expect(seen.status.at(-1)).toBe('Context 85% · save-context ran')
 })
 
+test('save-context before any warning pins nothing, and the warning still suggests it later', async ($, on) => {
+  const { seen, clock } = engine(on)
+  await measure($, 22)
+  await $.tool.call({ tool: 'Skill', skill: 'save-context' } as never)
+  await $.prompt.submit({ text: '/save-context', command: { name: 'save-context', args: '' } } as never)
+  expect(seen.status).toEqual([])
+  await measure($, 81)
+  expect(seen.status.at(-1)).toBe('Context 81% · /save-context suggested')
+  await turnEnd($)
+  await clock.advance(300)
+  expect(seen.suggested).toEqual(['/save-context'])
+})
+
 test('an automatic compaction without save-context warns, and never skips the compaction', async ($, on) => {
   const { seen } = engine(on)
   await measure($, 88)
