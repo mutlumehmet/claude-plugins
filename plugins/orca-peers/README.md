@@ -6,7 +6,7 @@ Part of **Orca Strator**, a set of small plugins for running many Claude Code se
 
 | Skill | What it does |
 |---|---|
-| [`peers`](skills/peers) | Lists every live Claude Code session on this machine, in every account, with the address to message it across accounts |
+| [`peers`](skills/peers) | Lists every live Claude Code session on this machine, in every account, with how full its context is and the address to message it across accounts |
 
 ## Install
 

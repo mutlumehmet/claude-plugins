@@ -146,7 +146,7 @@ Skills come grouped in plugins: [`project-workflow`](plugins/project-workflow) f
 </td>
 <td valign="top" width="50%">
 <a href="plugins/orca-peers/skills/peers"><img src="docs/images/orca-peers-flow.png" width="360" alt="peers: every live session in every account, with the address to message it"></a><br>
-<b><a href="plugins/orca-peers/skills/peers"><code>peers</code></a></b>: Lists every live Claude Code session in every account, with the address to message it (Orca Strator)
+<b><a href="plugins/orca-peers/skills/peers"><code>peers</code></a></b>: Lists every live Claude Code session in every account, with how full its context is and the address to message it (Orca Strator)
 </td>
 </tr>
 </table>

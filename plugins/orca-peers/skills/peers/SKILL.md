@@ -19,7 +19,7 @@ python3 -I "${CLAUDE_PLUGIN_ROOT}/skills/peers/scripts/peers.py" [filter words]
 ```
 
 - Filter words narrow the list (all must match the title, project or account), e.g. `lane 2b`.
-- `--json` prints the rows as JSON (account, project, cwd, title, state, address, sessionId, pid, self) for scripts and other skills.
+- `--json` prints the rows as JSON (account, project, cwd, title, state, address, sessionId, pid, self, context) for scripts and other skills. `context` is `{used, window, percent, flag}` or null before a session's first reply.
 - It reads only. It never writes to a Claude Code config dir.
 
 Show the result to the user as a short list. Mark which row is this session (the script adds
@@ -42,6 +42,14 @@ Call SendMessage with `to` set to the address exactly as printed (`uds:/tmp/cc-s
 `busy` working, `waiting` blocked on its user (a question or a permission prompt), `idle`
 finished its turn, `shell` turn finished while a background shell still runs. A session that is
 waiting on its user will not read your message until the user answers it.
+
+## Context use
+
+The percent column is how full each session's context window was at its last reply. At 70% the
+row adds `PREPARE HANDOVER`, at 85% `HAND OVER`. When you report the list, name the sessions with
+a flag first: a flagged session should write its handover note soon. `·` means no reply yet. The
+window is 1M when the account's model ends in `[1m]` or the session already passed 200k, else
+200k; `context_window:` in the config overrides it.
 
 ## When the list looks wrong
 

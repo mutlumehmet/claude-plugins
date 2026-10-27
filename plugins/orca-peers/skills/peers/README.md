@@ -9,9 +9,9 @@ message it at. Claude Code's own peer list shows only the account you are in; Se
 `uds:` address works across accounts. This closes that gap.
 
 ```
-default   my-app          Lane 1                  busy     uds:/tmp/cc-socks/37240.sock
-default   my-app          orchestrator            idle     uds:/tmp/cc-socks/34319.sock  (this session)
-personal  side-project    refactor the parser     waiting  uds:/tmp/cc-socks/48790.sock
+default   my-app          Lane 1                  busy      87%  uds:/tmp/cc-socks/37240.sock  HAND OVER
+default   my-app          orchestrator            idle      31%  uds:/tmp/cc-socks/34319.sock  (this session)
+personal  side-project    refactor the parser     waiting   72%  uds:/tmp/cc-socks/48790.sock  PREPARE HANDOVER
 ```
 
 ## Install
@@ -30,6 +30,12 @@ skill reads those records for every account, drops the ones whose process has en
 process id now belongs to a newer process), and takes each title from the session's own
 transcript. It reads only and never writes to a config dir. No server, no login tokens.
 
+The percent column is each session's **context use**: how full its context window was at its last
+reply (that reply's input tokens, cache reads and cache writes, from the transcript, out of the
+model's window). It survives account moves and shows long before Claude Code's own warning. At
+70% the row says `PREPARE HANDOVER`, at 85% `HAND OVER`. `·` means no reply yet. With `--json`
+each row carries `context: {used, window, percent, flag}` for scripts and scheduled checks.
+
 ## First run and config
 
 Works with no config: it finds `~/.claude` and every `~/.claude-<name>` folder with a `sessions/`
@@ -39,6 +45,7 @@ Optional, `~/.config/orca-strator/config.yaml` (shared by the Orca Strator plugi
 
 | Key | Required | Default | What it does |
 |---|---|---|---|
+| `context_window` | no | 1000000 when the account's `settings.json` model ends in `[1m]` or the session already went past 200000, else 200000 | The context window in tokens, for every session |
 | `accounts_file` | no | none | A JSON file listing your accounts, to name them and to include config dirs in other places: `{"accounts": {"work": {"configDir": "~/.claude"}, "personal": {"configDir": "~/.claude-personal"}}}` |
 
 ## It will never
