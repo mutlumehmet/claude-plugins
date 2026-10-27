@@ -26,6 +26,8 @@ It also holds one small mod: the part of a move that has to happen inside Claude
 
 A session never runs in two places: the line is typed only after the old process is gone.
 
+Changed your mind after `switch` ran? `/orca-move:switch cancel` stops the helper and withdraws the exit request; the session stays where it is.
+
 ## Setup
 
 Twins must already exist and be logged in on their own; this never reads or copies login tokens. Optional: the same `~/.config/orca-strator/config.yaml` that [`orca-peers`](../orca-peers) and [`orca-accounts`](../orca-accounts) read, pointing at an accounts file that names your accounts and marks twins with `twinOf` (see the orca-accounts README). Without it, an account whose `projects/` is a link into another account's counts as that account's twin.

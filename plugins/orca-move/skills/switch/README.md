@@ -11,6 +11,7 @@ Moves this live session to a twin account: tells the sessions it works with, sav
 ```
 /orca-move:switch            the twin with the most quota left
 /orca-move:switch workb      a named twin
+/orca-move:switch cancel     withdraw a pending move
 ```
 
 How the whole move works, setup, what it reads and writes, and what it never does: see the [plugin README](../../README.md).

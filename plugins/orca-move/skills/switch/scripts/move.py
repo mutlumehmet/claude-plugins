@@ -17,7 +17,7 @@ the same conversation. The move itself is three steps, and only the last one typ
                         Terminal.app, tab not found), it copies that line to the clipboard and
                         shows a notification instead.
 
-Usage: move.py plan [account] [--json] | move.py go <account> | move.py status
+Usage: move.py plan [account] [--json] | move.py go <account> | move.py cancel | move.py status
 Reads ~/.config/orca-strator/config.yaml (`accounts_file:`), the same as orca-peers. Never reads
 or copies login tokens: each account must already be logged in on its own.
 """
@@ -308,6 +308,29 @@ def go(target):
     return 0
 
 
+def cancel():
+    """Withdraws this session's pending move: stops its helper and removes the exit request."""
+    cur_dir = real(os.environ.get("CLAUDE_CONFIG_DIR") or "~/.claude")
+    rec = this_session(cur_dir)
+    if not rec or not rec.get("sessionId"):
+        print("Could not find this session's pid record.")
+        return 1
+    sid = rec["sessionId"]
+    short = sid[:8]
+    if not (MOVES / f"{short}.exit").exists() and not (MOVES / f"{short}.json").exists():
+        print("No move is pending for this session.")
+        return 0
+    subprocess.run(["pkill", "-f", f"move.py _helper {sid}"], capture_output=True)
+    for ext in (".exit", ".sh", ".json"):
+        (MOVES / f"{short}{ext}").unlink(missing_ok=True)
+    note = MOVES / f"{sid}.md"
+    if note.exists():
+        note.rename(MOVES / f"{sid}.cancelled.md")
+    log(sid, "cancelled")
+    print("Move cancelled: the helper is stopped and the exit request withdrawn. This session stays where it is.")
+    return 0
+
+
 def status():
     for f in sorted(MOVES.glob("*.log")):
         lines = f.read_text().splitlines()
@@ -339,6 +362,8 @@ def main():
         return 0 if p["ok"] else 1
     if cmd == "go" and rest:
         return go(rest[0])
+    if cmd == "cancel":
+        return cancel()
     if cmd == "status":
         return status()
     if cmd == "_helper" and rest:
