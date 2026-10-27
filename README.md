@@ -128,6 +128,8 @@ Small mods for long sessions. Install them all with `/plugin install toolkit@meh
 <b><a href="plugins/orca-strator"><code>orca-strator</code></a></b>: Runs a fleet of sessions on one project: an orchestrator with status and nudge crons, lanes that send "ready to merge", checkers that verify each merge once, and handovers to a fresh session when context fills (Orca Strator). Not in the toolkit bundle: install it by name
 </td>
 <td valign="top" width="50%">
+<a href="plugins/orca-suite"><img src="docs/images/orca-suite-flow.png" width="360" alt="orca-suite: peers, accounts, move and strator in one install"></a><br>
+<b><a href="plugins/orca-suite"><code>orca-suite</code></a></b>: All four Orca Strator plugins in one install: <code>orca-peers</code>, <code>orca-accounts</code>, <code>orca-move</code> and <code>orca-strator</code>, for running many sessions across many Claude accounts
 </td>
 </tr>
 </table>

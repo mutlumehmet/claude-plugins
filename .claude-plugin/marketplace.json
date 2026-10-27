@@ -81,6 +81,11 @@
       "description": "Part of Orca Strator. Runs a fleet of Claude Code sessions: an orchestrator, lanes and checkers, with handovers to a fresh session when context fills. Each project keeps its own facts in one config file."
     },
     {
+      "name": "orca-suite",
+      "source": "./plugins/orca-suite",
+      "description": "Orca Strator in one install: every session in every account, each account's usage, moves to a twin account before a limit, and a fleet of sessions with handovers. Each part also installs on its own."
+    },
+    {
       "name": "toolkit",
       "source": "./plugins/toolkit",
       "description": "The Claude Code Toolkit in one install: small mods for long sessions, each also installable on its own."
