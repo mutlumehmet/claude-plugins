@@ -61,6 +61,11 @@
       "description": "A short sound when Claude needs you, a long job finishes, a test fails or a push lands. Packs from StarCraft, Warcraft, Age of Empires, Command & Conquer, Diablo, Counter-Strike, Duke Nukem, Rick and Morty, The Big Lebowski and more, or your own"
     },
     {
+      "name": "orca-accounts",
+      "source": "./plugins/orca-accounts",
+      "description": "Part of Orca Strator. Shows every Claude account's 5-hour and 7-day usage in one band above the prompt, and warns once before the account you are on hits its limit."
+    },
+    {
       "name": "orca-peers",
       "source": "./plugins/orca-peers",
       "description": "Part of Orca Strator. Lists every live Claude Code session on this machine, in every account, with the address to message it across accounts."

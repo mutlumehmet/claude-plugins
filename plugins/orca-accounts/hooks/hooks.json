@@ -1,0 +1,4 @@
+{
+  "description": "orca-accounts hooks module",
+  "modules": ["./register.jsx"]
+}

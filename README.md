@@ -112,6 +112,14 @@ Small mods for long sessions. Install them all with `/plugin install toolkit@meh
 <b><a href="plugins/findmutlu-sounds"><code>findmutlu-sounds</code></a></b>: A short sound when Claude needs you, a job finishes, a test fails or a push lands. StarCraft, Warcraft, Age of Empires, Command & Conquer, Diablo, Counter-Strike, Duke Nukem, Rick and Morty, The Big Lebowski and more (<a href="docs/videos/findmutlu-sounds-tour.mp4">hear them</a>). Not in the toolkit bundle: install it by name
 </td>
 </tr>
+<tr>
+<td valign="top" width="50%">
+<a href="plugins/orca-accounts"><img src="docs/images/orca-accounts-flow.png" width="360" alt="orca-accounts: every account's 5-hour and 7-day usage above the prompt, with a warning before the limit"></a><br>
+<b><a href="plugins/orca-accounts"><code>orca-accounts</code></a></b>: Every Claude account's 5-hour and 7-day usage in one band above the prompt, <code>/quota</code> for the details, and one warning before the account you are on hits its limit (Orca Strator). Not in the toolkit bundle: install it by name
+</td>
+<td valign="top" width="50%">
+</td>
+</tr>
 </table>
 
 ## Skills

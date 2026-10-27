@@ -1,0 +1,11 @@
+{
+  "name": "orca-accounts",
+  "version": "0.1.0",
+  "description": "Part of Orca Strator. Shows every Claude account's 5-hour and 7-day usage in one band, and warns before an account hits its limit.",
+  "author": {
+    "name": "Mehmet Mutlu"
+  },
+  "homepage": "https://github.com/mutlumehmet/claude-plugins/tree/main/plugins/orca-accounts",
+  "license": "MIT",
+  "repository": "https://github.com/mutlumehmet/claude-plugins"
+}
