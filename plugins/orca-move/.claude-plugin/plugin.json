@@ -1,0 +1,11 @@
+{
+  "name": "orca-move",
+  "version": "0.1.0",
+  "description": "Part of Orca Strator. Moves a live session, or every session of an account, to a twin account when one nears its limit, and tells the sessions it works with where it went.",
+  "author": {
+    "name": "Mehmet Mutlu"
+  },
+  "homepage": "https://github.com/mutlumehmet/claude-plugins/tree/main/plugins/orca-move",
+  "license": "MIT",
+  "repository": "https://github.com/mutlumehmet/claude-plugins"
+}

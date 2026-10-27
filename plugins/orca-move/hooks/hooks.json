@@ -1,0 +1,1 @@
+{"description":"orca-move: exits this session when its switch skill asked for it, and only with an empty prompt box","modules":["./register.jsx"]}

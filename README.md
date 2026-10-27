@@ -118,6 +118,8 @@ Small mods for long sessions. Install them all with `/plugin install toolkit@meh
 <b><a href="plugins/orca-accounts"><code>orca-accounts</code></a></b>: Every Claude account's 5-hour and 7-day usage in one band above the prompt, <code>/quota</code> for the details, and one warning before the account you are on hits its limit (Orca Strator). Not in the toolkit bundle: install it by name
 </td>
 <td valign="top" width="50%">
+<a href="plugins/orca-move"><img src="docs/images/orca-move-flow.png" width="360" alt="orca-move: moves a live session to a twin account and announces its new address"></a><br>
+<b><a href="plugins/orca-move"><code>orca-move</code></a></b>: Moves a live session, or every session of an account, to a twin account when one nears its limit: saves its crons, tells the sessions it works with, resumes the same conversation in the same tab and announces its new address (Orca Strator). Not in the toolkit bundle: install it by name
 </td>
 </tr>
 </table>
