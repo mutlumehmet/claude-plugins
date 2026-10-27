@@ -122,6 +122,14 @@ Small mods for long sessions. Install them all with `/plugin install toolkit@meh
 <b><a href="plugins/orca-move"><code>orca-move</code></a></b>: Moves a live session, or every session of an account, to a twin account when one nears its limit: saves its crons, tells the sessions it works with, resumes the same conversation in the same tab and announces its new address (Orca Strator). Not in the toolkit bundle: install it by name
 </td>
 </tr>
+<tr>
+<td valign="top" width="50%">
+<a href="plugins/orca-strator"><img src="docs/images/orca-strator-flow.png" width="360" alt="orca-strator: an orchestrator, lanes and checkers, with handovers to a fresh session"></a><br>
+<b><a href="plugins/orca-strator"><code>orca-strator</code></a></b>: Runs a fleet of sessions on one project: an orchestrator with status and nudge crons, lanes that send "ready to merge", checkers that verify each merge once, and handovers to a fresh session when context fills (Orca Strator). Not in the toolkit bundle: install it by name
+</td>
+<td valign="top" width="50%">
+</td>
+</tr>
 </table>
 
 ## Skills

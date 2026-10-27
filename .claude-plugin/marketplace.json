@@ -76,6 +76,11 @@
       "description": "Part of Orca Strator. Lists every live Claude Code session on this machine, in every account, with how full its context is and the address to message it across accounts."
     },
     {
+      "name": "orca-strator",
+      "source": "./plugins/orca-strator",
+      "description": "Part of Orca Strator. Runs a fleet of Claude Code sessions: an orchestrator, lanes and checkers, with handovers to a fresh session when context fills. Each project keeps its own facts in one config file."
+    },
+    {
       "name": "toolkit",
       "source": "./plugins/toolkit",
       "description": "The Claude Code Toolkit in one install: small mods for long sessions, each also installable on its own."

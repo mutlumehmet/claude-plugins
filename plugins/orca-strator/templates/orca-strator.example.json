@@ -1,0 +1,15 @@
+{
+  "repo": "your-org/your-app",
+  "fleet": ["Lane", "Checker"],
+  "ci": { "gateJob": "ci gate", "gatedStatus": "deploy-preview" },
+  "rules": "CLAUDE.md",
+  "files": {
+    "orders": "notes/orders.md",
+    "ledger": "notes/preview-ledger.md",
+    "openItems": "notes/open-items.md",
+    "handoffDir": "notes"
+  },
+  "crons": { "status": "13,43", "nudge": "4,19,34,49" },
+  "handover": { "prepare": 70, "start": 85 },
+  "checkers": { "testAccounts": "Use only the test accounts listed in notes/test-accounts.md, on staging, never on previews." }
+}
