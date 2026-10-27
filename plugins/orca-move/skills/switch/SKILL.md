@@ -76,6 +76,9 @@ Moving to workb. If the tab does not reopen the session within a minute, run /ex
 sh ~/.config/orca-strator/moves/1a2b3c4d.sh
 ```
 
+If `go` says this session started before orca-move was installed, there is no mod to exit it:
+put "type /exit now" first in your last message. The helper still resumes it in the same tab.
+
 Do not run anything after `go`: the exit waits for this turn to end, and only happens while the
 prompt box is empty. If the person typed a draft, the mod says so and the move waits; their own
 `/exit` also completes it.

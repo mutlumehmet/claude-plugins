@@ -1,5 +1,7 @@
 # claude-plugins: current state
 
+**27 October 2026 (`orca-move` 0.1.2, sessions without the mod):** plugins load when a session starts, so a session started before orca-move was installed has no mod to run `/exit`, and `go` used to promise an automatic exit that never came (an orchestrator armed two moves that way; the person typed `/exit` both times). `plan` and `go` now check: the process's own arguments name orca-move (a plugin folder), or its start time (`procStart`) is after the earliest `installedAt` of `orca-move@*` in the account's `installed_plugins.json`. When it is not, `go` says to type `/exit` (the helper still resumes the tab), and the skill puts that first in its last message.
+
 **27 October 2026 (new plugin `orca-suite` 0.1.0, the Orca Strator bundle):** no code of its own; `dependencies` on `orca-peers`, `orca-accounts`, `orca-move` and `orca-strator`, like `toolkit`. The README is written for someone new to it: what each plugin does and when to use it, how they combine, and twin accounts in one paragraph.
 
 **27 October 2026 (`orca-move` 0.1.1, cancel):** `/orca-move:switch cancel` (`move.py cancel`) withdraws a pending move: stops this session's helper, removes the exit request, resume script and plan file, keeps the note as `<id>.cancelled.md`, and the skill recreates the crons and tells the peers it is not moving. Needed the same day: an orchestrator asked a session to move, then said hold after `go` had run, and the move had to be withdrawn by hand.

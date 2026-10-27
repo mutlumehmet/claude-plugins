@@ -158,6 +158,32 @@ def used(ident):
     return max(vals) if vals else None
 
 
+def mod_loaded(pid, proc_start, cfg_dir):
+    """Whether this session's process has the orca-move mod: True, False, or None when unknown.
+
+    Plugins load when a session starts, so a session started before orca-move was installed has
+    no mod to run /exit for it. A session started with the plugin from a folder has it too.
+    """
+    try:
+        args = subprocess.run(["ps", "-E", "-p", str(pid), "-o", "command="], capture_output=True, text=True, timeout=5).stdout
+    except (OSError, subprocess.SubprocessError):
+        args = ""
+    if "orca-move" in args:
+        return True
+    try:
+        from datetime import datetime, timezone
+        data = json.loads(Path(cfg_dir, "plugins", "installed_plugins.json").read_text())
+        stamps = [e.get("installedAt") for k, v in (data.get("plugins") or {}).items() if k.startswith("orca-move@")
+                  for e in (v if isinstance(v, list) else [v]) if isinstance(e, dict) and e.get("installedAt")]
+        if not stamps or not proc_start:
+            return None
+        installed = min(datetime.fromisoformat(t.replace("Z", "+00:00")) for t in stamps)
+        started = datetime.strptime(" ".join(proc_start.split()), "%a %b %d %H:%M:%S %Y").astimezone(timezone.utc)
+        return started > installed
+    except (OSError, ValueError):
+        return None
+
+
 def plan(target=None):
     accs = accounts()
     cur_dir = real(os.environ.get("CLAUDE_CONFIG_DIR") or "~/.claude")
@@ -203,6 +229,7 @@ def plan(target=None):
         "line": f"sh ~/{script.relative_to(HOME)}",
         "body": f"cd {shlex.quote(cwd)} && {env} && exec claude --resume {sid} '/orca-move:after-move'\n",
         "note": str(MOVES / f"{sid}.md"),
+        "autoExit": mod_loaded(rec["pid"], rec.get("procStart"), cur_dir),
     }
 
 
@@ -302,9 +329,13 @@ def go(target):
                      stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                      start_new_session=True, close_fds=True)
     log(p["session"], f"move {p['from']} -> {p['to']} requested")
-    print(f"Ready: {p['from']} -> {p['to']}. The session exits when this turn ends (if the prompt box is empty),")
-    print(f"then `{p['line']}` resumes it as {p['to']} in the same tab.")
-    print(f"If anything stops it, run /exit yourself and paste: {p['line']}")
+    if p["autoExit"] is False:
+        print(f"Ready: {p['from']} -> {p['to']}. This session started before orca-move was installed, so it cannot")
+        print("exit by itself: type /exit when this turn ends. The helper then resumes it in this tab.")
+    else:
+        print(f"Ready: {p['from']} -> {p['to']}. The session exits when this turn ends (if the prompt box is empty),")
+        print(f"then `{p['line']}` resumes it as {p['to']} in the same tab.")
+    print(f"If the tab does not reopen it within a minute after the exit, paste: {p['line']}")
     return 0
 
 
@@ -359,6 +390,7 @@ def main():
             print(f"Tab      {p['tty'] or 'none'} in {p['terminal'] or 'unknown terminal'}"
                   + ("" if p["terminal"] == "Apple_Terminal" and p["tty"] else ": cannot type here, you will paste the line"))
             print(f"Resume   {p['line']}  ({p['body'].strip()})")
+            print("Exit     " + {True: "automatic (the orca-move mod is loaded)", False: "by hand: this session started before orca-move was installed, so type /exit", None: "automatic if the orca-move mod is loaded; otherwise type /exit"}[p["autoExit"]])
         return 0 if p["ok"] else 1
     if cmd == "go" and rest:
         return go(rest[0])
