@@ -1,6 +1,6 @@
 # Handover: <Checker X #k> to <Checker X #k+1> (<date>)
 
-Written at <percent>% context. Start with `/orca-strator:join-checker <this file>`.
+Written at <percent>% context. Start with `/orca-fleet:join-checker <this file>`.
 
 ## Reports to
 <orchestrator name>

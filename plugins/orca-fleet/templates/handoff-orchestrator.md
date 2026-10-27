@@ -1,6 +1,6 @@
 # Handover: <old name> to <new name> (<date>, <time>)
 
-Written at <percent>% context. Start with `/orca-strator:conduct <this file>`.
+Written at <percent>% context. Start with `/orca-fleet:conduct <this file>`.
 
 ## Read first
 1. The rules file (`<rules>`): who may merge what, and what always needs the person.

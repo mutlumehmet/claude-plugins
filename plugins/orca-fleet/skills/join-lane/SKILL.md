@@ -1,6 +1,6 @@
 ---
 name: join-lane
-description: Starts this session as a lane in an orchestrated fleet of Claude Code sessions: one stream of build work that reports to an orchestrator, sends "ready to merge #N, head <sha>, SAFE" when a PR is done, pushes once per finished change, and writes a handoff note when its context fills. Use when the user or an orchestrator says "you are Lane N", "join as a lane", "take over Lane N", "read this lane handover", or a handoff note says to start with /orca-strator:join-lane.
+description: Starts this session as a lane in an orchestrated fleet of Claude Code sessions: one stream of build work that reports to an orchestrator, sends "ready to merge #N, head <sha>, SAFE" when a PR is done, pushes once per finished change, and writes a handoff note when its context fills. Use when the user or an orchestrator says "you are Lane N", "join as a lane", "take over Lane N", "read this lane handover", or a handoff note says to start with /orca-fleet:join-lane.
 argument-hint: "[handoff note] [lane name]"
 ---
 
@@ -39,5 +39,5 @@ rules file says lanes merge their own PRs.
 ## Context
 
 When the orchestrator says "write your handoff note", or `/context` shows the line from the
-config's `handover.prepare` (default 70%), run `/orca-strator:hand-over`. At `handover.start`
-(default 85%), run `/orca-strator:hand-over start`.
+config's `handover.prepare` (default 70%), run `/orca-fleet:hand-over`. At `handover.start`
+(default 85%), run `/orca-fleet:hand-over start`.

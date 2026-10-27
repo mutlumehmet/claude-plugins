@@ -114,8 +114,8 @@ Small mods for long sessions. Install them all with `/plugin install toolkit@meh
 </tr>
 <tr>
 <td valign="top" width="50%">
-<a href="plugins/orca-accounts"><img src="docs/images/orca-accounts-flow.png" width="360" alt="orca-accounts: every account's 5-hour and 7-day usage above the prompt, with a warning before the limit"></a><br>
-<b><a href="plugins/orca-accounts"><code>orca-accounts</code></a></b>: Every Claude account's 5-hour and 7-day usage in one band above the prompt, <code>/quota</code> for the details, and one warning before the account you are on hits its limit (Orca Strator). Not in the toolkit bundle: install it by name
+<a href="plugins/orca-quota"><img src="docs/images/orca-quota-flow.png" width="360" alt="orca-quota: every account's 5-hour and 7-day usage above the prompt, with a warning before the limit"></a><br>
+<b><a href="plugins/orca-quota"><code>orca-quota</code></a></b>: Every Claude account's 5-hour and 7-day usage in one band above the prompt, <code>/quota</code> for the details, and one warning before the account you are on hits its limit (Orca Strator). Not in the toolkit bundle: install it by name
 </td>
 <td valign="top" width="50%">
 <a href="plugins/orca-move"><img src="docs/images/orca-move-flow.png" width="360" alt="orca-move: moves a live session to a twin account and announces its new address"></a><br>
@@ -124,12 +124,12 @@ Small mods for long sessions. Install them all with `/plugin install toolkit@meh
 </tr>
 <tr>
 <td valign="top" width="50%">
-<a href="plugins/orca-strator"><img src="docs/images/orca-strator-flow.png" width="360" alt="orca-strator: an orchestrator, lanes and checkers, with handovers to a fresh session"></a><br>
-<b><a href="plugins/orca-strator"><code>orca-strator</code></a></b>: Runs a fleet of sessions on one project: an orchestrator with status and nudge crons, lanes that send "ready to merge", checkers that verify each merge once, and handovers to a fresh session when context fills (Orca Strator). Not in the toolkit bundle: install it by name
+<a href="plugins/orca-fleet"><img src="docs/images/orca-fleet-flow.png" width="360" alt="orca-fleet: an orchestrator, lanes and checkers, with handovers to a fresh session"></a><br>
+<b><a href="plugins/orca-fleet"><code>orca-fleet</code></a></b>: Runs a fleet of sessions on one project: an orchestrator with status and nudge crons, lanes that send "ready to merge", checkers that verify each merge once, and handovers to a fresh session when context fills (Orca Strator). Not in the toolkit bundle: install it by name
 </td>
 <td valign="top" width="50%">
-<a href="plugins/orca-suite"><img src="docs/images/orca-suite-flow.png" width="360" alt="orca-suite: peers, accounts, move and strator in one install"></a><br>
-<b><a href="plugins/orca-suite"><code>orca-suite</code></a></b>: All four Orca Strator plugins in one install: <code>orca-peers</code>, <code>orca-accounts</code>, <code>orca-move</code> and <code>orca-strator</code>, for running many sessions across many Claude accounts
+<a href="plugins/orca-suite"><img src="docs/images/orca-suite-flow.png" width="360" alt="orca-suite: peers, quota, move and fleet in one install"></a><br>
+<b><a href="plugins/orca-suite"><code>orca-suite</code></a></b>: All four Orca Strator plugins in one install: <code>orca-peers</code>, <code>orca-quota</code>, <code>orca-move</code> and <code>orca-fleet</code>, for running many sessions across many Claude accounts
 </td>
 </tr>
 </table>

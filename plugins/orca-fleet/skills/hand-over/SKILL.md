@@ -35,7 +35,7 @@ working; update the note again just before starting the successor.
    ```bash
    python3 -I "${CLAUDE_PLUGIN_ROOT}/scripts/successor.py" --name "<successor name>" \
      --cwd "<project folder>" \
-     --prompt "/orca-strator:<conduct|join-lane|join-checker> <note path>"
+     --prompt "/orca-fleet:<conduct|join-lane|join-checker> <note path>"
    ```
 
    It opens a new Terminal window in the same account. Elsewhere it prints the command and copies

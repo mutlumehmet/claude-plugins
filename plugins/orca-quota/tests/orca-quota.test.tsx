@@ -88,7 +88,7 @@ test('/quota lists every account, this one starred', async ($, on) => {
 test('the band shows every account', async ($, on) => {
   engine(on, { files: { [Q + '/personal.json']: row('personal', 'personal', 12) } })
   await measure($, limits(95))
-  const band = { plugin: 'orca-accounts', component: 'AbovePrompt', props: { hasSurvey: false } } as const
+  const band = { plugin: 'orca-quota', component: 'AbovePrompt', props: { hasSurvey: false } } as const
   const ui = await $.ui.mount({ ...band, surface: 'terminal' } as never)
   expect((await ui.find({ type: 'Text', text: /default 5h 95%/ }))?.text).toBeTruthy()
   expect((await ui.find({ type: 'Text', text: /personal 5h 12%/ }))?.text).toBeTruthy()
@@ -110,7 +110,7 @@ test('the band dims a reading older than an hour and shows its age', async ($, o
     },
   })
   await measure($, limits(40))
-  const band = { plugin: 'orca-accounts', component: 'AbovePrompt', props: { hasSurvey: false } } as const
+  const band = { plugin: 'orca-quota', component: 'AbovePrompt', props: { hasSurvey: false } } as const
   const ui = await $.ui.mount({ ...band, surface: 'terminal' } as never)
   const old = await ui.find({ type: 'Text', text: /twin 5h 3%/ })
   expect(old?.text).toContain('(19h)')

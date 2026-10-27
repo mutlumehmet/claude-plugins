@@ -61,9 +61,14 @@
       "description": "A short sound when Claude needs you, a long job finishes, a test fails or a push lands. Packs from StarCraft, Warcraft, Age of Empires, Command & Conquer, Diablo, Counter-Strike, Duke Nukem, Rick and Morty, The Big Lebowski and more, or your own"
     },
     {
+      "name": "orca-quota",
+      "source": "./plugins/orca-quota",
+      "description": "Part of Orca Strator. Shows every Claude account's 5-hour and 7-day usage in one band above the prompt, and warns once before the account you are on hits its limit."
+    },
+    {
       "name": "orca-accounts",
       "source": "./plugins/orca-accounts",
-      "description": "Part of Orca Strator. Shows every Claude account's 5-hour and 7-day usage in one band above the prompt, and warns once before the account you are on hits its limit."
+      "description": "Renamed to orca-quota. Installs orca-quota; uninstall this one afterwards."
     },
     {
       "name": "orca-move",
@@ -76,9 +81,14 @@
       "description": "Part of Orca Strator. Lists every live Claude Code session on this machine, in every account, with how full its context is and the address to message it across accounts."
     },
     {
+      "name": "orca-fleet",
+      "source": "./plugins/orca-fleet",
+      "description": "Part of Orca Strator. Runs a fleet of Claude Code sessions: an orchestrator, lanes and checkers, with handovers to a fresh session when context fills. Each project keeps its own facts in one config file."
+    },
+    {
       "name": "orca-strator",
       "source": "./plugins/orca-strator",
-      "description": "Part of Orca Strator. Runs a fleet of Claude Code sessions: an orchestrator, lanes and checkers, with handovers to a fresh session when context fills. Each project keeps its own facts in one config file."
+      "description": "Renamed to orca-fleet. Installs orca-fleet; uninstall this one afterwards."
     },
     {
       "name": "orca-suite",

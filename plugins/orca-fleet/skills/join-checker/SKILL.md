@@ -1,6 +1,6 @@
 ---
 name: join-checker
-description: Starts this session as a checker in an orchestrated fleet of Claude Code sessions: it works through the preview ledger, checking each merged change once on staging with the project's test accounts, records pass or fail with what it saw, and reports to the orchestrator. Use when the user or an orchestrator says "you are Checker A", "join as a checker", "check the ledger", "take over Checker B", or a handoff note says to start with /orca-strator:join-checker.
+description: Starts this session as a checker in an orchestrated fleet of Claude Code sessions: it works through the preview ledger, checking each merged change once on staging with the project's test accounts, records pass or fail with what it saw, and reports to the orchestrator. Use when the user or an orchestrator says "you are Checker A", "join as a checker", "check the ledger", "take over Checker B", or a handoff note says to start with /orca-fleet:join-checker.
 argument-hint: "[handoff note] [checker name]"
 ---
 
@@ -34,5 +34,5 @@ When the queue is empty, tell the orchestrator and wait; do not invent checks.
 
 ## Context
 
-At the config's `handover.prepare` (default 70%) run `/orca-strator:hand-over`; at
-`handover.start` (default 85%) run `/orca-strator:hand-over start`.
+At the config's `handover.prepare` (default 70%) run `/orca-fleet:hand-over`; at
+`handover.start` (default 85%) run `/orca-fleet:hand-over start`.

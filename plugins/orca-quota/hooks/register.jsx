@@ -1,4 +1,4 @@
-// orca-accounts: one view of every Claude account's usage. Each session saves
+// orca-quota: one view of every Claude account's usage. Each session saves
 // its own account's 5-hour and 7-day reading (Claude Code pushes it with
 // session.measure) to ~/.config/orca-strator/quota/<account>.json, so every
 // other session, in any account, can show it. A band above the prompt lists

@@ -1,16 +1,16 @@
 # join-checker
 
-Part of [`orca-strator`](../../README.md), an Orca Strator plugin.
+Part of [`orca-fleet`](../../README.md), an Orca Strator plugin.
 
-![orca-strator: conduct runs the fleet and its crons, lanes and checkers report to it, and a session near full context hands over to a fresh one](../../../../docs/images/orca-strator-flow.png)
+![orca-fleet: conduct runs the fleet and its crons, lanes and checkers report to it, and a session near full context hands over to a fresh one](../../../../docs/images/orca-fleet-flow.png)
 
 Makes this session a checker: it works through the preview ledger oldest first, checks each merged change once where the row says, as the project's test accounts, writes pass or fail with what it saw, and reports fails to the orchestrator at once.
 
 ## Use
 
 ```
-/orca-strator:join-checker
-/orca-strator:join-checker notes/handoff-checker-a-2.md
+/orca-fleet:join-checker
+/orca-fleet:join-checker notes/handoff-checker-a-2.md
 ```
 
 The project config, templates, and what it reads and writes: see the [plugin README](../../README.md).
@@ -19,7 +19,7 @@ The project config, templates, and what it reads and writes: see the [plugin REA
 
 ```
 /plugin marketplace add mutlumehmet/claude-plugins
-/plugin install orca-strator@mehmetmutlu
+/plugin install orca-fleet@mehmetmutlu
 ```
 
 ## About

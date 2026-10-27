@@ -1,0 +1,4 @@
+{
+  "description": "orca-quota hooks module",
+  "modules": ["./register.jsx"]
+}

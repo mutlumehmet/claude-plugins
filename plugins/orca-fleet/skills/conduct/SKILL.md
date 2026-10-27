@@ -1,6 +1,6 @@
 ---
 name: conduct
-description: Runs this session as the orchestrator of a fleet of Claude Code sessions (lanes that build, checkers that verify). It starts or takes over the fleet from a handoff note, keeps two crons (a status round with every session's context use, and a nudge for idle lanes), tells every lane and checker to report to it, and keeps the orders file. Use when the user says "conduct", "be the orchestrator", "take over the fleet", "start the sprint", "you are the sprint N orchestrator", "read the handover and run the lanes", or a handoff note says to start with /orca-strator:conduct. The crons call it as `conduct status` and `conduct nudge`.
+description: Runs this session as the orchestrator of a fleet of Claude Code sessions (lanes that build, checkers that verify). It starts or takes over the fleet from a handoff note, keeps two crons (a status round with every session's context use, and a nudge for idle lanes), tells every lane and checker to report to it, and keeps the orders file. Use when the user says "conduct", "be the orchestrator", "take over the fleet", "start the sprint", "you are the sprint N orchestrator", "read the handover and run the lanes", or a handoff note says to start with /orca-fleet:conduct. The crons call it as `conduct status` and `conduct nudge`.
 argument-hint: "[handoff note] | status | nudge"
 ---
 
@@ -31,7 +31,7 @@ of the same name.
 
 ## Start or take over
 
-1. **Read** the handoff note if given (`/orca-strator:conduct <path>`), else the newest
+1. **Read** the handoff note if given (`/orca-fleet:conduct <path>`), else the newest
    `handoff-*orchestrator*` or sprint handoff in `files.handoffDir`. Read the files its "Read first"
    section names. Then the orders file, newest entries first.
 2. **Fleet:** list live sessions with `/orca-peers:peers` (or the `peers` skill; it covers every
@@ -41,8 +41,8 @@ of the same name.
    person which sessions are this fleet before messaging anyone. A session in the note but not
    live is gone: say so.
 3. **Crons:** create two with CronCreate, minutes from `crons` in the config:
-   - status: `<status minutes> * * * *`, prompt `/orca-strator:conduct status`
-   - nudge: `<nudge minutes> * * * *`, prompt `/orca-strator:conduct nudge`
+   - status: `<status minutes> * * * *`, prompt `/orca-fleet:conduct status`
+   - nudge: `<nudge minutes> * * * *`, prompt `/orca-fleet:conduct nudge`
 4. **Old orchestrator:** if the note names one that is still live, message it: "I am <name>,
    taking over. Stop your crons now and close once you have nothing in flight." This is also
    its signal that the successor arrived. Two orchestrators
@@ -63,10 +63,10 @@ of the same name.
 Run peers with `--json` and keep this fleet's sessions (as in step 2 above). For each, report state and `context`:
 
 - `flag` "prepare handover" (from `handover.prepare`, default 70%): message the session "Write
-  your handoff note now with /orca-strator:hand-over; keep working."
+  your handoff note now with /orca-fleet:hand-over; keep working."
 - `flag` "hand over" (from `handover.start`, default 85%): message it "Hand over now:
-  /orca-strator:hand-over start." If it is a lane mid-merge, let the merge finish first.
-- This session itself past either line: run `/orca-strator:hand-over` for yourself.
+  /orca-fleet:hand-over start." If it is a lane mid-merge, let the merge finish first.
+- This session itself past either line: run `/orca-fleet:hand-over` for yourself.
 
 Then check the merge queue (messages "ready to merge #N, head <sha>, SAFE") and CI on the default
 branch with `watch-ci` if it is installed. Merge only as the rules file allows. Give the person a

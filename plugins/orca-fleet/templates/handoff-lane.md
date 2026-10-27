@@ -1,6 +1,6 @@
 # Handover: <Lane n #k> to <Lane n #k+1> (<date>)
 
-Written at <percent>% context. Start with `/orca-strator:join-lane <this file>`.
+Written at <percent>% context. Start with `/orca-fleet:join-lane <this file>`.
 
 ## Reports to
 <orchestrator name> (find its address with peers; it may have moved)

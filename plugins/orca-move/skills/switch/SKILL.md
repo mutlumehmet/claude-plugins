@@ -17,7 +17,7 @@ Script: `python3 -I "${CLAUDE_PLUGIN_ROOT}/skills/switch/scripts/move.py"`
 ## 1. Plan
 
 If the argument is `cancel`, skip to **Cancel** below. Otherwise run `move.py plan $ARGUMENTS`. It names the target (the account named, or the twin with most
-quota left by orca-accounts' readings), the terminal tab, and the resume line. If it refuses
+quota left by orca-quota' readings), the terminal tab, and the resume line. If it refuses
 (no twin, another family, not in a known account), say why in one line and stop.
 
 Moving between twins is the only kind of move: another family has its own transcripts, and a

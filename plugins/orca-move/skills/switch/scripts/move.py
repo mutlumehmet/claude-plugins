@@ -5,7 +5,7 @@ Twins share their projects/ folder, so `claude --resume <id>` under the twin's c
 the same conversation. The move itself is three steps, and only the last one types anything:
 
   1. `plan [account]`  says what would happen: this session, its account and family, the target
-                        (named, or the twin with most quota left per orca-accounts' readings), the
+                        (named, or the twin with most quota left per orca-quota' readings), the
                         terminal tab, and the resume script. Changes nothing.
   2. `go <account>`    writes the resume script and an exit request, and starts a detached helper.
                         The orca-move mod sees the request when the turn ends and runs /exit once the
@@ -137,7 +137,7 @@ def first_cwd(cfg_dir, sid, fallback):
 
 
 def used(ident):
-    """Highest live percent of an account's saved readings, or None when orca-accounts has none."""
+    """Highest live percent of an account's saved readings, or None when orca-quota has none."""
     try:
         r = json.loads((QUOTA / f"{ident}.json").read_text())
     except (OSError, ValueError):

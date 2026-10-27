@@ -3,7 +3,7 @@
 This policy covers every plugin in this repository: the skills, the Claude Code Arcade
 (`arcade` and its ten games), the mods in Claude Code Toolkit (subtask-icons,
 context-alarm, answer-buttons, skill-stats, dash-guard, shared-file-guard, fork-lineage), the `toolkit`
-collection that installs them, and the Orca Strator plugins (orca-peers, orca-accounts, orca-move, orca-strator) and the `orca-suite` collection that installs them.
+collection that installs them, and the Orca Strator plugins (orca-peers, orca-quota, orca-move, orca-fleet) and the `orca-suite` collection that installs them.
 
 ## What is collected
 
@@ -25,7 +25,7 @@ plugin store or in your Claude Code transcripts on your own machine, and you can
 uninstalling the plugin. The Arcade keeps no scores: each terminal's games start from zero and end
 with it, and it writes nothing into your projects. fork-lineage also keeps the fork reports you approve, and the links
 between sessions, as files in `~/.claude-forks/` on your machine; they can contain conversation
-content, are never sent anywhere, and are cleaned up as described in its README. orca-accounts keeps one small file per Claude account in `~/.config/orca-strator/quota/` (the usage percent and reset time Claude Code reports for that account, and when it was read); it never reads login tokens. orca-move keeps a move note per moved session in `~/.config/orca-strator/moves/` (its scheduled jobs, the sessions to tell and what it waits on, written by the session itself), never sent anywhere. Each plugin's README lists exactly what it reads and keeps, under "What
+content, are never sent anywhere, and are cleaned up as described in its README. orca-quota keeps one small file per Claude account in `~/.config/orca-strator/quota/` (the usage percent and reset time Claude Code reports for that account, and when it was read); it never reads login tokens. orca-move keeps a move note per moved session in `~/.config/orca-strator/moves/` (its scheduled jobs, the sessions to tell and what it waits on, written by the session itself), never sent anywhere. Each plugin's README lists exactly what it reads and keeps, under "What
 it reads and does".
 
 ## What the mods read

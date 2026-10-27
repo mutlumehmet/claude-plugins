@@ -16,7 +16,7 @@ It also holds one small mod: the part of a move that has to happen inside Claude
 
 ## How a move works
 
-1. `/orca-move:switch [account]` picks the target: the account you name, or the twin with the most quota left (from [`orca-accounts`](../orca-accounts) readings, when installed).
+1. `/orca-move:switch [account]` picks the target: the account you name, or the twin with the most quota left (from [`orca-quota`](../orca-quota) readings, when installed).
 2. It messages the sessions it works with (the orchestrator, lanes, checkers) that it is moving.
 3. It writes a move note, `~/.config/orca-strator/moves/<session id>.md`: its crons, background work worth restarting, who to tell afterwards and what it is waiting on. Then it deletes its crons.
 4. It writes a resume script, `~/.config/orca-strator/moves/<first 8 of the id>.sh`, and starts a detached helper.
@@ -30,13 +30,13 @@ Changed your mind after `switch` ran? `/orca-move:switch cancel` stops the helpe
 
 ## Setup
 
-Twins must already exist and be logged in on their own; this never reads or copies login tokens. Optional: the same `~/.config/orca-strator/config.yaml` that [`orca-peers`](../orca-peers) and [`orca-accounts`](../orca-accounts) read, pointing at an accounts file that names your accounts and marks twins with `twinOf` (see the orca-accounts README). Without it, an account whose `projects/` is a link into another account's counts as that account's twin.
+Twins must already exist and be logged in on their own; this never reads or copies login tokens. Optional: the same `~/.config/orca-strator/config.yaml` that [`orca-peers`](../orca-peers) and [`orca-quota`](../orca-quota) read, pointing at an accounts file that names your accounts and marks twins with `twinOf` (see the orca-quota README). Without it, an account whose `projects/` is a link into another account's counts as that account's twin.
 
 Install it in every account of the family (twins that share `plugins/` share it automatically), and install [`orca-peers`](../orca-peers) too, so a moving session can find the addresses of the sessions it tells.
 
 ## What it reads and does
 
-- **Reads**: its own pid record and transcript start (for the session id, folder and terminal tab), the Orca Strator config and accounts file, and orca-accounts' quota readings.
+- **Reads**: its own pid record and transcript start (for the session id, folder and terminal tab), the Orca Strator config and accounts file, and orca-quota' quota readings.
 - **Writes**: move notes, resume scripts, a small plan file and a log per move in `~/.config/orca-strator/moves/`. `after-move` keeps the note as `<id>.done.md` and removes the rest.
 - **Types**: one line, `sh ~/.config/orca-strator/moves/<id8>.sh`, into the shell of the tab the session ran in, only after that session's process has ended. Never into a Claude prompt.
 - **Mod hooks**: `session.start` (starts a two second check for a move request addressed to this session); it reads the prompt box only when such a request exists, and runs `/exit` only then.
