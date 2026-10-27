@@ -16,7 +16,9 @@ A Claude Code mod that shows the 5-hour and 7-day usage of every Claude account 
 - **The warning**: when this account passes the warning level (90% by default) in either window, one toast says so and names the account in the same family with the most room, for example `work is at 91% of its 5h limit. twin is at 4%.` It warns again only after usage drops back below the level and crosses it again.
 - **Resets**: a window whose reset time has passed shows 0%, even if no session has reported since.
 
-It never switches accounts by itself. Moving a session to another account is a separate plugin of Orca Strator.
+- **Auto move (opt in)**: with `/quota auto on`, a session that passes the warning level moves itself to the twin with most room: the mod runs `/orca-move:switch <twin>`, and [`orca-move`](../orca-move) does the move (tells its peers, saves its crons, resumes the same conversation in the same tab). Off by default; it moves once per session, and never to a twin that is itself over the warning level.
+
+Without auto move it never switches accounts: it warns, and you move with `/orca-move:switch`.
 
 ## Commands
 
@@ -25,9 +27,11 @@ It never switches accounts by itself. Moving a session to another account is a s
 /quota warn <50-99>  warn when this account passes that percent (default 90)
 /quota hide          fold the band to one button
 /quota show          open the band again
+/quota auto on       move this session to the twin with most room by itself at the warning level
+/quota auto off      only warn (the default)
 ```
 
-`/quota warn` and the fold are kept per config directory (per account), in Claude Code's plugin store.
+`/quota warn`, `/quota auto` and the fold are kept per config directory (per account), in Claude Code's plugin store.
 
 ## How the numbers get there
 
@@ -74,7 +78,8 @@ The accounts file:
 - **Keeps**: one small JSON file per account in `~/.config/orca-strator/quota/` (percent and reset time per window, and when it was read); the warning level, the fold and whether the first-run tip was shown, in Claude Code's plugin store.
 - **Does**: draws the band, answers `/quota`, shows the warning toast and, once, a tip saying where the controls are.
 - **Hooks**: `session.start` (registers `/quota`, saves the first reading), `session.measure` (saves and warns when the usage changes), `command.run` for `/quota`, `ui.render` on the band above the prompt.
-- **Never**: reads login tokens or credentials, calls any API, switches accounts, or sends anything anywhere.
+- **Runs**: `/orca-move:switch <twin>`, only with `/quota auto on`, once per session, when this account passes the warning level.
+- **Never**: reads login tokens or credentials, calls any API, switches accounts unless you turned auto move on, or sends anything anywhere.
 - **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
 
 ## Install

@@ -5,7 +5,9 @@
 // them all (folded to one button when you want it out of the way), /quota
 // prints them, and a toast warns once when this account passes the threshold,
 // naming the account in its family with the most room left. It never reads
-// login tokens and never switches anything by itself. An account with no
+// login tokens. It moves a session only when you turned that on with
+// /quota auto on: then, at the warning level, it runs /orca-move:switch for this
+// session to the twin with most room (orca-move does the move). An account with no
 // session running keeps its last reading, so the band dims a reading older
 // than an hour and shows its age.
 
@@ -19,12 +21,17 @@ let accounts = [] // [{ id, configDir, family }] from accounts_file, when set
 let dir = null
 let cache = { at: 0, rows: [] }
 let warned = {} // window kind -> true while over the threshold
+let auto = false // /quota auto on: move this session by itself at the warning level
+let moving = false // one automatic move per session
+const MOVE = 'orca-move:switch'
 
 const HELP = [
   '/quota: every account with its usage, reset times and how old each reading is',
   '/quota warn <50-99>: warn when this account passes that percent',
   '/quota hide: fold the band to one button',
   '/quota show: open the band again',
+  '/quota auto on: at the warning level, move this session to the twin with most room by itself (needs orca-move)',
+  '/quota auto off: only warn (the default)',
 ]
 
 export function register(on) {
@@ -61,6 +68,14 @@ export function register(on) {
       await $.store.set('warn', n)
       return { text: 'Warning changed: this account now warns at ' + n + '%.' }
     }
+    if (word === 'auto') {
+      if (value !== 'on' && value !== 'off') return { text: 'Use /quota auto on or /quota auto off. Now: ' + (auto ? 'on' : 'off') + '.' }
+      const want = value === 'on'
+      if (want === auto) return { text: 'Auto move is already ' + value + '.' }
+      auto = want
+      await $.store.set('auto', want)
+      return { text: want ? 'Auto move on: at ' + warnAt + '% this session moves itself to the twin with most room.' : 'Auto move off: it only warns.' }
+    }
     if (word === 'hide' || word === 'show') {
       const fold = word === 'hide'
       if (((await $.store.get('folded')) === true) === fold) return { text: 'The band is already ' + (fold ? 'folded.' : 'open.') }
@@ -75,7 +90,7 @@ export function register(on) {
       const parts = WINDOWS.map(([kind, label]) => label + ' ' + pct(r, kind, now) + resetText(r, kind, now))
       return (r.id === me.id ? '* ' : '  ') + pad(r.id, 10) + parts.join('   ') + '   (' + ago(now - r.readAt) + ')'
     })
-    return { text: 'Usage by account (* = this session), warns at ' + warnAt + '%\n' + lines.join('\n') + '\n\n' + HELP.join('\n') }
+    return { text: 'Usage by account (* = this session), warns at ' + warnAt + '%, auto move ' + (auto ? 'on' : 'off') + '\n' + lines.join('\n') + '\n\n' + HELP.join('\n') }
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
@@ -108,6 +123,7 @@ async function setup($) {
   if (me) return
   const n = await $.store.get('warn')
   if (typeof n === 'number' && n >= 50 && n <= 99) warnAt = n
+  auto = (await $.store.get('auto')) === true
   const home = (await $.env.get('HOME')) || ''
   const cfg = clean((await $.env.get('CLAUDE_CONFIG_DIR')) || home + '/.claude', home)
   dir = home + '/.config/orca-strator/quota'
@@ -177,7 +193,25 @@ async function warn($, rateLimits) {
     const best = others.map(r => ({ r, used: Math.max(...WINDOWS.map(([k]) => live(r, k, now) ?? 0)) }))
       .sort((a, b) => a.used - b.used)[0]
     const tip = best ? ' ' + best.r.id + ' is at ' + Math.round(best.used) + '%.' : ''
+    if (auto && best && best.used < warnAt && !moving) {
+      moving = true
+      $.ui.toast(me.id + ' is at ' + Math.round(w.percentUsed) + '% of its ' + label + ' limit. Moving this session to ' + best.r.id + ' (' + Math.round(best.used) + '%).', { timeoutMs: 12000 })
+      // Outside the hook: a command the turn would wait on is refused, and orca-move runs once the session is idle
+      $.clock.after(1000, () => { void moveTo($, best.r.id) })
+      continue
+    }
     $.ui.toast(me.id + ' is at ' + Math.round(w.percentUsed) + '% of its ' + label + ' limit.' + tip, { timeoutMs: 12000 })
+  }
+}
+
+async function moveTo($, target) {
+  try {
+    const known = (await $.command.list()).some(c => c.name === MOVE)
+    if (!known) throw new Error('missing')
+    await $.command.run({ command: MOVE, args: target })
+  } catch {
+    moving = false
+    $.ui.toast('Auto move needs the orca-move plugin in this session. Install orca-move, or run /orca-move:switch ' + target + ' yourself.', { timeoutMs: 15000 })
   }
 }
 

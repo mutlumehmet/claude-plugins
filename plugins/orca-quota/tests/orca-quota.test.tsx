@@ -9,7 +9,7 @@ const IN_2H = '2026-10-26T14:00:00Z'
 function engine(on, { env = {}, files = {} } = {}) {
   const disk: Record<string, string> = { ...files }
   const store: Record<string, unknown> = {}
-  const seen = { toasts: [] as string[] }
+  const seen = { toasts: [] as string[], moves: [] as string[], moveInstalled: true as boolean }
   on('env.get', ($, e) => ({ value: ({ HOME, ...env })[e.name] }))
   on('fs.read', ($, e) => (e.path in disk ? { value: disk[e.path] } : { deny: 'ENOENT' }) as never)
   on('fs.write', ($, e) => { disk[e.path] = e.text; return { value: undefined } })
@@ -24,6 +24,9 @@ function engine(on, { env = {}, files = {} } = {}) {
   on('session.start', ($, e) => ({ cwd: e.cwd }))
   on('session.measure', ($, e) => ({ changed: e.changed }))
   on('ui.toast', ($, e) => { seen.toasts.push(e.text); return { value: undefined } })
+  on('command.list', () => ({ value: (seen.moveInstalled === false ? [] : [{ name: 'orca-move:switch' }]) as never }))
+  on('command.run', { command: 'orca-move:switch' }, ($, e) => { seen.moves.push(String(e.args)); return { text: '' } as never })
+  on('clock.after', () => ({ value: undefined }))
   return { disk, seen }
 }
 
@@ -140,4 +143,36 @@ test('/quota hide, show and unknown words', async ($, on) => {
   const r = await $.command.run({ command: 'quota', args: 'banana' })
   expect(r.text).toContain('Unknown: banana')
   expect(r.text).toContain('/quota warn <50-99>')
+})
+
+const settle = () => new Promise(res => setTimeout(res, 30))
+
+test('auto move: off by default, only warns', async ($, on) => {
+  const { seen } = engine(on, { files: { [Q + '/b.json']: row('b', 'default', 3) } })
+  await measure($, limits(95))
+  await settle()
+  expect(seen.moves).toEqual([])
+  expect(seen.toasts[0]).toContain('b is at 5%')
+})
+
+test('auto move on: at the warning level it runs orca-move:switch to the twin with room, once', async ($, on) => {
+  const { seen } = engine(on, { files: { [Q + '/b.json']: row('b', 'default', 3) } })
+  expect((await $.command.run({ command: 'quota', args: 'auto on' })).text).toContain('Auto move on')
+  expect((await $.command.run({ command: 'quota', args: 'auto on' })).text).toBe('Auto move is already on.')
+  await measure($, limits(95))
+  await settle()
+  expect(seen.moves).toEqual(['b'])
+  expect(seen.toasts.some(t => t.includes('Moving this session to b'))).toBe(true)
+  await measure($, limits(20))
+  await measure($, limits(96))
+  await settle()
+  expect(seen.moves).toEqual(['b'])
+})
+
+test('auto move does not move to a twin that is itself over the limit', async ($, on) => {
+  const { seen } = engine(on, { files: { [Q + '/b.json']: row('b', 'default', 93) } })
+  await $.command.run({ command: 'quota', args: 'auto on' })
+  await measure($, limits(95))
+  await settle()
+  expect(seen.moves).toEqual([])
 })
