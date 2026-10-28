@@ -3,7 +3,7 @@
 This policy covers every plugin in this repository: the skills, the Claude Code Arcade
 (`arcade` and its ten games), the mods in Claude Code Toolkit (subtask-icons,
 context-alarm, answer-buttons, skill-stats, dash-guard, shared-file-guard, fork-lineage), the `toolkit`
-collection that installs them, and the Orca Strator plugins (orca-peers, orca-quota, orca-move, orca-fleet) and the `orca-suite` collection that installs them.
+collection that installs them, and the Orca Strator plugins (orca-peers, orca-quota, orca-move, orca-fleet) and the `orca-strator` bundle that installs them.
 
 ## What is collected
 

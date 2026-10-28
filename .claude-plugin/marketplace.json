@@ -88,12 +88,12 @@
     {
       "name": "orca-strator",
       "source": "./plugins/orca-strator",
-      "description": "Renamed to orca-fleet. Installs orca-fleet; uninstall this one afterwards."
+      "description": "Orca Strator in one install: every session in every account, each account's usage, moves to a twin account before a limit, and a fleet of sessions with handovers. Each part also installs on its own."
     },
     {
       "name": "orca-suite",
       "source": "./plugins/orca-suite",
-      "description": "Orca Strator in one install: every session in every account, each account's usage, moves to a twin account before a limit, and a fleet of sessions with handovers. Each part also installs on its own."
+      "description": "Renamed to orca-strator. Installs orca-strator; uninstall this one afterwards."
     },
     {
       "name": "toolkit",

@@ -1,13 +1,16 @@
 {
   "name": "orca-strator",
-  "version": "0.1.1",
-  "description": "Renamed to orca-fleet. This empty plugin only installs orca-fleet (orchestrator, lanes, checkers and handovers); uninstall it once orca-fleet is installed.",
+  "version": "0.2.0",
+  "description": "Orca Strator in one install: see every session in every account, watch each account's usage, move sessions to a twin account before a limit, and run a fleet of sessions with handovers. Each part also installs on its own.",
   "author": {
     "name": "Mehmet Mutlu"
   },
-  "homepage": "https://github.com/mutlumehmet/claude-plugins/tree/main/plugins/orca-fleet",
+  "homepage": "https://github.com/mutlumehmet/claude-plugins/tree/main/plugins/orca-strator",
   "license": "MIT",
   "dependencies": [
+    "orca-peers",
+    "orca-quota",
+    "orca-move",
     "orca-fleet"
   ],
   "repository": "https://github.com/mutlumehmet/claude-plugins"

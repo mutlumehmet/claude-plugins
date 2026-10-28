@@ -1,17 +1,14 @@
 {
   "name": "orca-suite",
-  "version": "0.1.1",
-  "description": "Orca Strator in one install: see every session in every account, watch each account's usage, move sessions to a twin account before a limit, and run a fleet of sessions with handovers. Each part also installs on its own.",
+  "version": "0.1.2",
+  "description": "Renamed to orca-strator. This empty plugin only installs orca-strator (the Orca Strator bundle); uninstall it once orca-strator is installed.",
   "author": {
     "name": "Mehmet Mutlu"
   },
   "homepage": "https://github.com/mutlumehmet/claude-plugins/tree/main/plugins/orca-suite",
   "license": "MIT",
   "dependencies": [
-    "orca-peers",
-    "orca-quota",
-    "orca-move",
-    "orca-fleet"
+    "orca-strator"
   ],
   "repository": "https://github.com/mutlumehmet/claude-plugins"
 }
