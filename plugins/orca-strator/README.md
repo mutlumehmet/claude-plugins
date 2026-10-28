@@ -13,6 +13,12 @@
 The full story, with the video: [mehmetmutlu.dev/projects/orca-strator](https://www.mehmetmutlu.dev/projects/orca-strator).
 
 
+## Start here: `/orca`
+
+One command, buttons for the rest. `/orca` checks the setup (plugins in this account, accounts and twins, a fleet config in this project), lets you change the settings (auto move on or off, the warning level) and starts this session in the right role: **orchestrator**, **lane**, **checker**, or **just this session**. `/orca status` shows every seat, session and context level on one screen; `/orca help` lists every command. In a project with a fleet config (`.claude/orca-strator.json`) a new session says so in one line, and never starts anything by itself.
+
+## The parts
+
 | Plugin | What it does | Use it when |
 |---|---|---|
 | [`orca-peers`](../orca-peers) | `/peers` lists every live session in every account, with its message address and how full its context is | You message sessions in other accounts, or want to see which ones need a handover |

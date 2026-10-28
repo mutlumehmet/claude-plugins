@@ -176,3 +176,17 @@ test('auto move does not move to a twin that is itself over the limit', async ($
   await settle()
   expect(seen.moves).toEqual([])
 })
+
+test('shared config turns auto move on for every account; /quota auto off overrides it here', async ($, on) => {
+  const { seen } = engine(on, {
+    files: {
+      [HOME + '/.config/orca-strator/config.yaml']: 'auto_move: true\nwarn_percent: 80\n',
+      [Q + '/b.json']: row('b', 'default', 3),
+    },
+  })
+  await measure($, limits(85))
+  await settle()
+  expect(seen.moves).toEqual(['b'])
+  const r = await $.command.run({ command: 'quota', args: 'auto off' })
+  expect(r.text).toContain('Auto move off')
+})

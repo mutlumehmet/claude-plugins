@@ -31,7 +31,7 @@ Without auto move it never switches accounts: it warns, and you move with `/orca
 /quota auto off      only warn (the default)
 ```
 
-`/quota warn`, `/quota auto` and the fold are kept per config directory (per account), in Claude Code's plugin store.
+Defaults for every account can live in `~/.config/orca-strator/config.yaml` as `auto_move: true` and `warn_percent: 85` (the `/orca` setup screen writes them). `/quota warn`, `/quota auto` and the fold are kept per config directory (per account), in Claude Code's plugin store.
 
 ## How the numbers get there
 

@@ -121,10 +121,15 @@ export function register(on) {
 
 async function setup($) {
   if (me) return
+  const home = (await $.env.get('HOME')) || ''
+  // Defaults for every account from the shared config (the /orca setup screen writes them);
+  // /quota warn and /quota auto in an account override them for that account
+  const shared = await readSettings($, home)
   const n = await $.store.get('warn')
   if (typeof n === 'number' && n >= 50 && n <= 99) warnAt = n
-  auto = (await $.store.get('auto')) === true
-  const home = (await $.env.get('HOME')) || ''
+  else if (shared.warn >= 50 && shared.warn <= 99) warnAt = shared.warn
+  const a = await $.store.get('auto')
+  auto = typeof a === 'boolean' ? a : shared.auto === true
   const cfg = clean((await $.env.get('CLAUDE_CONFIG_DIR')) || home + '/.claude', home)
   dir = home + '/.config/orca-strator/quota'
   accounts = await readAccounts($, home)
@@ -132,6 +137,17 @@ async function setup($) {
   const base = cfg.split('/').pop() || ''
   const id = known ? known.id : base === '.claude' ? 'default' : base.replace(/^\.claude-/, '') || 'default'
   me = { id, family: known ? known.family : id }
+}
+
+async function readSettings($, home) {
+  try {
+    const yaml = await $.fs.read(home + '/.config/orca-strator/config.yaml')
+    const auto = yaml.match(/^\s*auto_move\s*:\s*(true|false)\s*$/m)
+    const warn = yaml.match(/^\s*warn_percent\s*:\s*(\d+)\s*$/m)
+    return { auto: auto ? auto[1] === 'true' : undefined, warn: warn ? Number(warn[1]) : undefined }
+  } catch {
+    return {}
+  }
 }
 
 // accounts_file in ~/.config/orca-strator/config.yaml, the same file orca-peers reads

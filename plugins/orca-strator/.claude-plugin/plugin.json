@@ -1,6 +1,6 @@
 {
   "name": "orca-strator",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Orca Strator in one install: see every session in every account, watch each account's usage, move sessions to a twin account before a limit, and run a fleet of sessions with handovers. Each part also installs on its own.",
   "author": {
     "name": "Mehmet Mutlu"

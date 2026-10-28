@@ -1,6 +1,6 @@
 {
   "name": "orca-quota",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Part of Orca Strator. Shows every Claude account's 5-hour and 7-day usage in one band, and warns before an account hits its limit.",
   "author": {
     "name": "Mehmet Mutlu"
