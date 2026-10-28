@@ -1,8 +1,17 @@
 # orca-strator
 
-**Orca Strator** in one install: tools for people who run many Claude Code sessions at once, often under more than one Claude login. The bundle is `orca-strator` (it was `orca-suite` until 27 October 2026). This plugin holds no code of its own. It lists the four Orca Strator plugins as dependencies, so installing it installs them all.
+**Orca Strator** in one install: tools for people who run many Claude Code sessions at once, often under more than one Claude login. This plugin holds no code of its own. It lists the four Orca Strator plugins as dependencies, so installing it installs them all.
 
-![Orca Strator: peers, quota, move and fleet, one install or each on its own](../../docs/images/orca-strator-flow.png)
+<img src="../../docs/images/orca-strator-logo.png" width="160" alt="Orca Strator logo: an orca">
+
+![Orca Strator teaser: one seat hits its limit, extra usage costs about $15,000 a month against $375 for three seats, then sessions move themselves to the seat with room, message each other and hand over when context fills](../../docs/images/orca-strator-teaser.gif)
+
+![Same Claude work for one month: about $15,000 on one seat plus extra usage against $375 on three seats, fixed (estimates from claude.com/pricing, 27 October 2026, and own token counts)](../../docs/images/orca-strator-price.png)
+
+**Why:** one Claude seat plus extra usage at API rates came to roughly $15,000 to $20,000 a month for the author's work, by his own token counts; three Team seats used fully cost $375 a month, fixed. More seats is cheaper, but every seat has its own 5 hour and weekly limit. Orca Strator does the juggling: it shows every seat's usage, moves a session to the seat with room (by itself with `/quota auto on`), lets sessions on different seats talk, and hands over to a fresh session when context fills.
+
+The full story, with the video: [mehmetmutlu.dev/projects/orca-strator](https://www.mehmetmutlu.dev/projects/orca-strator).
+
 
 | Plugin | What it does | Use it when |
 |---|---|---|

@@ -2,7 +2,7 @@
 
 Part of **Orca Strator**, a set of small plugins for running many Claude Code sessions at once. Each one installs on its own.
 
-`orca-quota` was called `orca-accounts` until 0.1.x (renamed 27 October 2026, so the name says what it does). Installed `orca-accounts` updates to an empty plugin that installs this one.
+`orca-quota` was called `orca-accounts` until 0.1.x (renamed 27 October 2026, so the name says what it does).
 
 A Claude Code mod that shows the 5-hour and 7-day usage of every Claude account you use on this machine, in one band above the prompt, and warns you once before the account you are on hits its limit.
 

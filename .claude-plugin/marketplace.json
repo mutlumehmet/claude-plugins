@@ -66,11 +66,6 @@
       "description": "Part of Orca Strator. Shows every Claude account's 5-hour and 7-day usage in one band above the prompt, and warns once before the account you are on hits its limit."
     },
     {
-      "name": "orca-accounts",
-      "source": "./plugins/orca-accounts",
-      "description": "Renamed to orca-quota. Installs orca-quota; uninstall this one afterwards."
-    },
-    {
       "name": "orca-move",
       "source": "./plugins/orca-move",
       "description": "Part of Orca Strator. Moves a live session, or every session of an account, to a twin account when one nears its limit, and tells the sessions it works with where it went."
@@ -89,11 +84,6 @@
       "name": "orca-strator",
       "source": "./plugins/orca-strator",
       "description": "Orca Strator in one install: every session in every account, each account's usage, moves to a twin account before a limit, and a fleet of sessions with handovers. Each part also installs on its own."
-    },
-    {
-      "name": "orca-suite",
-      "source": "./plugins/orca-suite",
-      "description": "Renamed to orca-strator. Installs orca-strator; uninstall this one afterwards."
     },
     {
       "name": "toolkit",
