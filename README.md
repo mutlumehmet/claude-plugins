@@ -129,7 +129,7 @@ Small mods for long sessions. Install them all with `/plugin install toolkit@meh
 </td>
 <td valign="top" width="50%">
 <a href="plugins/orca-strator"><img src="docs/images/orca-strator-product.png" width="360" alt="orca-strator: peers, quota, move and fleet in one install"></a><br>
-<b><a href="plugins/orca-strator"><code>orca-strator</code></a></b>: All four Orca Strator plugins in one install: <code>orca-peers</code>, <code>orca-quota</code>, <code>orca-move</code> and <code>orca-fleet</code>, for running many sessions across many Claude accounts
+<b><a href="plugins/orca-strator"><code>orca-strator</code></a></b>: All four Orca Strator plugins in one install: <code>orca-peers</code>, <code>orca-quota</code>, <code>orca-move</code> and <code>orca-fleet</code>, for running many sessions across many Claude accounts. Start with <code>/orca</code>: setup, settings and roles with buttons
 </td>
 </tr>
 </table>
