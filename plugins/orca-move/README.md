@@ -1,6 +1,6 @@
 # orca-move
 
-Part of **Orca Strator**, a set of small plugins for running many Claude Code sessions at once. Each one installs on its own.
+Part of **Orca Strator**, a set of small plugins for running many Claude Code sessions at once. Each one installs on its own. **Most people install the bundle, [`orca-strator`](../orca-strator), which includes this one, then type `/orca`.**
 
 When one Claude account nears its usage limit, this moves a live session (or all of them) to a **twin account**: a second login whose config directory shares the same `projects/` folder, so `claude --resume` there opens the very same conversation. Before the move the session tells the sessions it works with and saves its scheduled jobs; after it, it brings them back and sends its new message address.
 

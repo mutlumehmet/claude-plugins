@@ -1,6 +1,6 @@
 # orca-peers
 
-Part of **Orca Strator**, a set of small plugins for running many Claude Code sessions at once. Each one installs on its own.
+Part of **Orca Strator**, a set of small plugins for running many Claude Code sessions at once. Each one installs on its own. **Most people install the bundle, [`orca-strator`](../orca-strator), which includes this one, then type `/orca`.**
 
 ![orca-peers: reads every account, drops ended sessions, lists each one with the address to message it](../../docs/images/orca-peers-flow.png)
 

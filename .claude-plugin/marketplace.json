@@ -61,29 +61,29 @@
       "description": "A short sound when Claude needs you, a long job finishes, a test fails or a push lands. Packs from StarCraft, Warcraft, Age of Empires, Command & Conquer, Diablo, Counter-Strike, Duke Nukem, Rick and Morty, The Big Lebowski and more, or your own"
     },
     {
-      "name": "orca-quota",
-      "source": "./plugins/orca-quota",
-      "description": "Part of Orca Strator. Shows every Claude account's 5-hour and 7-day usage in one band above the prompt, and warns once before the account you are on hits its limit."
-    },
-    {
-      "name": "orca-move",
-      "source": "./plugins/orca-move",
-      "description": "Part of Orca Strator. Moves a live session, or every session of an account, to a twin account when one nears its limit, and tells the sessions it works with where it went."
+      "name": "orca-strator",
+      "source": "./plugins/orca-strator",
+      "description": "Start here: Orca Strator in one install. Every seat's usage, moving sessions to the seat with room, messages across seats and handovers when context fills. Then type /orca."
     },
     {
       "name": "orca-peers",
       "source": "./plugins/orca-peers",
-      "description": "Part of Orca Strator. Lists every live Claude Code session on this machine, in every account, with how full its context is and the address to message it across accounts."
+      "description": "Part of Orca Strator, included in orca-strator. Install alone only if you just want /peers: every session in every account, with its context use and message address."
+    },
+    {
+      "name": "orca-quota",
+      "source": "./plugins/orca-quota",
+      "description": "Part of Orca Strator, included in orca-strator. Install alone only if you just want the usage band, /quota and the warning before a limit."
+    },
+    {
+      "name": "orca-move",
+      "source": "./plugins/orca-move",
+      "description": "Part of Orca Strator, included in orca-strator. Install alone only if you just want to move sessions between seats."
     },
     {
       "name": "orca-fleet",
       "source": "./plugins/orca-fleet",
-      "description": "Part of Orca Strator. Runs a fleet of Claude Code sessions: an orchestrator, lanes and checkers, with handovers to a fresh session when context fills. Each project keeps its own facts in one config file."
-    },
-    {
-      "name": "orca-strator",
-      "source": "./plugins/orca-strator",
-      "description": "Orca Strator in one install: every session in every account, each account's usage, moves to a twin account before a limit, and a fleet of sessions with handovers. Each part also installs on its own."
+      "description": "Part of Orca Strator, included in orca-strator. Install alone only if you just want the orchestrator, lane and checker roles with handovers."
     },
     {
       "name": "toolkit",

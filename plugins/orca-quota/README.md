@@ -1,6 +1,6 @@
 # orca-quota
 
-Part of **Orca Strator**, a set of small plugins for running many Claude Code sessions at once. Each one installs on its own.
+Part of **Orca Strator**, a set of small plugins for running many Claude Code sessions at once. Each one installs on its own. **Most people install the bundle, [`orca-strator`](../orca-strator), which includes this one, then type `/orca`.**
 
 `orca-quota` was called `orca-accounts` until 0.1.x (renamed 27 October 2026, so the name says what it does).
 

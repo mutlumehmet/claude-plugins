@@ -1,6 +1,6 @@
 # orca-fleet
 
-Part of **Orca Strator**, a set of small plugins for running many Claude Code sessions at once. Each one installs on its own.
+Part of **Orca Strator**, a set of small plugins for running many Claude Code sessions at once. Each one installs on its own. **Most people install the bundle, [`orca-strator`](../orca-strator), which includes this one, then type `/orca`.**
 
 `orca-fleet` was called `orca-strator` until 0.1.x (renamed 27 October 2026, so the name says what it does). The name `orca-strator` now belongs to the Orca Strator bundle, which includes this plugin.
 

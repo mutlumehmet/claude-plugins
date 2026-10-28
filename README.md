@@ -10,7 +10,7 @@ Claude Code plugins I use every day, cleaned up so they work on anyone's machine
 `agent-skills`; old links redirect here.
 
 **Contents:** [Claude Code Arcade](#claude-code-arcade) · [Claude Code Toolkit](#claude-code-toolkit) ·
-[Skills](#skills) · [Install](#install) · [Contributing](#contributing) · [About](#about)
+[Orca Strator](#orca-strator) · [Skills](#skills) · [Install](#install) · [Contributing](#contributing) · [About](#about)
 
 ## Claude Code Arcade
 
@@ -112,31 +112,49 @@ Small mods for long sessions. Install them all with `/plugin install toolkit@meh
 <b><a href="plugins/findmutlu-sounds"><code>findmutlu-sounds</code></a></b>: A short sound when Claude needs you, a job finishes, a test fails or a push lands. StarCraft, Warcraft, Age of Empires, Command & Conquer, Diablo, Counter-Strike, Duke Nukem, Rick and Morty, The Big Lebowski and more (<a href="docs/videos/findmutlu-sounds-tour.mp4">hear them</a>). Not in the toolkit bundle: install it by name
 </td>
 </tr>
+</table>
+
+## Orca Strator
+
+Run many Claude Code sessions across several Claude seats: see every seat's usage, move a session to the seat with room without losing the conversation, let sessions on different seats message each other, and hand over to a fresh session when context fills.
+
+**Start here:** install the bundle, then type `/orca`. It checks the setup, asks a few questions with buttons and starts the session in the right role.
+
+```
+/plugin install orca-strator@mehmetmutlu
+/orca
+```
+
+[![Orca Strator: Claude Code plugins for managing many sessions on many seats](docs/images/orca-strator-product.png)](plugins/orca-strator)
+
+The bundle [`orca-strator`](plugins/orca-strator) installs these four parts:
+
+<table>
 <tr>
 <td valign="top" width="50%">
-<a href="plugins/orca-quota"><img src="docs/images/orca-quota-flow.png" width="360" alt="orca-quota: every account's 5-hour and 7-day usage above the prompt, with a warning before the limit"></a><br>
-<b><a href="plugins/orca-quota"><code>orca-quota</code></a></b>: Every Claude account's 5-hour and 7-day usage in one band above the prompt, <code>/quota</code> for the details, and one warning before the account you are on hits its limit (Orca Strator). Not in the toolkit bundle: install it by name
+<a href="plugins/orca-peers/skills/peers"><img src="docs/images/orca-peers-flow.png" width="360" alt="orca-peers: every live session in every account, with its context use and the address to message it"></a><br>
+<b><a href="plugins/orca-peers/skills/peers"><code>orca-peers</code></a></b>: <code>/peers</code>: every live session in every account, how full its context is, and the address to message it. Included in <code>orca-strator</code>; install it alone only if you just want this part
 </td>
 <td valign="top" width="50%">
-<a href="plugins/orca-move"><img src="docs/images/orca-move-flow.png" width="360" alt="orca-move: moves a live session to a twin account and announces its new address"></a><br>
-<b><a href="plugins/orca-move"><code>orca-move</code></a></b>: Moves a live session, or every session of an account, to a twin account when one nears its limit: saves its crons, tells the sessions it works with, resumes the same conversation in the same tab and announces its new address (Orca Strator). Not in the toolkit bundle: install it by name
+<a href="plugins/orca-quota"><img src="docs/images/orca-quota-flow.png" width="360" alt="orca-quota: every account's 5-hour and 7-day usage above the prompt, with a warning before the limit"></a><br>
+<b><a href="plugins/orca-quota"><code>orca-quota</code></a></b>: Every seat's 5-hour and weekly usage above the prompt, <code>/quota</code>, a warning before the limit and an opt in auto move. Included in <code>orca-strator</code>; install it alone only if you just want this part
 </td>
 </tr>
 <tr>
 <td valign="top" width="50%">
-<a href="plugins/orca-fleet"><img src="docs/images/orca-fleet-flow.png" width="360" alt="orca-fleet: an orchestrator, lanes and checkers, with handovers to a fresh session"></a><br>
-<b><a href="plugins/orca-fleet"><code>orca-fleet</code></a></b>: Runs a fleet of sessions on one project: an orchestrator with status and nudge crons, lanes that send "ready to merge", checkers that verify each merge once, and handovers to a fresh session when context fills (Orca Strator). Not in the toolkit bundle: install it by name
+<a href="plugins/orca-move"><img src="docs/images/orca-move-flow.png" width="360" alt="orca-move: moves a live session to a twin account and announces its new address"></a><br>
+<b><a href="plugins/orca-move"><code>orca-move</code></a></b>: Moves a live session, or every session of a seat, to the seat with room: saves its crons, tells the sessions it works with and reopens the same conversation. Included in <code>orca-strator</code>; install it alone only if you just want this part
 </td>
 <td valign="top" width="50%">
-<a href="plugins/orca-strator"><img src="docs/images/orca-strator-product.png" width="360" alt="orca-strator: peers, quota, move and fleet in one install"></a><br>
-<b><a href="plugins/orca-strator"><code>orca-strator</code></a></b>: All four Orca Strator plugins in one install: <code>orca-peers</code>, <code>orca-quota</code>, <code>orca-move</code> and <code>orca-fleet</code>, for running many sessions across many Claude accounts. Start with <code>/orca</code>: setup, settings and roles with buttons
+<a href="plugins/orca-fleet"><img src="docs/images/orca-fleet-flow.png" width="360" alt="orca-fleet: an orchestrator, lanes and checkers, with handovers to a fresh session"></a><br>
+<b><a href="plugins/orca-fleet"><code>orca-fleet</code></a></b>: An orchestrator, lanes and checkers on one project, with handovers to a fresh session when context fills. Included in <code>orca-strator</code>; install it alone only if you just want this part
 </td>
 </tr>
 </table>
 
 ## Skills
 
-Skills come grouped in plugins: [`project-workflow`](plugins/project-workflow) for starting and closing work, [`dev-workflow`](plugins/dev-workflow) for shipping code, [`orca-peers`](plugins/orca-peers) for running many sessions at once (the first of the Orca Strator plugins). Install a group with `/plugin install <plugin>@mehmetmutlu`.
+Skills come grouped in plugins: [`project-workflow`](plugins/project-workflow) for starting and closing work and [`dev-workflow`](plugins/dev-workflow) for shipping code. Install a group with `/plugin install <plugin>@mehmetmutlu`.
 
 <table>
 <tr>
@@ -155,8 +173,6 @@ Skills come grouped in plugins: [`project-workflow`](plugins/project-workflow) f
 <b><a href="plugins/dev-workflow/skills/watch-ci"><code>watch-ci</code></a></b>: Watches a pull request or a merge until every check has finished, then reports GREEN or RED by itself
 </td>
 <td valign="top" width="50%">
-<a href="plugins/orca-peers/skills/peers"><img src="docs/images/orca-peers-flow.png" width="360" alt="peers: every live session in every account, with the address to message it"></a><br>
-<b><a href="plugins/orca-peers/skills/peers"><code>peers</code></a></b>: Lists every live Claude Code session in every account, with how full its context is and the address to message it (Orca Strator)
 </td>
 </tr>
 </table>
