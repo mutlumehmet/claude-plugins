@@ -2,6 +2,10 @@
 
 Part of **Orca Strator**, a set of small plugins for running many Claude Code sessions at once. Each one installs on its own. **Most people install the bundle, [`orca-strator`](../orca-strator), which includes this one, then type `/orca`.**
 
+**A compact orchestrator for Claude Code sessions.** One session plans and routes the work, lanes build, checkers verify each merged change, and two crons watch every session's context and hand work to a fresh session before it fills up. Full write-up with the teaser and slides: [mehmetmutlu.dev/projects/orca-fleet](https://www.mehmetmutlu.dev/projects/orca-fleet).
+
+![Orca Fleet teaser: one orchestrator routes the work, lanes build, checkers verify, a status cron reads every session's context, a nudge cron wakes an idle lane, and a lane hands over to a fresh session](../../docs/images/orca-fleet-teaser.gif)
+
 `orca-fleet` was called `orca-strator` until 0.1.x (renamed 27 October 2026, so the name says what it does). The name `orca-strator` now belongs to the Orca Strator bundle, which includes this plugin.
 
 Runs a **fleet** of Claude Code sessions on one project: an orchestrator that keeps the plan, the crons and the merge queue; lanes that each build one stream of work; checkers that verify each merged change once on staging. When a session's context fills, it hands over to a fresh session that reads one note and carries on. The plugin holds the roles and templates only; your project keeps its own facts and rules in one config file.
