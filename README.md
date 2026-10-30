@@ -9,8 +9,119 @@
 Claude Code plugins I use every day, cleaned up so they work on anyone's machine. Formerly
 `agent-skills`; old links redirect here.
 
-**Contents:** [Claude Code Arcade](#claude-code-arcade) · [Claude Code Toolkit](#claude-code-toolkit) ·
-[Orca Strator](#orca-strator) · [Skills](#skills) · [Install](#install) · [Contributing](#contributing) · [About](#about)
+**Contents:** [Orca Strator](#orca-strator) · [Claude Code Toolkit](#claude-code-toolkit) ·
+[Skills](#skills) · [Claude Code Arcade](#claude-code-arcade) · [Install](#install) · [Contributing](#contributing) · [About](#about)
+
+## Orca Strator
+
+Run many Claude Code sessions across several Claude seats: see every seat's usage, move a session to the seat with room without losing the conversation, let sessions on different seats message each other, and hand over to a fresh session when context fills.
+
+**Start here:** install the bundle, then type `/orca`. It checks the setup, asks a few questions with buttons and starts the session in the right role.
+
+```
+/plugin install orca-strator@mehmetmutlu
+/orca
+```
+
+[![Orca Strator: Claude Code plugins for managing many sessions on many seats](docs/images/orca-strator-product.png)](plugins/orca-strator)
+
+The bundle [`orca-strator`](plugins/orca-strator) installs these four parts:
+
+<table>
+<tr>
+<td valign="top" width="50%">
+<a href="plugins/orca-peers/skills/peers"><img src="docs/images/orca-peers-flow.png" width="360" alt="orca-peers: every live session in every account, with its context use and the address to message it"></a><br>
+<b><a href="plugins/orca-peers/skills/peers"><code>orca-peers</code></a></b>: <code>/peers</code>: every live session in every account, how full its context is, and the address to message it. Included in <code>orca-strator</code>; install it alone only if you just want this part
+</td>
+<td valign="top" width="50%">
+<a href="plugins/orca-quota"><img src="docs/images/orca-quota-flow.png" width="360" alt="orca-quota: every account's 5-hour and 7-day usage above the prompt, with a warning before the limit"></a><br>
+<b><a href="plugins/orca-quota"><code>orca-quota</code></a></b>: Every seat's 5-hour and weekly usage above the prompt, <code>/quota</code>, a warning before the limit and an opt in auto move. Included in <code>orca-strator</code>; install it alone only if you just want this part
+</td>
+</tr>
+<tr>
+<td valign="top" width="50%">
+<a href="plugins/orca-move"><img src="docs/images/orca-move-flow.png" width="360" alt="orca-move: moves a live session to a twin account and announces its new address"></a><br>
+<b><a href="plugins/orca-move"><code>orca-move</code></a></b>: Moves a live session, or every session of a seat, to the seat with room: saves its crons, tells the sessions it works with and reopens the same conversation. Included in <code>orca-strator</code>; install it alone only if you just want this part
+</td>
+<td valign="top" width="50%">
+<a href="plugins/orca-fleet"><img src="docs/images/orca-fleet-flow.png" width="360" alt="orca-fleet: an orchestrator, lanes and checkers, with handovers to a fresh session"></a><br>
+<b><a href="plugins/orca-fleet"><code>orca-fleet</code></a></b>: An orchestrator, lanes and checkers on one project, with handovers to a fresh session when context fills. Included in <code>orca-strator</code>; install it alone only if you just want this part
+</td>
+</tr>
+</table>
+
+## Claude Code Toolkit
+
+Small mods for long sessions. Install them all with `/plugin install toolkit@mehmetmutlu`
+([`toolkit`](plugins/toolkit)), or any one by name.
+
+<table>
+<tr>
+<td valign="top" width="50%">
+<a href="plugins/subtask-icons"><img src="docs/images/subtask-icons-film.gif" width="360" alt="subtask-icons: a Subtask button under the answer forks one item into its own session"></a><br>
+<b><a href="plugins/subtask-icons"><code>subtask-icons</code></a></b>: A <code>⑂ Subtask</code> button under the last answer that puts <code>/subtask &lt;item&gt;</code> in the prompt box, and a <code>Pin list</code> button that keeps that list above the prompt while you work through it
+</td>
+<td valign="top" width="50%">
+<a href="plugins/context-alarm"><img src="docs/images/context-alarm-film.gif" width="360" alt="context-alarm: a warning at 82 percent full suggests /save-context"></a><br>
+<b><a href="plugins/context-alarm"><code>context-alarm</code></a></b>: Warns as the context fills up and suggests <code>/save-context</code> before compaction
+</td>
+</tr>
+<tr>
+<td valign="top" width="50%">
+<a href="plugins/answer-buttons"><img src="docs/images/answer-buttons-film.gif" width="360" alt="answer-buttons: one click asks for the short version of the last answer"></a><br>
+<b><a href="plugins/answer-buttons"><code>answer-buttons</code></a></b>: Plain English, Shorter and Plain & short buttons under the last answer
+</td>
+<td valign="top" width="50%">
+<a href="plugins/skill-stats"><img src="docs/images/skill-stats-film.gif" width="360" alt="skill-stats: a table of skills counted from your past sessions"></a><br>
+<b><a href="plugins/skill-stats"><code>skill-stats</code></a></b>: Which skills run, which never trigger, and a hand off to skill-creator
+</td>
+</tr>
+<tr>
+<td valign="top" width="50%">
+<a href="plugins/dash-guard"><img src="docs/images/dash-guard-film.gif" width="360" alt="dash-guard: a write with an em dash is refused and the line to rewrite is named"></a><br>
+<b><a href="plugins/dash-guard"><code>dash-guard</code></a></b>: Refuses prose with em dashes, en dashes or double hyphens
+</td>
+<td valign="top" width="50%">
+<a href="plugins/shared-file-guard"><img src="docs/images/shared-file-guard-film.gif" width="360" alt="shared-file-guard: a shell write to a STATUS.md another session changed is stopped"></a><br>
+<b><a href="plugins/shared-file-guard"><code>shared-file-guard</code></a></b>: Refuses shell writes to shared files another session changed
+</td>
+</tr>
+<tr>
+<td valign="top" width="50%">
+<a href="plugins/fork-lineage"><img src="docs/images/fork-lineage-how.gif" width="360" alt="fork-lineage: a fork remembers its parent, and its report goes back after you approve"></a><br>
+<b><a href="plugins/fork-lineage"><code>fork-lineage</code></a></b>: Shows which session a fork came from, and sends the fork's report to its parent when you approve
+</td>
+<td valign="top" width="50%">
+<a href="docs/videos/findmutlu-sounds-tour.mp4"><img src="docs/images/findmutlu-sounds-tour.png" width="360" alt="findmutlu-sounds: game sound packs for the moments that need you; open the film to hear them"></a><br>
+<b><a href="plugins/findmutlu-sounds"><code>findmutlu-sounds</code></a></b>: A short sound when Claude needs you, a job finishes, a test fails or a push lands. StarCraft, Warcraft, Age of Empires, Command & Conquer, Diablo, Counter-Strike, Duke Nukem, Rick and Morty, The Big Lebowski and more (<a href="docs/videos/findmutlu-sounds-tour.mp4">hear them</a>). Not in the toolkit bundle: install it by name
+</td>
+</tr>
+</table>
+
+## Skills
+
+Skills come grouped in plugins: [`project-workflow`](plugins/project-workflow) for starting and closing work and [`dev-workflow`](plugins/dev-workflow) for shipping code. Install a group with `/plugin install <plugin>@mehmetmutlu`.
+
+<table>
+<tr>
+<td valign="top" width="50%">
+<a href="plugins/project-workflow/skills/create-project"><img src="docs/images/create-project-flow.png" width="360" alt="create-project: the questions it asks and the folder it builds"></a><br>
+<b><a href="plugins/project-workflow/skills/create-project"><code>create-project</code></a></b>: Sets up a new project folder the same way every time
+</td>
+<td valign="top" width="50%">
+<a href="plugins/project-workflow/skills/save-context"><img src="docs/images/save-context-flow.png" width="360" alt="save-context: what a session decided goes to the one place it belongs"></a><br>
+<b><a href="plugins/project-workflow/skills/save-context"><code>save-context</code></a></b>: Saves what a session decided, changed and left open before you close it
+</td>
+</tr>
+<tr>
+<td valign="top" width="50%">
+<a href="plugins/dev-workflow/skills/watch-ci"><img src="docs/images/watch-ci-flow.gif" width="360" alt="watch-ci: you merge, every check on the commit finishes, the session hears GREEN by itself"></a><br>
+<b><a href="plugins/dev-workflow/skills/watch-ci"><code>watch-ci</code></a></b>: Watches a pull request or a merge until every check has finished, then reports GREEN or RED by itself
+</td>
+<td valign="top" width="50%">
+</td>
+</tr>
+</table>
 
 ## Claude Code Arcade
 
@@ -65,117 +176,6 @@ Five small games at the right of the line:<br>
 </table>
 
 Every game, what counts as a moment, and every command: [the Arcade's own page](plugins/arcade).
-
-## Claude Code Toolkit
-
-Small mods for long sessions. Install them all with `/plugin install toolkit@mehmetmutlu`
-([`toolkit`](plugins/toolkit)), or any one by name.
-
-<table>
-<tr>
-<td valign="top" width="50%">
-<a href="plugins/subtask-icons"><img src="docs/images/subtask-icons-film.gif" width="360" alt="subtask-icons: a Subtask button under the answer forks one item into its own session"></a><br>
-<b><a href="plugins/subtask-icons"><code>subtask-icons</code></a></b>: A <code>⑂ Subtask</code> button under the last answer that puts <code>/subtask &lt;item&gt;</code> in the prompt box, and a <code>Pin list</code> button that keeps that list above the prompt while you work through it
-</td>
-<td valign="top" width="50%">
-<a href="plugins/context-alarm"><img src="docs/images/context-alarm-film.gif" width="360" alt="context-alarm: a warning at 82 percent full suggests /save-context"></a><br>
-<b><a href="plugins/context-alarm"><code>context-alarm</code></a></b>: Warns as the context fills up and suggests <code>/save-context</code> before compaction
-</td>
-</tr>
-<tr>
-<td valign="top" width="50%">
-<a href="plugins/answer-buttons"><img src="docs/images/answer-buttons-film.gif" width="360" alt="answer-buttons: one click asks for the short version of the last answer"></a><br>
-<b><a href="plugins/answer-buttons"><code>answer-buttons</code></a></b>: Plain English, Shorter and Plain & short buttons under the last answer
-</td>
-<td valign="top" width="50%">
-<a href="plugins/skill-stats"><img src="docs/images/skill-stats-film.gif" width="360" alt="skill-stats: a table of skills counted from your past sessions"></a><br>
-<b><a href="plugins/skill-stats"><code>skill-stats</code></a></b>: Which skills run, which never trigger, and a hand off to skill-creator
-</td>
-</tr>
-<tr>
-<td valign="top" width="50%">
-<a href="plugins/dash-guard"><img src="docs/images/dash-guard-film.gif" width="360" alt="dash-guard: a write with an em dash is refused and the line to rewrite is named"></a><br>
-<b><a href="plugins/dash-guard"><code>dash-guard</code></a></b>: Refuses prose with em dashes, en dashes or double hyphens
-</td>
-<td valign="top" width="50%">
-<a href="plugins/shared-file-guard"><img src="docs/images/shared-file-guard-film.gif" width="360" alt="shared-file-guard: a shell write to a STATUS.md another session changed is stopped"></a><br>
-<b><a href="plugins/shared-file-guard"><code>shared-file-guard</code></a></b>: Refuses shell writes to shared files another session changed
-</td>
-</tr>
-<tr>
-<td valign="top" width="50%">
-<a href="plugins/fork-lineage"><img src="docs/images/fork-lineage-how.gif" width="360" alt="fork-lineage: a fork remembers its parent, and its report goes back after you approve"></a><br>
-<b><a href="plugins/fork-lineage"><code>fork-lineage</code></a></b>: Shows which session a fork came from, and sends the fork's report to its parent when you approve
-</td>
-<td valign="top" width="50%">
-<a href="docs/videos/findmutlu-sounds-tour.mp4"><img src="docs/images/findmutlu-sounds-tour.png" width="360" alt="findmutlu-sounds: game sound packs for the moments that need you; open the film to hear them"></a><br>
-<b><a href="plugins/findmutlu-sounds"><code>findmutlu-sounds</code></a></b>: A short sound when Claude needs you, a job finishes, a test fails or a push lands. StarCraft, Warcraft, Age of Empires, Command & Conquer, Diablo, Counter-Strike, Duke Nukem, Rick and Morty, The Big Lebowski and more (<a href="docs/videos/findmutlu-sounds-tour.mp4">hear them</a>). Not in the toolkit bundle: install it by name
-</td>
-</tr>
-</table>
-
-## Orca Strator
-
-Run many Claude Code sessions across several Claude seats: see every seat's usage, move a session to the seat with room without losing the conversation, let sessions on different seats message each other, and hand over to a fresh session when context fills.
-
-**Start here:** install the bundle, then type `/orca`. It checks the setup, asks a few questions with buttons and starts the session in the right role.
-
-```
-/plugin install orca-strator@mehmetmutlu
-/orca
-```
-
-[![Orca Strator: Claude Code plugins for managing many sessions on many seats](docs/images/orca-strator-product.png)](plugins/orca-strator)
-
-The bundle [`orca-strator`](plugins/orca-strator) installs these four parts:
-
-<table>
-<tr>
-<td valign="top" width="50%">
-<a href="plugins/orca-peers/skills/peers"><img src="docs/images/orca-peers-flow.png" width="360" alt="orca-peers: every live session in every account, with its context use and the address to message it"></a><br>
-<b><a href="plugins/orca-peers/skills/peers"><code>orca-peers</code></a></b>: <code>/peers</code>: every live session in every account, how full its context is, and the address to message it. Included in <code>orca-strator</code>; install it alone only if you just want this part
-</td>
-<td valign="top" width="50%">
-<a href="plugins/orca-quota"><img src="docs/images/orca-quota-flow.png" width="360" alt="orca-quota: every account's 5-hour and 7-day usage above the prompt, with a warning before the limit"></a><br>
-<b><a href="plugins/orca-quota"><code>orca-quota</code></a></b>: Every seat's 5-hour and weekly usage above the prompt, <code>/quota</code>, a warning before the limit and an opt in auto move. Included in <code>orca-strator</code>; install it alone only if you just want this part
-</td>
-</tr>
-<tr>
-<td valign="top" width="50%">
-<a href="plugins/orca-move"><img src="docs/images/orca-move-flow.png" width="360" alt="orca-move: moves a live session to a twin account and announces its new address"></a><br>
-<b><a href="plugins/orca-move"><code>orca-move</code></a></b>: Moves a live session, or every session of a seat, to the seat with room: saves its crons, tells the sessions it works with and reopens the same conversation. Included in <code>orca-strator</code>; install it alone only if you just want this part
-</td>
-<td valign="top" width="50%">
-<a href="plugins/orca-fleet"><img src="docs/images/orca-fleet-flow.png" width="360" alt="orca-fleet: an orchestrator, lanes and checkers, with handovers to a fresh session"></a><br>
-<b><a href="plugins/orca-fleet"><code>orca-fleet</code></a></b>: An orchestrator, lanes and checkers on one project, with handovers to a fresh session when context fills. Included in <code>orca-strator</code>; install it alone only if you just want this part
-</td>
-</tr>
-</table>
-
-## Skills
-
-Skills come grouped in plugins: [`project-workflow`](plugins/project-workflow) for starting and closing work and [`dev-workflow`](plugins/dev-workflow) for shipping code. Install a group with `/plugin install <plugin>@mehmetmutlu`.
-
-<table>
-<tr>
-<td valign="top" width="50%">
-<a href="plugins/project-workflow/skills/create-project"><img src="docs/images/create-project-flow.png" width="360" alt="create-project: the questions it asks and the folder it builds"></a><br>
-<b><a href="plugins/project-workflow/skills/create-project"><code>create-project</code></a></b>: Sets up a new project folder the same way every time
-</td>
-<td valign="top" width="50%">
-<a href="plugins/project-workflow/skills/save-context"><img src="docs/images/save-context-flow.png" width="360" alt="save-context: what a session decided goes to the one place it belongs"></a><br>
-<b><a href="plugins/project-workflow/skills/save-context"><code>save-context</code></a></b>: Saves what a session decided, changed and left open before you close it
-</td>
-</tr>
-<tr>
-<td valign="top" width="50%">
-<a href="plugins/dev-workflow/skills/watch-ci"><img src="docs/images/watch-ci-flow.gif" width="360" alt="watch-ci: you merge, every check on the commit finishes, the session hears GREEN by itself"></a><br>
-<b><a href="plugins/dev-workflow/skills/watch-ci"><code>watch-ci</code></a></b>: Watches a pull request or a merge until every check has finished, then reports GREEN or RED by itself
-</td>
-<td valign="top" width="50%">
-</td>
-</tr>
-</table>
 
 ## Install
 
