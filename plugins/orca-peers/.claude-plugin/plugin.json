@@ -1,6 +1,6 @@
 {
   "name": "orca-peers",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Part of Orca Strator (included in the orca-strator bundle). Lists every live Claude Code session on this machine, in every account, with how full its context is and the address to message it across accounts.",
   "author": {
     "name": "Mehmet Mutlu"

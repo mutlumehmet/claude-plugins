@@ -11,10 +11,13 @@ fields are ignored. Nothing is ever written to a config dir.
 
 Usage: peers.py [--json] [filter words...]
 
-Context use: for each session, the last reply's input tokens (plus cache reads and writes) in its
-transcript, out of the model's context window: `context_window:` in the config when set, else 1M
-when the account's settings.json model ends in [1m] or the session already went past 200k, else
-200k. At 70% the row says "prepare handover", at 85% "hand over".
+Context use: the session's own reading when the orca-peers hooks module has saved one
+(`~/.config/orca-strator/context/<sessionId>.json`: tokens, window and percent as Claude Code
+measured them). Without that file the row is an ESTIMATE, shown with a leading `~`: the last
+reply's input tokens (plus cache reads and writes) in the transcript, out of `context_window:` in
+the config when set, else 1M. An estimate never carries a handover flag. At 70% a measured row says
+"prepare handover", at 85% "hand over". (Until 3 November 2026 the estimate guessed a 200k window
+unless the model name ended in [1m]; on 1M-window models that read two to five times too high.)
 
 Accounts, first match wins:
   1. `accounts_file:` in ~/.config/orca-strator/config.yaml, a JSON file shaped
@@ -33,9 +36,10 @@ import sys
 from pathlib import Path
 
 CONFIG = Path("~/.config/orca-strator/config.yaml").expanduser()
+CONTEXT_DIR = Path("~/.config/orca-strator/context").expanduser()
 TITLE_KEYS = (b'"customTitle":"', b'"aiTitle":"')
 PREPARE, HANDOVER = 70, 85
-SMALL, LARGE = 200_000, 1_000_000
+LARGE = 1_000_000  # the fallback window for an estimate; `context_window:` in the config overrides it
 
 
 def read_config():
@@ -168,21 +172,37 @@ def account_model(cfg):
         return ""
 
 
-def context_of(path, cfg, configured):
-    """{used, window, percent, flag} or None when the transcript has no reply yet."""
-    u = last_usage(path) if path else None
-    if not u:
+def reported_context(sid):
+    """The session's own reading, saved by the orca-peers hooks module on every change."""
+    if not sid:
         return None
-    used = sum(int(u.get(k) or 0) for k in ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"))
-    if configured:
-        window = configured
-    elif account_model(cfg).endswith("[1m]") or used > SMALL:
-        window = LARGE
-    else:
-        window = SMALL
-    pct = round(used * 100 / window)
-    flag = "hand over" if pct >= HANDOVER else "prepare handover" if pct >= PREPARE else None
-    return {"used": used, "window": window, "percent": pct, "flag": flag}
+    try:
+        d = json.loads((CONTEXT_DIR / f"{sid}.json").read_text())
+    except (OSError, ValueError):
+        return None
+    pct = d.get("percent") if isinstance(d, dict) else None
+    if not isinstance(pct, (int, float)):
+        return None
+    return {"used": d.get("tokens"), "window": d.get("window"), "percent": round(pct), "source": "session"}
+
+
+def context_of(path, cfg, configured, sid=None):
+    """{used, window, percent, flag, source} or None when the session has no reading yet.
+
+    source is "session" (Claude Code's own number, from the hooks module) or "estimate" (from the
+    transcript against a configured or assumed window). Only a measured reading gets a flag."""
+    c = reported_context(sid)
+    if c is None:
+        u = last_usage(path) if path else None
+        if not u:
+            return None
+        used = sum(int(u.get(k) or 0) for k in ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"))
+        window = configured or LARGE
+        c = {"used": used, "window": window, "percent": round(used * 100 / window), "source": "estimate"}
+    pct = c["percent"]
+    measured = c["source"] == "session" or bool(configured)
+    c["flag"] = ("hand over" if pct >= HANDOVER else "prepare handover" if pct >= PREPARE else None) if measured else None
+    return c
 
 
 def transcript(cfg, sid):
@@ -273,7 +293,7 @@ def main():
                 "sessionId": rec.get("sessionId"),
                 "pid": rec.get("pid"),
                 "self": rec.get("pid") in mine,
-                "context": context_of(path, cfg, configured),
+                "context": context_of(path, cfg, configured, rec.get("sessionId")),
             }
             hay = f"{row['title']} {row['project']} {ident}".lower()
             if words and not all(w in hay for w in words):
@@ -288,7 +308,7 @@ def main():
         return 0
     for r in rows:
         c = r["context"]
-        ctx = f"{c['percent']}%" if c else "·"
+        ctx = (("~" if c["source"] == "estimate" else "") + f"{c['percent']}%") if c else "·"
         flag = f"  {c['flag'].upper()}" if c and c["flag"] else ""
         print(f"{r['account']:<9} {r['project'][:22]:<22} {r['title'][:48]:<48} {r['state']:<8} {ctx:>4}  "
               f"{r['address'] or '(no address)'}{'  (this session)' if r['self'] else ''}{flag}")
