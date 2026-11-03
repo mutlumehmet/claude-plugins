@@ -98,6 +98,25 @@ test('the band shows every account', async ($, on) => {
   await ui.unmount()
 })
 
+test('a registered account with no reading yet shows on the band as never read', async ($, on) => {
+  engine(on, {
+    env: { CLAUDE_CONFIG_DIR: '~/.claude' },
+    files: {
+      [HOME + '/.config/orca-strator/config.yaml']: 'accounts_file: ~/acc.json\n',
+      [HOME + '/acc.json']: JSON.stringify({ accounts: { work: { configDir: '~/.claude' }, workc: { configDir: '~/.claude-workc', twinOf: 'work' } } }),
+    },
+  })
+  await measure($, limits(40))
+  const band = { plugin: 'orca-quota', component: 'AbovePrompt', props: { hasSurvey: false } } as const
+  const ui = await $.ui.mount({ ...band, surface: 'terminal' } as never)
+  const unread = await ui.find({ type: 'Text', text: /workc 5h · 7d ·/ })
+  expect(unread?.text).toContain('(never)')
+  expect(unread?.props.dimColor).toBe(true)
+  await ui.unmount()
+  const r = await $.command.run({ command: 'quota', args: '' })
+  expect(r.text).toContain('workc     5h ·   7d ·   (no reading yet)')
+})
+
 test('a passed reset reads as 0', async ($, on) => {
   engine(on, { files: { [Q + '/old.json']: JSON.stringify({ id: 'old', family: 'old', readAt: NOW - 9e6, windows: { five_hour: { percent: 99, resetsAt: '2026-10-26T11:00:00Z' } } }) } })
   await measure($, limits(1))

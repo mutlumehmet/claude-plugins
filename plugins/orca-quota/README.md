@@ -38,6 +38,7 @@ Defaults for every account can live in `~/.config/orca-strator/config.yaml` as `
 Claude Code itself tells each session how much of its own account's 5-hour and 7-day limits are used. The mod saves that reading for the session's account to `~/.config/orca-strator/quota/<account>.json`, and every session, in any account, reads all of those files. So:
 
 - An account with a session open is current.
+- An account named in the accounts file that has never had a session shows as `workc 5h · 7d · (never)`, dimmed, so you can see the seat exists; its first reply in a session fills it in.
 - An account with no session open keeps its last reading. That reading stays right until you use the account again, unless you use it elsewhere: claude.ai on the web, the desktop chat and the phone apps share the same limits but do not write readings. The dimmed age tells you how old it is.
 
 ## Accounts and families

@@ -88,7 +88,7 @@ export function register(on) {
     const now = await $.clock.now()
     const lines = rows.map(r => {
       const parts = WINDOWS.map(([kind, label]) => label + ' ' + pct(r, kind, now) + resetText(r, kind, now))
-      return (r.id === me.id ? '* ' : '  ') + pad(r.id, 10) + parts.join('   ') + '   (' + ago(now - r.readAt) + ')'
+      return (r.id === me.id ? '* ' : '  ') + pad(r.id, 10) + parts.join('   ') + '   (' + (r.readAt === null ? 'no reading yet' : ago(now - r.readAt)) + ')'
     })
     return { text: 'Usage by account (* = this session), warns at ' + warnAt + '%, auto move ' + (auto ? 'on' : 'off') + '\n' + lines.join('\n') + '\n\n' + HELP.join('\n') }
   })
@@ -111,7 +111,7 @@ export function register(on) {
         {rows.map(r => (
           <Text key={r.id} color={hot(r, now) ? 'red' : undefined} bold={r.id === me.id} dimColor={stale(r, now)}>
             {r.id} {WINDOWS.map(([kind, label]) => label + ' ' + pct(r, kind, now)).join(' ')}
-            {stale(r, now) ? ' (' + short(now - r.readAt) + ')' : ''}{'   '}
+            {r.readAt === null ? ' (never)' : stale(r, now) ? ' (' + short(now - r.readAt) + ')' : ''}{'   '}
           </Text>
         ))}
       </Box>
@@ -191,6 +191,11 @@ async function load($, fresh) {
       } catch {}
     }
   } catch {}
+  // A registered account nobody has opened a session in yet still gets a place on the band,
+  // so a missing seat is seen, not mistaken for one that does not exist
+  for (const a of accounts) {
+    if (!rows.some(r => r.id === a.id)) rows.push({ id: a.id, family: a.family, windows: {}, readAt: null })
+  }
   rows.sort((a, b) => (a.id === me.id ? -1 : b.id === me.id ? 1 : a.id.localeCompare(b.id)))
   cache = { at: now, rows }
   return rows
@@ -249,7 +254,7 @@ function hot(r, now) {
 
 // This session's own reading is current even when old: nothing used the account since
 function stale(r, now) {
-  return r.id !== me.id && now - r.readAt > STALE_MS
+  return r.id !== me.id && (r.readAt === null || now - r.readAt > STALE_MS)
 }
 
 function short(ms) {
