@@ -19,7 +19,7 @@ python3 -I "${CLAUDE_PLUGIN_ROOT}/skills/peers/scripts/peers.py" [filter words]
 ```
 
 - Filter words narrow the list (all must match the title, project or account), e.g. `lane 2b`.
-- `--json` prints the rows as JSON (account, project, cwd, title, state, address, sessionId, pid, self, context) for scripts and other skills. `context` is `{used, window, percent, flag}` or null before a session's first reply.
+- `--json` prints the rows as JSON (account, project, cwd, title, state, address, sessionId, pid, self, context) for scripts and other skills. `context` is `{used, window, percent, flag, source}` (`source` is `session` for the harness's own number or `estimate`) or null before a session's first reply.
 - It reads only. It never writes to a Claude Code config dir.
 
 Show the result to the user as a short list. Mark which row is this session (the script adds
@@ -45,11 +45,15 @@ waiting on its user will not read your message until the user answers it.
 
 ## Context use
 
-The percent column is how full each session's context window was at its last reply. At 70% the
+The percent column is how full each session's context window is. A plain number (`16%`) is the
+session's own reading: the orca-peers hooks module saves what Claude Code measured to
+`~/.config/orca-strator/context/<sessionId>.json` on every change. A number with a tilde (`~16%`)
+is an estimate from the transcript, used only when that file is missing (the session runs without
+the module, for example an older orca-peers): it assumes a 1M window unless `context_window:` in
+`~/.config/orca-strator/config.yaml` says otherwise, and it never carries a flag. At 70% a measured
 row adds `PREPARE HANDOVER`, at 85% `HAND OVER`. When you report the list, name the sessions with
-a flag first: a flagged session should write its handover note soon. `·` means no reply yet. The
-window is 1M when the account's model ends in `[1m]` or the session already passed 200k, else
-200k; `context_window:` in the config overrides it.
+a flag first: a flagged session should write its handover note soon. `·` means no reply yet. Never
+order a handover on an estimate; ask the session for its own `/context` reading instead.
 
 ## When the list looks wrong
 

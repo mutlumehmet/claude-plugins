@@ -1,0 +1,4 @@
+{
+  "description": "orca-peers hooks module: saves this session's own context reading for /peers in every account",
+  "modules": ["./register.js"]
+}
