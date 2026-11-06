@@ -142,6 +142,24 @@ test('the band dims a reading older than an hour and shows its age', async ($, o
   await ui.unmount()
 })
 
+test('the band shows the time to reset of each window', async ($, on) => {
+  engine(on, {
+    files: {
+      [Q + '/soon.json']: JSON.stringify({ id: 'soon', family: 'soon', readAt: NOW, windows: { five_hour: { percent: 80, resetsAt: '2026-10-26T12:40:00Z' }, seven_day: { percent: 50, resetsAt: '2026-10-29T12:00:00Z' } } }),
+      [Q + '/mid.json']: JSON.stringify({ id: 'mid', family: 'mid', readAt: NOW, windows: { five_hour: { percent: 20, resetsAt: '2026-10-26T13:50:00Z' }, seven_day: { percent: 9, resetsAt: '2026-10-27T02:00:00Z' } } }),
+      [Q + '/gone.json']: JSON.stringify({ id: 'gone', family: 'gone', readAt: NOW, windows: { five_hour: { percent: 99, resetsAt: '2026-10-26T11:00:00Z' } } }),
+    },
+  })
+  await measure($, limits(10))
+  const band = { plugin: 'orca-quota', component: 'AbovePrompt', props: { hasSurvey: false } } as const
+  const ui = await $.ui.mount({ ...band, surface: 'terminal' } as never)
+  expect((await ui.find({ type: 'Text', text: /soon 5h/ }))?.text).toContain('soon 5h 80% ↻40m 7d 50% ↻3d')
+  expect((await ui.find({ type: 'Text', text: /mid 5h/ }))?.text).toContain('mid 5h 20% ↻1h50m 7d 9% ↻14h')
+  expect((await ui.find({ type: 'Text', text: /gone 5h/ }))?.text).toContain('gone 5h 0% 7d ·')
+  expect((await ui.find({ type: 'Text', text: /default 5h/ }))?.text).toContain('default 5h 10% ↻2h ')
+  await ui.unmount()
+})
+
 test('/quota warn sets the threshold and talks back', async ($, on) => {
   const { seen } = engine(on)
   await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
