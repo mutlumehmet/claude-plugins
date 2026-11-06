@@ -109,7 +109,7 @@ test('a registered account with no reading yet shows on the band as never read',
   await measure($, limits(40))
   const band = { plugin: 'orca-quota', component: 'AbovePrompt', props: { hasSurvey: false } } as const
   const ui = await $.ui.mount({ ...band, surface: 'terminal' } as never)
-  const unread = await ui.find({ type: 'Text', text: /workc 5h · 7d ·/ })
+  const unread = await ui.find({ type: 'Text', text: /workc 5h ·  7d ·/ })
   expect(unread?.text).toContain('(never)')
   expect(unread?.props.dimColor).toBe(true)
   await ui.unmount()
@@ -153,10 +153,21 @@ test('the band shows the time to reset of each window', async ($, on) => {
   await measure($, limits(10))
   const band = { plugin: 'orca-quota', component: 'AbovePrompt', props: { hasSurvey: false } } as const
   const ui = await $.ui.mount({ ...band, surface: 'terminal' } as never)
-  expect((await ui.find({ type: 'Text', text: /soon 5h/ }))?.text).toContain('soon 5h 80% ↻40m 7d 50% ↻3d')
-  expect((await ui.find({ type: 'Text', text: /mid 5h/ }))?.text).toContain('mid 5h 20% ↻1h50m 7d 9% ↻14h')
-  expect((await ui.find({ type: 'Text', text: /gone 5h/ }))?.text).toContain('gone 5h 0% 7d ·')
-  expect((await ui.find({ type: 'Text', text: /default 5h/ }))?.text).toContain('default 5h 10% ↻2h ')
+  expect((await ui.find({ type: 'Text', text: /soon 5h/ }))?.text).toContain('soon 5h 80% ↻40m  7d 50% ↻3d')
+  expect((await ui.find({ type: 'Text', text: /mid 5h/ }))?.text).toContain('mid 5h 20% ↻1h50m  7d 9% ↻14h')
+  expect((await ui.find({ type: 'Text', text: /gone 5h/ }))?.text).toContain('gone 5h 0%  7d ·')
+  expect((await ui.find({ type: 'Text', text: /default 5h/ }))?.text).toContain('default 5h 10% ↻2h  ')
+  await ui.unmount()
+})
+
+test('the band puts a dim bar between accounts, none before the first', async ($, on) => {
+  engine(on, { files: { [Q + '/personal.json']: row('personal', 'personal', 12) } })
+  await measure($, limits(10))
+  const band = { plugin: 'orca-quota', component: 'AbovePrompt', props: { hasSurvey: false } } as const
+  const ui = await $.ui.mount({ ...band, surface: 'terminal' } as never)
+  const bars = await ui.findAll({ type: 'Text', text: ' │ ' })
+  expect(bars.length).toBe(1)
+  expect(bars[0].props.dimColor).toBe(true)
   await ui.unmount()
 })
 

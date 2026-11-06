@@ -10,7 +10,7 @@ A Claude Code mod that shows the 5-hour and 7-day usage of every Claude account 
 
 ## What it does
 
-- **The band**: one line above the prompt, for example `◂ quota work 5h 91% ↻40m 7d 61% ↻3d   twin 5h 4% ↻4h10m 7d 12% ↻5d   personal 5h · 7d 30% ↻14h (2h)`. Each window shows its time to reset after `↻` (`↻40m`, `↻4h10m`, `↻14h`, `↻3d`). The account this session runs on is bold, an account at or over the warning level is red, and a reading older than an hour is dimmed with its age in brackets. `·` means Claude Code did not report that window for the account.
+- **The band**: one line above the prompt, for example `◂ quota work 5h 91% ↻40m  7d 61% ↻3d │ twin 5h 4% ↻4h10m  7d 12% ↻5d │ personal 5h ·  7d 30% ↻14h (2h)`, with a dim bar between accounts. Each window shows its time to reset after `↻` (`↻40m`, `↻4h10m`, `↻14h`, `↻3d`). The account this session runs on is bold, an account at or over the warning level is red, and a reading older than an hour is dimmed with its age in brackets. `·` means Claude Code did not report that window for the account.
 - **Fold it**: `◂` folds the band to one `quota ▸` button; press it to open the band again.
 - **`/quota`**: every account with its usage, when each window resets, and how old each reading is.
 - **The warning**: when this account passes the warning level (90% by default) in either window, one toast says so and names the account in the same family with the most room, for example `work is at 91% of its 5h limit. twin is at 4%.` It warns again only after usage drops back below the level and crosses it again.
