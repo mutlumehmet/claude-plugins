@@ -109,12 +109,14 @@ export function register(on) {
       <Box>
         <Button key="fold" label="◂" onPress={() => $.store.set('folded', true)} />
         <Text dimColor> quota </Text>
-        {rows.map(r => (
+        {rows.flatMap((r, i) => [
+          // A dim bar between accounts, two spaces between one account's windows
+          ...(i ? [<Text key={'bar-' + r.id} dimColor>{' │ '}</Text>] : []),
           <Text key={r.id} color={hot(r, now) ? 'red' : undefined} bold={r.id === me.id} dimColor={stale(r, now)}>
-            {r.id} {WINDOWS.map(([kind, label]) => label + ' ' + pct(r, kind, now) + countdown(r, kind, now)).join(' ')}
-            {r.readAt === null ? ' (never)' : stale(r, now) ? ' (' + short(now - r.readAt) + ')' : ''}{'   '}
-          </Text>
-        ))}
+            {r.id} {WINDOWS.map(([kind, label]) => label + ' ' + pct(r, kind, now) + countdown(r, kind, now)).join('  ')}
+            {r.readAt === null ? ' (never)' : stale(r, now) ? ' (' + short(now - r.readAt) + ')' : ''}
+          </Text>,
+        ])}
       </Box>
     )
   })
