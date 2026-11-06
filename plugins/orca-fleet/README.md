@@ -22,7 +22,7 @@ Runs a **fleet** of Claude Code sessions on one project: an orchestrator that ke
 ## How a fleet runs
 
 1. Open one session for the orchestrator and run `/orca-fleet:conduct` (or `/orca-fleet:conduct <handoff note>` to take over).
-2. Open a session per lane, named `Lane 1`, `Lane 2` and so on, and run `/orca-fleet:join-lane`. Checkers run `/orca-fleet:join-checker`. Each reports to the orchestrator by itself.
+2. Open a session per lane, named `Lane 1`, `Lane 2` and so on, and run `/orca-fleet:join-lane`. Checkers run `/orca-fleet:join-checker`. Each reports to the orchestrator by itself. A lane can instead report to the session that started it, or work on its own with you: see [who a lane reports to](skills/join-lane/README.md#who-a-lane-reports-to).
 3. The orchestrator's status cron reads every session's context use and nudges the ones that should write a handoff note or hand over; its nudge cron wakes lanes that went idle with work left.
 4. A session that hands over writes its note, opens `<name> #2` in a new Terminal tab with the note as its first prompt, and closes once the successor says "took over".
 
@@ -50,8 +50,8 @@ Handoff notes for each role ([orchestrator](templates/handoff-orchestrator.md), 
 ## What it reads and does
 
 - **Reads**: the project config and the files it names, the handoff notes, and live sessions through orca-peers.
-- **Writes**: the orders file, ledger, open-items list and handoff notes in your project; scheduled crons in the orchestrator's session (session only).
-- **Opens**: a new Terminal window for a successor, only during `hand-over start`. Elsewhere it copies the command for you to paste.
+- **Writes**: the orders file, ledger, open-items list and handoff notes in your project; a lane's reporting line in `~/.config/orca-strator/reporting/`; scheduled crons in the orchestrator's session (session only).
+- **Opens**: a new Terminal window for a successor, only during `hand-over start`, or for a new lane when you ask a session to start one. Elsewhere it copies the command for you to paste.
 - **Never**: decides merge rights by itself (they come from your rules file), forks a session, or closes a window for you.
 - **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
 

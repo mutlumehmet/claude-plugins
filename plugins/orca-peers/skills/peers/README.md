@@ -36,6 +36,11 @@ model's window). It survives account moves and shows long before Claude Code's o
 70% the row says `PREPARE HANDOVER`, at 85% `HAND OVER`. `·` means no reply yet. With `--json`
 each row carries `context: {used, window, percent, flag}` for scripts and scheduled checks.
 
+A lane started with orca-fleet records who it reports to, in
+`~/.config/orca-strator/reporting/<sessionId>.json`. Its row then ends with `reports: <kind> <name>`
+(`orchestrator`, `parent` or `independent`), so a lane reporting to the wrong session shows in the
+list. Sessions without that file look as they always did.
+
 ## First run and config
 
 Works with no config: it finds `~/.claude` and every `~/.claude-<name>` folder with a `sessions/`

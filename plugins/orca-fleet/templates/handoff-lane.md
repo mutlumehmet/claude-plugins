@@ -3,7 +3,7 @@
 Written at <percent>% context. Start with `/orca-fleet:join-lane <this file>`.
 
 ## Reports to
-<orchestrator name> (find its address with peers; it may have moved)
+<one line, copied from the line this lane runs on: `orchestrator <name>`, `parent "<title>" uds:<address> session:<id>`, or `independent`. Find a current address with peers; it may have moved>
 
 ## Where the work is
 - Worktree: <path>, branch <branch>, head <sha>, pushed: <yes/no>
@@ -19,4 +19,4 @@ Written at <percent>% context. Start with `/orca-fleet:join-lane <this file>`.
 <anything beyond the rules file: a migration number taken, a file owned by another lane>
 
 ## Waiting on
-<the orchestrator, the person, CI>
+<whoever this lane reports to, the person, CI>

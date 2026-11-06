@@ -19,7 +19,8 @@ python3 -I "${CLAUDE_PLUGIN_ROOT}/skills/peers/scripts/peers.py" [filter words]
 ```
 
 - Filter words narrow the list (all must match the title, project or account), e.g. `lane 2b`.
-- `--json` prints the rows as JSON (account, project, cwd, title, state, address, sessionId, pid, self, context) for scripts and other skills. `context` is `{used, window, percent, flag, source}` (`source` is `session` for the harness's own number or `estimate`) or null before a session's first reply.
+- `--json` prints the rows as JSON (account, project, cwd, title, state, address, sessionId, pid, self, context, reports) for scripts and other skills. `context` is `{used, window, percent, flag, source}` (`source` is `session` for the harness's own number or `estimate`) or null before a session's first reply.
+- `reports` is `{kind, name, address, session, updatedAt}` when the session recorded a reporting line (`kind` is `orchestrator`, `parent` or `independent`; see orca-fleet's `join-lane`), else null. The row then ends with `reports: <kind> <name>`.
 - It reads only. It never writes to a Claude Code config dir.
 
 Show the result to the user as a short list. Mark which row is this session (the script adds
