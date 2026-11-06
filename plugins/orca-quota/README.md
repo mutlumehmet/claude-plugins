@@ -16,6 +16,7 @@ A Claude Code mod that shows the 5-hour and 7-day usage of every Claude account 
 - **The warning**: when this account passes the warning level (90% by default) in either window, one toast says so and names the account in the same family with the most room, for example `work is at 91% of its 5h limit. twin is at 4%.` It warns again only after usage drops back below the level and crosses it again.
 - **Resets**: a window whose reset time has passed shows 0%, even if no session has reported since.
 
+- **Auto refresh (on by default)**: an account on this machine with no session open for over an hour gets one tiny headless prompt (`claude -p` on Haiku, in that account's own config dir) every hour or so, so its reading stays current. Each run costs that account a few tokens and starts its 5-hour window if none is running. `/quota refresh off` turns it off.
 - **Auto move (opt in)**: with `/quota auto on`, a session that passes the warning level moves itself to the twin with most room: the mod runs `/orca-move:switch <twin>`, and [`orca-move`](../orca-move) does the move (tells its peers, saves its crons, resumes the same conversation in the same tab). Off by default; it moves once per session, and never to a twin that is itself over the warning level.
 
 Without auto move it never switches accounts: it warns, and you move with `/orca-move:switch`.
@@ -29,9 +30,11 @@ Without auto move it never switches accounts: it warns, and you move with `/orca
 /quota show          open the band again
 /quota auto on       move this session to the twin with most room by itself at the warning level
 /quota auto off      only warn (the default)
+/quota refresh on    refresh accounts idle for over an hour with one tiny prompt each (the default)
+/quota refresh off   never run anything in another account
 ```
 
-Defaults for every account can live in `~/.config/orca-strator/config.yaml` as `auto_move: true` and `warn_percent: 85` (the `/orca` setup screen writes them). `/quota warn`, `/quota auto` and the fold are kept per config directory (per account), in Claude Code's plugin store.
+Defaults for every account can live in `~/.config/orca-strator/config.yaml` as `auto_move: true`, `warn_percent: 85` and `auto_refresh: false` (the `/orca` setup screen writes them). `/quota warn`, `/quota auto`, `/quota refresh` and the fold are kept per config directory (per account), in Claude Code's plugin store.
 
 ## How the numbers get there
 
@@ -39,7 +42,8 @@ Claude Code itself tells each session how much of its own account's 5-hour and 7
 
 - An account with a session open is current.
 - An account named in the accounts file that has never had a session shows as `workc 5h · 7d · (never)`, dimmed, so you can see the seat exists; its first reply in a session fills it in.
-- An account with no session open keeps its last reading. That reading stays right until you use the account again, unless you use it elsewhere: claude.ai on the web, the desktop chat and the phone apps share the same limits but do not write readings. The dimmed age tells you how old it is.
+- An account with no session open is refreshed by auto refresh: every 15 minutes each session looks for an account whose reading is over an hour old, writes a claim file in `~/.config/orca-strator/quota/refresh/` (so no other session refreshes it in that hour), and runs one prompt in it. That run's own copy of the mod saves the reading; it carries `ORCA_QUOTA_REFRESH=1` so it never starts runs itself. An account never read is skipped (it may not be signed in), and so is this session's own.
+- With auto refresh off, an account with no session open keeps its last reading. That reading stays right until you use the account again, unless you use it elsewhere: claude.ai on the web, the desktop chat and the phone apps share the same limits but do not write readings. The dimmed age tells you how old it is.
 
 ## Accounts and families
 
@@ -75,12 +79,12 @@ The accounts file:
 
 ## What it reads and does
 
-- **Reads**: the usage Claude Code reports to the session (`session.measure` and `$.session.usage()`), `HOME` and `CLAUDE_CONFIG_DIR`, the Orca Strator config and accounts file, and the readings in `~/.config/orca-strator/quota/`.
-- **Keeps**: one small JSON file per account in `~/.config/orca-strator/quota/` (percent and reset time per window, and when it was read); the warning level, the fold and whether the first-run tip was shown, in Claude Code's plugin store.
+- **Reads**: the usage Claude Code reports to the session (`session.measure` and `$.session.usage()`), `HOME` and `CLAUDE_CONFIG_DIR`, the Orca Strator config and accounts file, the readings in `~/.config/orca-strator/quota/`, and `ORCA_QUOTA_REFRESH`.
+- **Keeps**: one small JSON file per account in `~/.config/orca-strator/quota/` (percent and reset time per window, and when it was read), and one claim file per refreshed account in `quota/refresh/` (when and by which session); the warning level, auto move, auto refresh, the fold and whether the first-run tip was shown, in Claude Code's plugin store.
 - **Does**: draws the band, answers `/quota`, shows the warning toast and, once, a tip saying where the controls are.
 - **Hooks**: `session.start` (registers `/quota`, saves the first reading), `session.measure` (saves and warns when the usage changes), `command.run` for `/quota`, `ui.render` on the band above the prompt.
-- **Runs**: `/orca-move:switch <twin>`, only with `/quota auto on`, once per session, when this account passes the warning level.
-- **Never**: reads login tokens or credentials, calls any API, switches accounts unless you turned auto move on, or sends anything anywhere.
+- **Runs**: `claude -p "Reply with the single word: ok" --model haiku` in another account's config dir, with auto refresh on (the default), at most once an hour per account, for an account idle over an hour. `/orca-move:switch <twin>`, only with `/quota auto on`, once per session, when this account passes the warning level.
+- **Never**: reads login tokens or credentials, calls any API itself (the refresh prompt goes through Claude Code, signed in as that account), refreshes an account never read, switches accounts unless you turned auto move on, or sends anything else anywhere.
 - **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
 
 ## Install
@@ -97,7 +101,8 @@ Install it in every account you use, so each one writes its own reading. A mod r
 ## Known gaps
 
 - An account only reports the windows its plan has; some report only the 7-day window.
-- Usage on claude.ai, the desktop chat or the phone apps is not seen until a Claude Code session runs on that account again.
+- Usage on claude.ai, the desktop chat or the phone apps is not seen until a Claude Code session (or an auto refresh) runs on that account again.
+- Auto refresh covers only accounts on this machine; another machine refreshes its own.
 - Readings from before you set `accounts_file` stay under their folder names until you delete them from `~/.config/orca-strator/quota/`.
 
 ## About

@@ -10,7 +10,11 @@
 // session to the twin with most room (orca-move does the move). An account with no
 // session running keeps its last reading, so the band dims a reading older
 // than an hour and shows its age. Each window on the band carries its time to
-// reset (↻40m), from the reset time saved with the reading.
+// reset (↻40m), from the reset time saved with the reading. Auto refresh (on by
+// default, /quota refresh off): every 15 minutes a session looks for another account
+// on this machine whose reading is over an hour old and runs one tiny headless prompt
+// in it (claude -p on Haiku, that account's config dir), so its own copy of this mod
+// saves a fresh reading. A claim file keeps two sessions from refreshing the same account.
 
 const WINDOWS = [['five_hour', '5h'], ['seven_day', '7d']]
 const REFRESH_MS = 20000
@@ -25,6 +29,14 @@ let warned = {} // window kind -> true while over the threshold
 let auto = false // /quota auto on: move this session by itself at the warning level
 let moving = false // one automatic move per session
 const MOVE = 'orca-move:switch'
+let refresh = true // /quota refresh off: never run a prompt in another account
+let child = false // this session is itself a refresh run: it never starts another
+let refreshing = false
+let home = ''
+const REFRESH_EVERY_MS = 15 * 60000
+const REFRESH_FIRST_MS = 60000
+const CHILD_ENV = 'ORCA_QUOTA_REFRESH'
+const PING = ['claude', '-p', 'Reply with the single word: ok', '--model', 'haiku']
 
 const HELP = [
   '/quota: every account with its usage, reset times and how old each reading is',
@@ -33,6 +45,8 @@ const HELP = [
   '/quota show: open the band again',
   '/quota auto on: at the warning level, move this session to the twin with most room by itself (needs orca-move)',
   '/quota auto off: only warn (the default)',
+  '/quota refresh on: refresh accounts idle for over an hour on this machine, one tiny prompt each (the default)',
+  '/quota refresh off: never run anything in another account',
 ]
 
 export function register(on) {
@@ -45,6 +59,10 @@ export function register(on) {
     }
     const usage = await $.session.usage()
     await save($, usage.rateLimits)
+    if (!child) {
+      $.clock.after(REFRESH_FIRST_MS, () => { void refreshIdle($) })
+      $.clock.every(REFRESH_EVERY_MS, () => { void refreshIdle($) })
+    }
     return next(e)
   })
 
@@ -77,6 +95,14 @@ export function register(on) {
       await $.store.set('auto', want)
       return { text: want ? 'Auto move on: at ' + warnAt + '% this session moves itself to the twin with most room.' : 'Auto move off: it only warns.' }
     }
+    if (word === 'refresh') {
+      if (value !== 'on' && value !== 'off') return { text: 'Use /quota refresh on or /quota refresh off. Now: ' + (refresh ? 'on' : 'off') + '.' }
+      const want = value === 'on'
+      if (want === refresh) return { text: 'Auto refresh is already ' + value + '.' }
+      refresh = want
+      await $.store.set('refresh', want)
+      return { text: want ? 'Auto refresh on: an account idle for over an hour gets one tiny prompt to read its usage.' : 'Auto refresh off: idle accounts keep their last reading.' }
+    }
     if (word === 'hide' || word === 'show') {
       const fold = word === 'hide'
       if (((await $.store.get('folded')) === true) === fold) return { text: 'The band is already ' + (fold ? 'folded.' : 'open.') }
@@ -91,7 +117,7 @@ export function register(on) {
       const parts = WINDOWS.map(([kind, label]) => label + ' ' + pct(r, kind, now) + resetText(r, kind, now))
       return (r.id === me.id ? '* ' : '  ') + pad(r.id, 10) + parts.join('   ') + '   (' + (r.readAt === null ? 'no reading yet' : ago(now - r.readAt)) + ')'
     })
-    return { text: 'Usage by account (* = this session), warns at ' + warnAt + '%, auto move ' + (auto ? 'on' : 'off') + '\n' + lines.join('\n') + '\n\n' + HELP.join('\n') }
+    return { text: 'Usage by account (* = this session), warns at ' + warnAt + '%, auto move ' + (auto ? 'on' : 'off') + ', auto refresh ' + (refresh ? 'on' : 'off') + '\n' + lines.join('\n') + '\n\n' + HELP.join('\n') }
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
@@ -124,7 +150,8 @@ export function register(on) {
 
 async function setup($) {
   if (me) return
-  const home = (await $.env.get('HOME')) || ''
+  home = (await $.env.get('HOME')) || ''
+  child = Boolean(await $.env.get('ORCA_QUOTA_REFRESH'))
   // Defaults for every account from the shared config (the /orca setup screen writes them);
   // /quota warn and /quota auto in an account override them for that account
   const shared = await readSettings($, home)
@@ -133,6 +160,8 @@ async function setup($) {
   else if (shared.warn >= 50 && shared.warn <= 99) warnAt = shared.warn
   const a = await $.store.get('auto')
   auto = typeof a === 'boolean' ? a : shared.auto === true
+  const f = await $.store.get('refresh')
+  refresh = typeof f === 'boolean' ? f : shared.refresh !== false
   const cfg = clean((await $.env.get('CLAUDE_CONFIG_DIR')) || home + '/.claude', home)
   dir = home + '/.config/orca-strator/quota'
   accounts = await readAccounts($, home)
@@ -147,7 +176,8 @@ async function readSettings($, home) {
     const yaml = await $.fs.read(home + '/.config/orca-strator/config.yaml')
     const auto = yaml.match(/^\s*auto_move\s*:\s*(true|false)\s*$/m)
     const warn = yaml.match(/^\s*warn_percent\s*:\s*(\d+)\s*$/m)
-    return { auto: auto ? auto[1] === 'true' : undefined, warn: warn ? Number(warn[1]) : undefined }
+    const refresh = yaml.match(/^\s*auto_refresh\s*:\s*(true|false)\s*$/m)
+    return { auto: auto ? auto[1] === 'true' : undefined, warn: warn ? Number(warn[1]) : undefined, refresh: refresh ? refresh[1] === 'true' : undefined }
   } catch {
     return {}
   }
@@ -225,6 +255,56 @@ async function warn($, rateLimits) {
       continue
     }
     $.ui.toast(me.id + ' is at ' + Math.round(w.percentUsed) + '% of its ' + label + ' limit.' + tip, { timeoutMs: 12000 })
+  }
+}
+
+// One pass: each other account whose reading is over an hour old, and that no other
+// session claimed in the last hour, gets one headless prompt in its own config dir.
+// That run's copy of this mod saves the reading; the env marks it so it starts no runs itself.
+async function refreshIdle($) {
+  if (child || refreshing) return
+  refreshing = true
+  try {
+    // /quota refresh off in another session of this account counts here too
+    const s = await $.store.get('refresh')
+    if (typeof s === 'boolean') refresh = s
+    if (!refresh) return
+    const now = await $.clock.now()
+    const idle = (await load($, true)).filter(r => r.id !== me.id && r.readAt !== null && now - r.readAt > STALE_MS)
+    for (const r of idle) {
+      if (!(await claim($, r.id, now))) continue
+      const known = accounts.find(a => a.id === r.id)
+      const cfg = known ? known.configDir : r.id === 'default' ? home + '/.claude' : home + '/.claude-' + r.id
+      // ~/.claude is the account with the variable unset, as Claude Code itself reads it
+      const plain = cfg === home + '/.claude'
+      const argv = plain ? ['/usr/bin/env', '-u', 'CLAUDE_CONFIG_DIR', ...PING] : PING
+      const env = plain ? { [CHILD_ENV]: '1' } : { [CHILD_ENV]: '1', CLAUDE_CONFIG_DIR: cfg }
+      try {
+        const ran = await $.process.run(argv, { cwd: dir, env, timeoutMs: 120000 })
+        if (ran.exitCode !== 0) $.ui.log('orca-quota: refresh of ' + r.id + ' exited ' + ran.exitCode, { to: 'debug' })
+      } catch {
+        $.ui.log('orca-quota: could not run claude to refresh ' + r.id, { to: 'debug' })
+      }
+    }
+    cache.at = 0
+  } finally {
+    refreshing = false
+  }
+}
+
+// A claim file per account: the session whose claim is on file owns that account's refresh for an hour
+async function claim($, id, now) {
+  const path = dir + '/refresh/' + id + '.json'
+  try {
+    const c = JSON.parse(await $.fs.read(path))
+    if (c && now - c.at < STALE_MS) return false
+  } catch {}
+  const by = me.id + ':' + Math.random().toString(36).slice(2)
+  await $.fs.write(path, JSON.stringify({ at: now, by }) + '\n')
+  try {
+    return JSON.parse(await $.fs.read(path)).by === by
+  } catch {
+    return false
   }
 }
 

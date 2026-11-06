@@ -27,7 +27,13 @@ function engine(on, { env = {}, files = {} } = {}) {
   on('command.list', () => ({ value: (seen.moveInstalled === false ? [] : [{ name: 'orca-move:switch' }]) as never }))
   on('command.run', { command: 'orca-move:switch' }, ($, e) => { seen.moves.push(String(e.args)); return { text: '' } as never })
   on('clock.after', () => ({ value: undefined }))
-  return { disk, seen }
+  // The refresh timer: the test fires one period by calling seen.tick()
+  const ticks: Array<() => void> = []
+  on('clock.every', () => new Promise(r => { ticks.push(() => r({ value: undefined } as never)) }) as never)
+  const runs = [] as Array<{ argv: readonly string[]; env: Record<string, string> }>
+  on('process.run', ($, e) => { runs.push({ argv: e.argv, env: (e.init?.env ?? {}) as Record<string, string> }); return { value: { exitCode: 0, stdout: 'ok', stderr: '' } } as never })
+  on('ui.log', () => ({ value: undefined }))
+  return { disk, seen, runs, tick: async () => { ticks.shift()?.(); await new Promise(r => setTimeout(r, 20)) } }
 }
 
 const limits = (five: number, seven = 10) => [
@@ -169,6 +175,57 @@ test('the band puts a dim bar between accounts, none before the first', async ($
   expect(bars.length).toBe(1)
   expect(bars[0].props.dimColor).toBe(true)
   await ui.unmount()
+})
+
+const START = { cwd: '/', surface: 'terminal', isInteractive: true } as const
+const idleFiles = () => ({
+  [Q + '/old.json']: row('old', 'old', 50, NOW - 3 * 3600000),
+  [Q + '/fresh.json']: row('fresh', 'fresh', 10, NOW - 10 * 60000),
+  [Q + '/default.json']: row('default', 'default', 20, NOW - 5 * 3600000),
+})
+
+test('auto refresh is on by default and prompts only idle accounts, in their own config dir', async ($, on) => {
+  const { runs, tick } = engine(on, { env: { CLAUDE_CONFIG_DIR: HOME + '/.claude-me' }, files: idleFiles() })
+  await $.session.start(START)
+  await tick()
+  expect(runs.length).toBe(2)
+  const old = runs.find(r => r.env.CLAUDE_CONFIG_DIR === HOME + '/.claude-old')
+  expect(old?.argv).toEqual(['claude', '-p', 'Reply with the single word: ok', '--model', 'haiku'])
+  expect(old?.env.ORCA_QUOTA_REFRESH).toBe('1')
+  const plain = runs.find(r => r.argv[0] === '/usr/bin/env')
+  expect(plain?.argv.slice(0, 3)).toEqual(['/usr/bin/env', '-u', 'CLAUDE_CONFIG_DIR'])
+  expect(plain?.env.CLAUDE_CONFIG_DIR).toBeUndefined()
+})
+
+test('a claimed account is not refreshed again within the hour', async ($, on) => {
+  const { runs, tick } = engine(on, { env: { CLAUDE_CONFIG_DIR: HOME + '/.claude-me' }, files: { ...idleFiles(), [Q + '/refresh/old.json']: JSON.stringify({ at: NOW - 600000, by: 'x' }) } })
+  await $.session.start(START)
+  await tick()
+  expect(runs.map(r => r.env.CLAUDE_CONFIG_DIR)).toEqual([undefined])
+})
+
+test('a refresh run starts no refresh of its own', async ($, on) => {
+  const { runs, tick } = engine(on, { env: { CLAUDE_CONFIG_DIR: HOME + '/.claude-me', ORCA_QUOTA_REFRESH: '1' }, files: idleFiles() })
+  await $.session.start(START)
+  await tick()
+  expect(runs.length).toBe(0)
+})
+
+test('/quota refresh off stops it and talks back; the shared config can turn it off', async ($, on) => {
+  const { runs, tick } = engine(on, { env: { CLAUDE_CONFIG_DIR: HOME + '/.claude-me' }, files: idleFiles() })
+  await $.session.start(START)
+  expect((await $.command.run({ command: 'quota', args: 'refresh off' })).text).toContain('Auto refresh off')
+  expect((await $.command.run({ command: 'quota', args: 'refresh off' })).text).toContain('already off')
+  await tick()
+  expect(runs.length).toBe(0)
+  expect((await $.command.run({ command: 'quota', args: '' })).text).toContain('auto refresh off')
+})
+
+test('auto_refresh: false in the shared config is the default for every account', async ($, on) => {
+  const { runs, tick } = engine(on, { env: { CLAUDE_CONFIG_DIR: HOME + '/.claude-me' }, files: { ...idleFiles(), [HOME + '/.config/orca-strator/config.yaml']: 'auto_refresh: false\n' } })
+  await $.session.start(START)
+  await tick()
+  expect(runs.length).toBe(0)
 })
 
 test('/quota warn sets the threshold and talks back', async ($, on) => {
