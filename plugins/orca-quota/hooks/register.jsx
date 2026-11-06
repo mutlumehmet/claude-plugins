@@ -9,7 +9,8 @@
 // /quota auto on: then, at the warning level, it runs /orca-move:switch for this
 // session to the twin with most room (orca-move does the move). An account with no
 // session running keeps its last reading, so the band dims a reading older
-// than an hour and shows its age.
+// than an hour and shows its age. Each window on the band carries its time to
+// reset (↻40m), from the reset time saved with the reading.
 
 const WINDOWS = [['five_hour', '5h'], ['seven_day', '7d']]
 const REFRESH_MS = 20000
@@ -110,7 +111,7 @@ export function register(on) {
         <Text dimColor> quota </Text>
         {rows.map(r => (
           <Text key={r.id} color={hot(r, now) ? 'red' : undefined} bold={r.id === me.id} dimColor={stale(r, now)}>
-            {r.id} {WINDOWS.map(([kind, label]) => label + ' ' + pct(r, kind, now)).join(' ')}
+            {r.id} {WINDOWS.map(([kind, label]) => label + ' ' + pct(r, kind, now) + countdown(r, kind, now)).join(' ')}
             {r.readAt === null ? ' (never)' : stale(r, now) ? ' (' + short(now - r.readAt) + ')' : ''}{'   '}
           </Text>
         ))}
@@ -260,6 +261,19 @@ function stale(r, now) {
 function short(ms) {
   const h = Math.floor(ms / 3600000)
   return h < 48 ? h + 'h' : Math.round(h / 24) + 'd'
+}
+
+// The band's short time to reset: ↻40m, ↻1h50m, ↻14h, ↻3d. Nothing once the window has reset
+// (it reads 0% then) or when Claude Code gave no reset time
+function countdown(r, kind, now) {
+  const w = r.windows[kind]
+  if (!w || !w.resetsAt) return ''
+  const m = Math.ceil((Date.parse(w.resetsAt) - now) / 60000)
+  if (m <= 0) return ''
+  if (m < 60) return ' ↻' + m + 'm'
+  const h = Math.floor(m / 60)
+  if (h < 10) return ' ↻' + h + 'h' + (m % 60 ? (m % 60) + 'm' : '')
+  return h < 48 ? ' ↻' + h + 'h' : ' ↻' + Math.round(h / 24) + 'd'
 }
 
 function resetText(r, kind, now) {
