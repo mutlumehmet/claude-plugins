@@ -16,6 +16,9 @@ so a handover always starts a new session.
 - Copy `${CLAUDE_PLUGIN_ROOT}/templates/handoff-<role>.md` and fill every section from the files
   and the conversation. Exact ids, branches, shas, PR numbers, paths and commands; nothing from
   memory that a file can confirm. The next session knows only what the note says.
+- A lane copies its reporting line into the note's `## Reports to` exactly as it stands now
+  (`orchestrator <name>`, `parent "<title>" uds:<address> session:<id>` or `independent`), so the
+  successor reports to the same place. A released lane stays released.
 - Name the successor: the same name with the number after `#` raised by one (`Lane 4 #3` becomes
   `Lane 4 #4`); a name without `#` gets ` #2`.
 - Save it as `<files.handoffDir>/handoff-<successor name in lowercase, spaces and # as dashes>.md`
@@ -23,7 +26,7 @@ so a handover always starts a new session.
   without one, use the project's notes folder.
 - If the project is a git repo and the notes folder is tracked, commit the note on its own.
 
-Without `start`: tell the orchestrator (or the person) "handoff note ready: <path>" and keep
+Without `start`: tell whoever you report to (the orchestrator, your parent, or the person) "handoff note ready: <path>" and keep
 working; update the note again just before starting the successor.
 
 ## 2. Start the successor (`start`)
@@ -40,10 +43,11 @@ working; update the note again just before starting the successor.
 
    It opens a new Terminal window in the same account. Elsewhere it prints the command and copies
    it, for the person to paste.
-4. Tell the orchestrator (a lane or checker) or the fleet (the orchestrator does this through the
-   successor's `conduct`): "<you> hands over to <successor>, note <path>."
-5. Wait for the successor's message "<successor> took over" (it sends it to you and to the
-   orchestrator by itself). Then delete your crons with
+4. Tell whoever you report to (a lane or checker; an independent lane tells the person) or the
+   fleet (the orchestrator does this through the successor's `conduct`): "<you> hands over to
+   <successor>, note <path>."
+5. Wait for the successor's message "<successor> took over" (it sends it to you and to
+   whoever it reports to by itself). Then delete your crons with
    CronDelete, reply "handed over, closing", and tell the person this window can be closed.
    Do not close it yourself.
 

@@ -39,7 +39,9 @@ of the same name.
    title starts with one of the `fleet` prefixes in the config. There is no default prefix: other
    projects' lanes may share a name like "Lane 1", so with no note and no `fleet` key, ask the
    person which sessions are this fleet before messaging anyone. A session in the note but not
-   live is gone: say so.
+   live is gone: say so. Leave out any session whose `reports` in `peers --json` has `kind`
+   `parent` or `independent`, even with a matching title: it works for someone else, and this
+   fleet's messages would pull it away. Name the ones you left out to the person, once.
 3. **Crons:** create two with CronCreate, minutes from `crons` in the config:
    - status: `<status minutes> * * * *`, prompt `/orca-fleet:conduct status`
    - nudge: `<nudge minutes> * * * *`, prompt `/orca-fleet:conduct nudge`

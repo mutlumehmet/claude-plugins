@@ -19,6 +19,10 @@ the config when set, else 1M. An estimate never carries a handover flag. At 70% 
 "prepare handover", at 85% "hand over". (Until 3 November 2026 the estimate guessed a 200k window
 unless the model name ended in [1m]; on 1M-window models that read two to five times too high.)
 
+Reporting line: a lane started with orca-fleet saves who it reports to at
+`~/.config/orca-strator/reporting/<sessionId>.json` ({"kind", "name", "address", "session"}). The row
+then ends with `reports: <kind> <name>`; a session without that file shows nothing extra.
+
 Accounts, first match wins:
   1. `accounts_file:` in ~/.config/orca-strator/config.yaml, a JSON file shaped
      {"accounts": {"<id>": {"configDir": "~/.claude", "label": "..."}}}
@@ -37,6 +41,7 @@ from pathlib import Path
 
 CONFIG = Path("~/.config/orca-strator/config.yaml").expanduser()
 CONTEXT_DIR = Path("~/.config/orca-strator/context").expanduser()
+REPORTING_DIR = Path("~/.config/orca-strator/reporting").expanduser()
 TITLE_KEYS = (b'"customTitle":"', b'"aiTitle":"')
 PREPARE, HANDOVER = 70, 85
 LARGE = 1_000_000  # the fallback window for an estimate; `context_window:` in the config overrides it
@@ -212,6 +217,15 @@ def transcript(cfg, sid):
     return os.path.realpath(hits[0]) if hits else None
 
 
+def reporting_line(sid):
+    """What the session recorded about who it reports to, or None."""
+    try:
+        line = json.loads((REPORTING_DIR / f"{os.path.basename(sid or '')}.json").read_text())
+    except (OSError, ValueError):
+        return None
+    return line if isinstance(line, dict) and line.get("kind") else None
+
+
 def first_prompt(path):
     try:
         with open(path, encoding="utf-8", errors="replace") as f:
@@ -294,6 +308,7 @@ def main():
                 "pid": rec.get("pid"),
                 "self": rec.get("pid") in mine,
                 "context": context_of(path, cfg, configured, rec.get("sessionId")),
+                "reports": reporting_line(rec.get("sessionId")),
             }
             hay = f"{row['title']} {row['project']} {ident}".lower()
             if words and not all(w in hay for w in words):
@@ -310,8 +325,10 @@ def main():
         c = r["context"]
         ctx = (("~" if c["source"] == "estimate" else "") + f"{c['percent']}%") if c else "·"
         flag = f"  {c['flag'].upper()}" if c and c["flag"] else ""
+        rep = r["reports"]
+        reports = f"  reports: {rep['kind']}{' ' + rep['name'] if rep.get('name') else ''}" if rep else ""
         print(f"{r['account']:<9} {r['project'][:22]:<22} {r['title'][:48]:<48} {r['state']:<8} {ctx:>4}  "
-              f"{r['address'] or '(no address)'}{'  (this session)' if r['self'] else ''}{flag}")
+              f"{r['address'] or '(no address)'}{'  (this session)' if r['self'] else ''}{flag}{reports}")
     return 0
 
 
