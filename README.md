@@ -93,7 +93,7 @@ Small mods for long sessions. Install them all with `/plugin install toolkit@meh
 </td>
 <td valign="top" width="50%">
 <a href="docs/videos/findmutlu-sounds-tour.mp4"><img src="docs/images/findmutlu-sounds-tour.png" width="360" alt="findmutlu-sounds: game sound packs for the moments that need you; open the film to hear them"></a><br>
-<b><a href="plugins/findmutlu-sounds"><code>findmutlu-sounds</code></a></b>: A short sound when Claude needs you, a job finishes, a test fails or a push lands. StarCraft, Warcraft, Age of Empires, Command & Conquer, Diablo, Counter-Strike, Duke Nukem, Rick and Morty, The Big Lebowski and more (<a href="docs/videos/findmutlu-sounds-tour.mp4">hear them</a>). Not in the toolkit bundle: install it by name
+<b><a href="plugins/findmutlu-sounds"><code>findmutlu-sounds</code></a></b>: A short sound when Claude needs you, a job finishes, a test fails or a push lands. StarCraft, Warcraft, Age of Empires, Command & Conquer, Diablo, Counter-Strike, Duke Nukem, Rick and Morty, The Big Lebowski, Borat and more (<a href="docs/videos/findmutlu-sounds-tour.mp4">hear them</a>). Not in the toolkit bundle: install it by name
 </td>
 </tr>
 </table>
