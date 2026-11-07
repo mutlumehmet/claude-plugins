@@ -293,6 +293,40 @@ const FILE_PACKS = {
     ],
     "mcp": []
   },
+  "borat": {
+    "label": "Borat: wawaweewa, very nice, great success, my wife (fan use)",
+    "ordered": [
+      "wawaweewa.m4a",
+      "jagshemash.m4a",
+      "very-nice.m4a"
+    ],
+    "needsYou": [
+      "you-will-never-get-this.m4a",
+      "high-five.m4a",
+      "what-type-of-dog.m4a"
+    ],
+    "longDone": [
+      "great-success.m4a",
+      "king-in-the-castle.m4a"
+    ],
+    "subagentStart": [],
+    "subagent": [
+      "wow-very-nice.m4a",
+      "king-in-the-castle.m4a"
+    ],
+    "failed": [
+      "my-wife.m4a",
+      "smell-like-a-shit.m4a"
+    ],
+    "pushed": [
+      "great-success.m4a",
+      "very-nice.m4a"
+    ],
+    "compacted": [
+      "wawaweewa.m4a"
+    ],
+    "mcp": []
+  },
   "cabal": {
     "label": "Tiberian Sun: CABAL, the Nod AI (fan use)",
     "ordered": [
