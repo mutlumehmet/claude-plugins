@@ -119,7 +119,16 @@ def is_live(rec):
     if not info:
         return False
     start, comm = info
-    if rec.get("procStart") and " ".join(rec["procStart"].split()) != " ".join(start.split()):
+    ps = str(rec.get("procStart") or "")
+    if ps.isdigit():
+        # Linux builds record the start time in clock ticks since boot (field 22 of /proc/<pid>/stat)
+        try:
+            stat = Path(f"/proc/{pid}/stat").read_text()
+        except OSError:
+            return False
+        if stat.rsplit(")", 1)[1].split()[19] != ps:
+            return False  # the pid was reused by a newer process
+    elif ps and " ".join(ps.split()) != " ".join(start.split()):
         return False  # the pid was reused by a newer process
     return "claude" in comm.lower() or bool(rec.get("procStart"))
 
