@@ -68,7 +68,7 @@ Small mods for long sessions. Install them all with `/plugin install toolkit@meh
 </tr>
 <tr>
 <td valign="top" width="50%">
-<a href="plugins/answer-buttons"><img src="docs/images/answer-buttons-film.gif" width="360" alt="answer-buttons: one click asks for the short version of the last answer"></a><br>
+<a href="plugins/answer-buttons"><img src="docs/images/answer-buttons-film.gif" width="360" alt="answer-buttons: five buttons under the last answer; one click asks for the short version"></a><br>
 <b><a href="plugins/answer-buttons"><code>answer-buttons</code></a></b>: Plain English, Shorter, Plain & short, Status and Recommend buttons under the last answer
 </td>
 <td valign="top" width="50%">
