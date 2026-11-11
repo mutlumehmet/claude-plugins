@@ -1,10 +1,12 @@
-// answer-buttons: three small buttons under Claude's last answer.
+// answer-buttons: four small buttons under Claude's last answer.
 //   ✎ Plain English    asks for that answer again in plain words
 //   ✂ Shorter          asks for the same answer, cut down
 //   ✎✂ Plain & short   plain words, held to 2 or 3 sentences
+//   ◷ Status           asks where things stand and where Claude left off
 // The two Plain buttons send a built in prompt, or run the skill the plain_skill
 // setting names. From the keyboard: /answer-buttons:shorter and
-// /answer-buttons:plain-short (commands/), and that skill's own command.
+// /answer-buttons:plain-short and /answer-buttons:status (commands/), and that
+// skill's own command. Every prompt is English, whatever language the chat is in.
 
 import type { Register } from 'claude-code'
 
@@ -26,6 +28,9 @@ export const SHORTER_PROMPT =
   'Make your last answer shorter: lead with what it means for me in 2 or 3 sentences, ' +
   'keep any yes/no question and any copyable draft exactly as they were, drop the rest. ' +
   'Reply in the same language as before.'
+export const STATUS_PROMPT =
+  'Where are we? Give me the current status in a few lines: what is done, what is in progress, ' +
+  'where you left off, anything waiting on me, and the next step. Keep it short.'
 
 // The final text of the last main conversation answer, and whether a turn is
 // running. Module variables: a hot reload clears them, which only hides the
@@ -80,6 +85,9 @@ export const register: Register = (on, options) => {
           </Button>
           <Button key="plain-short" plain dimColor onPress={() => (plainSkill ? $.command.run({ command: plainSkill, args: PLAIN_SHORT_ARGS }) : $.prompt.submit({ text: PLAIN_SHORT_PROMPT, asUser: true }))}>
             ✎✂ Plain & short
+          </Button>
+          <Button key="status" plain dimColor onPress={() => $.prompt.submit({ text: STATUS_PROMPT, asUser: true })}>
+            ◷ Status
           </Button>
         </Box>
       </Box>
