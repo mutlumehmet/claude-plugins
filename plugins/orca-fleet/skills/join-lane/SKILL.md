@@ -54,7 +54,8 @@ you may do.
 
 ## Your name
 
-`Lane <N> #<n> · <label>`, for example `Lane 38 #4 · page access`. The label (at most three plain
+`Lane <N> #<n> · <label>`, for example `Lane 38 #4 · page access`; in a project with several
+fleets `Lane <fleet> <N> #<n> · <label>`, for example `Lane v1 38 #5 · page access`. The label (at most three plain
 words, no ids) is chosen by whoever started you: it is in the session title, the launch command or
 the handoff note's title. Keep it exactly; a handover keeps it too. If you have no label, ask your
 reporter for one in your first report instead of inventing it (an independent lane asks the

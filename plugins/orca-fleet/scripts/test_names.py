@@ -10,6 +10,35 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import names  # noqa: E402
 
 
+class Fleets(unittest.TestCase):
+    def test_new_lane(self):
+        self.assertEqual(names.lane_name("v1", 38, "page access"), "Lane v1 38 · page access")
+
+    def test_parse_fleet_lane(self):
+        self.assertEqual(names.parse("Lane v1 38 #5 · page access"), ("Lane v1 38", 5, "page access"))
+        self.assertEqual(names.fleet_of("Lane v1 38 #5 · page access"), "v1")
+        self.assertEqual(names.lane_number("Lane v1 38 #5 · page access"), "38")
+        self.assertEqual(names.lane_number("Lane 38 #4"), "38")
+        self.assertIsNone(names.fleet_of("Lane 38 #4"))
+
+    def test_orchestrator(self):
+        self.assertEqual(names.orchestrator_name("agentic"), "Orchestrator agentic #1")
+        self.assertEqual(names.fleet_of("Orchestrator ci-cost #3"), "ci-cost")
+        self.assertEqual(names.next_name("Orchestrator v1 #27"), "Orchestrator v1 #28")
+
+    def test_old_names_move_at_handover(self):
+        self.assertEqual(names.next_name("Lane 38 #4 · page access", fleet="v1"), "Lane v1 38 #5 · page access")
+        self.assertEqual(names.next_name("sprint 26 orchestrator", fleet="v1"), "Orchestrator v1 #27")
+        self.assertEqual(names.next_name("agentic orchestrator #1", fleet="agentic"), "Orchestrator agentic #2")
+        self.assertEqual(names.next_name("Lane v1 38 #5 · page access", fleet="v1"), "Lane v1 38 #6 · page access")
+
+    def test_checker_unchanged_by_fleet(self):
+        self.assertEqual(names.next_name("Checker A #17 · demo checks", fleet="v1"), "Checker A #18 · demo checks")
+
+    def test_slug_with_fleet(self):
+        self.assertEqual(names.slug("Lane v1 38 #5 · page access"), "lane-v1-38-5")
+
+
 class Parse(unittest.TestCase):
     def test_full(self):
         self.assertEqual(names.parse("Lane 38 #4 · page access"), ("Lane 38", 4, "page access"))

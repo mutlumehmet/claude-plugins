@@ -25,7 +25,10 @@ so a handover always starts a new session.
 - Name the successor: the same name with the number after `#` raised by one and the label after
   the middle dot kept as it is (`Lane 38 #4 · page access` becomes `Lane 38 #5 · page access`;
   `Lane 4 #3` becomes `Lane 4 #4`; a name without `#` gets ` #2`). Let the script do it, so the
-  label survives: `python3 -I "${CLAUDE_PLUGIN_ROOT}/scripts/names.py" next "<your name>"`. The
+  label survives: `python3 -I "${CLAUDE_PLUGIN_ROOT}/scripts/names.py" next "<your name>"`, adding
+  `--fleet <id>` in a project with several fleets (an orchestrator or a lane), so the successor carries
+  the fleet: `Lane 38 #4` becomes `Lane v1 38 #5`, `sprint 26 orchestrator` becomes
+  `Orchestrator v1 #27`. The
   label changes only when the orchestrator gave this lane a different job and wrote the new label
   in the orders file; then add `--label "<new label>"`.
 - Save it as `<files.handoffDir>/handoff-<slug>.md`, where the slug is

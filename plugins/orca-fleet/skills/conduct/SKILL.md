@@ -37,8 +37,9 @@ lanes and orders file, and an Admiral above them (`/orca-fleet:admiral`). Then:
 - **Your settings** are the top-level values with `fleets.<id>` laid over them: its `files.orders`,
   `crons` and anything else it sets. The ledger and the open-items file stay shared unless the fleet
   names its own; a row you add there carries a `Fleet` column (or `[<id>]` at the start of its text).
-- **Your name** is `<id> orchestrator #<n>` (for example `v1 orchestrator #26`); `names.py next`
-  raises the number at a handover as for any session.
+- **Your name** is `Orchestrator <id> #<n>` (for example `Orchestrator v1 #27`), so every
+  orchestrator sorts together; `names.py next "<your name>" --fleet <id>` gives the successor's name
+  and moves an older name (`sprint 26 orchestrator`) to this pattern at the handover.
 - **Register** at the start and after any move, so other fleets and the Admiral can find you:
   `python3 -I "${CLAUDE_PLUGIN_ROOT}/scripts/fleets.py" register orchestrator --fleet <id> --label "<what it works on>"`,
   adding `--takeover` when you take over from a handoff note (it refuses to replace a predecessor that
@@ -58,6 +59,14 @@ lanes and orders file, and an Admiral above them (`/orca-fleet:admiral`). Then:
 - **`nudge`**: wake idle lanes (the nudge cron sends this).
 
 ## Session names
+
+With several fleets, a lane's name also says its fleet: `Lane <fleet> <N> #<n> · <label>`, for
+example `Lane v1 38 #5 · page access` (`names.py lane <fleet> <N> --label "<label>"` makes a new
+one). Lane numbers stay unique across the project, so match a lane by its number
+(`names.py number "<title>"`). Checkers serve every fleet and keep `Checker A #17 · demo checks`.
+A lane started before fleets keeps its old name until its handover, where
+`names.py next --fleet <id>` renames it (`Lane 38 #4` becomes `Lane v1 38 #5`). `/orca-peers:peers`
+groups the list by fleet.
 
 Every lane and checker is named `<base> #<n> · <label>`: `Lane 38 #4 · page access`,
 `Checker A #17 · demo checks`. The base (`Lane 38`, `Checker A`) and `#<n>` are as before; the
@@ -121,7 +130,7 @@ stuck. There is no lane limit in the plugin; the person says when the machine sl
 **Start** with `successor.py` (a new session, never a fork):
 
 ```bash
-python3 -I "${CLAUDE_PLUGIN_ROOT}/scripts/successor.py" --name "Lane <N> · <label>" \
+python3 -I "${CLAUDE_PLUGIN_ROOT}/scripts/successor.py" --name "Lane [<fleet> ]<N> · <label>" \
   --cwd "<project folder>" --reports-to orchestrator [--fleet <id>] \
   --prompt "/orca-fleet:join-lane <brief or handoff note>"
 ```

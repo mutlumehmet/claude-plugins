@@ -54,7 +54,7 @@ needs no Admiral: say so and stop, unless the person is setting up the first two
 Run `fleets.py list` and `peers --json`. Then:
 
 - **Each fleet's orchestrator:** gone with no successor: tell the person, with the command to start one
-  from its newest handoff note (`successor.py --name "<id> orchestrator #<n+1>" --fleet <id>
+  from its newest handoff note (`successor.py --name "Orchestrator <id> #<n+1>" --fleet <id>
   --prompt "/orca-fleet:conduct --fleet <id> <note>"`); start it yourself only if the person said so
   this session. Past `handover.prepare` or `handover.start`: tell it, as `conduct status` does for lanes.
   Never nudge its lanes yourself; that is its job.
@@ -83,7 +83,7 @@ Tell the person at most eight lines, only when something changed or waits on the
    orders file `<handoffDir>/<id>-orders.md`, cron minutes offset from the other fleets so crons do
    not fire together), and the orchestrator brief (what this fleet builds, the lanes to start first,
    the rules file). Write them after the yes; create the orders file from the template.
-3. Start its orchestrator: `successor.py --name "<id> orchestrator #1" --fleet <id> --cwd
+3. Start its orchestrator: `successor.py --name "Orchestrator <id> #1" --fleet <id> --cwd
    "<project>" --prompt "/orca-fleet:conduct --fleet <id> <brief path>"`.
 4. Add an Admiral orders entry: "fleet <id> started: <label>". Wait for the orchestrator's first line.
 
