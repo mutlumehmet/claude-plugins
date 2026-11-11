@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 // @ts-ignore: the test kit loads .tsx paths; tsc wants allowImportingTsExtensions
-import { isLastBlock, PLAIN_ARGS, PLAIN_PROMPT, PLAIN_SHORT_ARGS, PLAIN_SHORT_PROMPT, SHORTER_PROMPT } from '../hooks/register.tsx'
+import { isLastBlock, PLAIN_ARGS, PLAIN_PROMPT, PLAIN_SHORT_ARGS, PLAIN_SHORT_PROMPT, SHORTER_PROMPT, STATUS_PROMPT } from '../hooks/register.tsx'
 
 const ANSWER = 'First block.\n\nLast block of the answer.'
 
@@ -37,7 +37,7 @@ test('isLastBlock matches only the block that ends the answer', () => {
   expect(isLastBlock('anything', '')).toBe(false)
 })
 
-test('the last block gets all three buttons, and each sends its prompt when no skill is set', async ($, on) => {
+test('the last block gets all four buttons, and each sends its prompt when no skill is set', async ($, on) => {
   const submitted: string[] = []
   engine(on, submitted)
   await $.turn.start({ turnId: 't1', text: 'q' })
@@ -50,9 +50,10 @@ test('the last block gets all three buttons, and each sends its prompt when no s
     await ui.press({ key: 'plain' })
     await ui.press({ key: 'shorter' })
     await ui.press({ key: 'plain-short' })
+    await ui.press({ key: 'status' })
     await ui.unmount()
   }
-  expect(submitted).toEqual([PLAIN_PROMPT, SHORTER_PROMPT, PLAIN_SHORT_PROMPT, PLAIN_PROMPT, SHORTER_PROMPT, PLAIN_SHORT_PROMPT])
+  expect(submitted).toEqual([PLAIN_PROMPT, SHORTER_PROMPT, PLAIN_SHORT_PROMPT, STATUS_PROMPT, PLAIN_PROMPT, SHORTER_PROMPT, PLAIN_SHORT_PROMPT, STATUS_PROMPT])
 })
 
 test('an earlier block gets no buttons', async ($, on) => {

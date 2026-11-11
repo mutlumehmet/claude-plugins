@@ -28,7 +28,7 @@
     {
       "name": "answer-buttons",
       "source": "./plugins/answer-buttons",
-      "description": "Three small buttons under Claude's last answer: Plain English, Shorter, and Plain & short"
+      "description": "Four small buttons under Claude's last answer: Plain English, Shorter, Plain & short, and Status"
     },
     {
       "name": "skill-stats",

@@ -1,6 +1,6 @@
 # answer-buttons
 
-A Claude Code mod that draws three small buttons under Claude's last answer. Part of
+A Claude Code mod that draws four small buttons under Claude's last answer. Part of
 [claude-plugins](../../README.md).
 
 ## What it does
@@ -10,9 +10,12 @@ A Claude Code mod that draws three small buttons under Claude's last answer. Par
 | `✎ Plain English` | Asks for the answer again in plain words: what the thing is, one labelled analogy and where it stops being true, where it is, and what breaks if it is wrong |
 | `✂ Shorter` | Asks for the same answer cut to its point in 2 or 3 sentences, keeping any yes/no question and any copyable draft word for word |
 | `✎✂ Plain & short` | Plain words, held to 2 or 3 sentences |
+| `◷ Status` | Asks where things stand: what is done, what is in progress, where Claude left off, what waits on you, and the next step |
+
+Every button sends an English prompt, whatever language the conversation is in.
 
 The buttons show only under the last answer, never while Claude is working. From the keyboard:
-`/answer-buttons:shorter` and `/answer-buttons:plain-short`.
+`/answer-buttons:shorter`, `/answer-buttons:plain-short` and `/answer-buttons:status`.
 
 ## Settings
 
@@ -23,10 +26,10 @@ The buttons show only under the last answer, never while Claude is working. From
 ## What it reads and does
 
 - **Reads**: whether Claude is answering and which answer is the latest, to draw the buttons under it.
-- **Does**: on a press, sends a fixed prompt as your message (Plain English, Shorter, Plain & short), or runs the skill named in `plain_skill`.
+- **Does**: on a press, sends a fixed prompt as your message (Plain English, Shorter, Plain & short, Status), or runs the skill named in `plain_skill`.
 - **Hooks**: `turn.start` and `turn.complete` only track whether a turn is running. `ui.render` on the answer adds the button row under the last answer and leaves the answer itself unchanged.
 - **Commands it runs**: only when you press a Plain button and the `plain_skill` setting names a skill, it runs that one skill (`/<plain_skill>` with a fixed argument written in this mod's code, asking it to re-explain your last answer, or to do so in 2 or 3 sentences). With `plain_skill` empty it runs no command at all. It never runs a command on its own, only on your press.
-- **What goes into the prompts it submits**: one of three fixed sentences written in this mod's code (ask Claude to re-explain the last answer in plain English, to say it shorter, or both), sent as your own message in the same session. It reads the conversation only to find which answer is the latest, and copies none of its text into the prompt.
+- **What goes into the prompts it submits**: one of four fixed sentences written in this mod's code (ask Claude to re-explain the last answer in plain English, to say it shorter, both, or to report where the work stands), sent as your own message in the same session. It reads the conversation only to find which answer is the latest, and copies none of its text into the prompt.
 - **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
 - **Never**: sends anything anywhere (no network calls, no telemetry).
 

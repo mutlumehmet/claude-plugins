@@ -1,7 +1,7 @@
 {
   "name": "answer-buttons",
-  "version": "0.3.1",
-  "description": "Three small buttons under Claude's last answer: Plain English, Shorter, and Plain & short",
+  "version": "0.4.0",
+  "description": "Four small buttons under Claude's last answer: Plain English, Shorter, Plain & short, and Status",
   "author": {
     "name": "Mehmet Mutlu"
   },
