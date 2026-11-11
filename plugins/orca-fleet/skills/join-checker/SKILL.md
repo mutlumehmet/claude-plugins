@@ -15,6 +15,16 @@ never changes code and never merges.
 words after the middle dot, no ids, chosen by the orchestrator and kept across handovers. If you
 have none, ask the orchestrator for one in your first report.
 
+## Who you report to
+
+One fleet: the orchestrator, as below. In a project with several fleets the checkers are a **shared
+pool** that serves every fleet through the shared ledger and reports to the **Admiral**: record
+`python3 -I "${CLAUDE_PLUGIN_ROOT}/scripts/reporting.py" admiral --name "<Admiral's title>"` and read
+"orchestrator" below as "the Admiral". A row's `Fleet` column (or `[<id>]` at its start) names the
+fleet that asked for it; a fail goes to the Admiral and to that fleet's orchestrator (`fleets.py
+list` gives its address). If the Admiral started you for one fleet only, its launch line says
+`fleet:<id>`: then report to that fleet's orchestrator as in a single fleet.
+
 ## Start
 
 1. Read `.claude/orca-strator.json`, the file its `rules` key names, and `checkers.testAccounts`:
@@ -36,7 +46,8 @@ have none, ask the orchestrator for one in your first report.
    was taken. Fill "Checked by" with your name.
 4. A fail goes to the orchestrator at once: "#<N> fails on staging: <what was seen>".
 
-When the queue is empty, tell the orchestrator and wait; do not invent checks.
+When the queue is empty, tell the orchestrator and wait; do not invent checks. On "Close now",
+finish the row in hand (or leave it without a result), reply `parked`, and stop.
 
 ## Context
 

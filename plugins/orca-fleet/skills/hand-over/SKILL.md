@@ -12,13 +12,16 @@ so a handover always starts a new session.
 
 ## 1. Write the note (always)
 
-- Find your role: orchestrator, lane or checker (from how this session was started, or its name).
+- Find your role: admiral, orchestrator, lane or checker (from how this session was started, or its name).
 - Copy `${CLAUDE_PLUGIN_ROOT}/templates/handoff-<role>.md` and fill every section from the files
   and the conversation. Exact ids, branches, shas, PR numbers, paths and commands; nothing from
   memory that a file can confirm. The next session knows only what the note says.
 - A lane copies its reporting line into the note's `## Reports to` exactly as it stands now
   (`orchestrator <name>`, `parent "<title>" uds:<address> session:<id>` or `independent`), so the
-  successor reports to the same place. A released lane stays released.
+  successor reports to the same place. A released lane stays released. In a project with several
+  fleets, also write `## Fleet` with your fleet id (an orchestrator and every lane of a fleet), so
+  the successor joins the same fleet; the Admiral writes `## Fleets` with every fleet's id,
+  orchestrator and state.
 - Name the successor: the same name with the number after `#` raised by one and the label after
   the middle dot kept as it is (`Lane 38 #4 · page access` becomes `Lane 38 #5 · page access`;
   `Lane 4 #3` becomes `Lane 4 #4`; a name without `#` gets ` #2`). Let the script do it, so the
@@ -42,9 +45,12 @@ working; update the note again just before starting the successor.
 
    ```bash
    python3 -I "${CLAUDE_PLUGIN_ROOT}/scripts/successor.py" --name "<successor name>" \
-     --cwd "<project folder>" \
-     --prompt "/orca-fleet:<conduct|join-lane|join-checker> <note path>"
+     --cwd "<project folder>" [--fleet <id>] \
+     --prompt "/orca-fleet:<conduct|join-lane|join-checker|admiral> <note path>"
    ```
+
+   An orchestrator of one of several fleets passes `--fleet <id>` and its prompt starts
+   `/orca-fleet:conduct --fleet <id>`.
 
    It opens a new Terminal window in the same account. Elsewhere it prints the command and copies
    it, for the person to paste.

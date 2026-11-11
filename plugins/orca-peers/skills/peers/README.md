@@ -38,8 +38,9 @@ each row carries `context: {used, window, percent, flag}` for scripts and schedu
 
 A lane started with orca-fleet records who it reports to, in
 `~/.config/orca-strator/reporting/<sessionId>.json`. Its row then ends with `reports: <kind> <name>`
-(`orchestrator`, `parent` or `independent`), so a lane reporting to the wrong session shows in the
-list. Sessions without that file look as they always did.
+(`orchestrator`, `parent`, `independent`, or `admiral` for a checker in a shared pool), so a lane
+reporting to the wrong session shows in the list. In a project that runs several fleets the row also
+ends with `fleet: <id>`. Sessions without that file look as they always did.
 
 ## First run and config
 

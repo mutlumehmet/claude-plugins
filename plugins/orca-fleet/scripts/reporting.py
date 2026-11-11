@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """A lane's reporting line: who it reports to, saved where orca-peers can show it.
 
-Usage: reporting.py orchestrator|parent|independent [--name <title>] [--address uds:<socket>] [--session <id>]
+Usage: reporting.py orchestrator|parent|independent|admiral [--name <title>] [--address uds:<socket>] [--session <id>]
+                    [--fleet <id>]
        reporting.py --self     print this session's own name, address and sessionId as JSON
 
 It finds this session from its own process ancestors and the pid records at
 `<config dir>/sessions/<pid>.json`, and writes one file:
 `~/.config/orca-strator/reporting/<sessionId>.json`. Nothing is written to a config dir.
+
+`--fleet` records which fleet the session belongs to when a project runs several (see fleets.py);
+`admiral` is the line of a checker in the shared pool, which reports to the Admiral.
 """
 
 import argparse
@@ -19,7 +23,7 @@ import tempfile
 import time
 from pathlib import Path
 
-KINDS = ("orchestrator", "parent", "independent")
+KINDS = ("orchestrator", "parent", "independent", "admiral")
 REPORTING_DIR = Path("~/.config/orca-strator/reporting").expanduser()
 
 
@@ -83,6 +87,7 @@ def main():
     ap.add_argument("--name")
     ap.add_argument("--address")
     ap.add_argument("--session")
+    ap.add_argument("--fleet")
     ap.add_argument("--self", action="store_true", dest="whoami")
     a = ap.parse_args()
     if not a.whoami and not a.kind:
@@ -96,9 +101,9 @@ def main():
         print(json.dumps(identity(rec)))
         return 0
     line = {"kind": a.kind, "updatedAt": int(time.time())}
-    line.update({k: v for k, v in (("name", a.name), ("address", a.address), ("session", a.session)) if v})
+    line.update({k: v for k, v in (("name", a.name), ("address", a.address), ("session", a.session), ("fleet", a.fleet)) if v})
     record(rec, line)
-    print(f"Recorded: reports to {a.kind}{' ' + a.name if a.name else ''}.")
+    print(f"Recorded: reports to {a.kind}{' ' + a.name if a.name else ''}{' (fleet ' + a.fleet + ')' if a.fleet else ''}.")
     return 0
 
 

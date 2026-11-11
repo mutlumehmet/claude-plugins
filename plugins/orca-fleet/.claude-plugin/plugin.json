@@ -1,7 +1,7 @@
 {
   "name": "orca-fleet",
-  "version": "0.4.0",
-  "description": "Part of Orca Strator (included in the orca-strator bundle). Runs a fleet of Claude Code sessions: an orchestrator, lanes and checkers, with handovers to a fresh session when context fills. Each project keeps its own facts in one config file.",
+  "version": "0.5.0",
+  "description": "Part of Orca Strator (included in the orca-strator bundle). Runs one or several fleets of Claude Code sessions: orchestrators, lanes and checkers, with an Admiral above several fleets, with handovers to a fresh session when context fills. Each project keeps its own facts in one config file.",
   "author": {
     "name": "Mehmet Mutlu"
   },

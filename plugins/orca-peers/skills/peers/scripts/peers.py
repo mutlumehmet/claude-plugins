@@ -20,8 +20,9 @@ the config when set, else 1M. An estimate never carries a handover flag. At 70% 
 unless the model name ended in [1m]; on 1M-window models that read two to five times too high.)
 
 Reporting line: a lane started with orca-fleet saves who it reports to at
-`~/.config/orca-strator/reporting/<sessionId>.json` ({"kind", "name", "address", "session"}). The row
-then ends with `reports: <kind> <name>`; a session without that file shows nothing extra.
+`~/.config/orca-strator/reporting/<sessionId>.json` ({"kind", "name", "address", "session", "fleet"}).
+The row then ends with `reports: <kind> <name>`, plus `fleet: <id>` when the project runs several
+fleets; a session without that file shows nothing extra.
 
 Accounts, first match wins:
   1. `accounts_file:` in ~/.config/orca-strator/config.yaml, a JSON file shaped
@@ -326,7 +327,8 @@ def main():
         ctx = (("~" if c["source"] == "estimate" else "") + f"{c['percent']}%") if c else "·"
         flag = f"  {c['flag'].upper()}" if c and c["flag"] else ""
         rep = r["reports"]
-        reports = f"  reports: {rep['kind']}{' ' + rep['name'] if rep.get('name') else ''}" if rep else ""
+        reports = (f"  reports: {rep['kind']}{' ' + rep['name'] if rep.get('name') else ''}"
+                   f"{'  fleet: ' + rep['fleet'] if rep.get('fleet') else ''}") if rep else ""
         print(f"{r['account']:<9} {r['project'][:22]:<22} {r['title'][:48]:<48} {r['state']:<8} {ctx:>4}  "
               f"{r['address'] or '(no address)'}{'  (this session)' if r['self'] else ''}{flag}{reports}")
     return 0
