@@ -3,6 +3,10 @@
 A Claude Code mod that draws five small buttons under Claude's last answer. Part of
 [claude-plugins](../../README.md).
 
+![answer-buttons: a question, the five buttons under the answer, Shorter pressed, and the short version with the buttons again](../../docs/images/answer-buttons-film.gif)
+
+The film is drawn by the mod's own code from a scripted session; the window is a mock up.
+
 ## What it does
 
 | Button | What it sends |
