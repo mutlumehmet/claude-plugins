@@ -14,7 +14,7 @@ The film is drawn by the mod's own code from a scripted session; the window is a
 | `✎ Plain English` | Asks for the answer again in plain words: what the thing is, one labelled analogy and where it stops being true, where it is, and what breaks if it is wrong |
 | `✂ Shorter` | Asks for the same answer cut to its point in 2 or 3 sentences, keeping any yes/no question and any copyable draft word for word |
 | `✎✂ Plain & short` | Plain words, held to 2 or 3 sentences |
-| `◷ Status` | Asks where things stand: what is done, what is in progress, where Claude left off, what waits on you, and the next step |
+| `◷ Status` | Asks where things stand in at most four short lines: Done, Now, Waiting on me, Next |
 | `★ Recommend` | Asks for one recommendation with the reason in 2 or 3 sentences, and what would change it |
 
 Every button sends an English prompt, whatever language the conversation is in.

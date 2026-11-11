@@ -1,6 +1,6 @@
 {
   "name": "answer-buttons",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Five small buttons under Claude's last answer: Plain English, Shorter, Plain & short, Status, and Recommend",
   "author": {
     "name": "Mehmet Mutlu"
