@@ -5,13 +5,16 @@ A handover starts a NEW session (never a fork): it gets an empty context and rea
 note as its first prompt. It runs in the given folder and, unless --account says otherwise, in the
 same account as this session (the same CLAUDE_CONFIG_DIR). The same script starts a new lane.
 
-Usage: successor.py --name "<Lane 4 #4>" --prompt "<first prompt>" [--cwd <folder>] [--dry-run]
+Usage: successor.py --name "<Lane 4 #4 · page access>" --prompt "<first prompt>" [--cwd <folder>] [--dry-run]
                     [--account <id>] [--reports-to orchestrator|parent|independent]
 
 --account takes an id from `accounts_file:` in ~/.config/orca-strator/config.yaml (the same lookup
 as orca-peers), so nobody sets CLAUDE_CONFIG_DIR by hand. --reports-to adds a `reports-to:` line to
 the prompt for join-lane; with `parent` it names this session, with its current address. Without
 these two flags the command is what it always was.
+
+--name is `<base> #<n> · <label>` (see names.py); the label is optional, so older names still
+work, but a label longer than three words or carrying an id is refused before anything opens.
 
 Outside macOS Terminal.app (or with --dry-run) it does not open anything: it prints the command
 and copies it to the clipboard, for the person to paste in a new terminal tab.
@@ -29,6 +32,7 @@ from pathlib import Path
 
 sys.dont_write_bytecode = True  # no __pycache__ in the plugin's folder
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # python3 -I leaves it out
+import names  # noqa: E402
 import reporting  # noqa: E402
 
 CONFIG = Path("~/.config/orca-strator/config.yaml").expanduser()
@@ -114,6 +118,10 @@ def main():
     ap.add_argument("--account")
     ap.add_argument("--reports-to", choices=reporting.KINDS)
     a = ap.parse_args()
+    problem = names.label_problem(names.parse(a.name)[2])
+    if problem:
+        print(f"Not started: {problem}. Name it like `Lane 38 #4 {names.DOT} page access`.", file=sys.stderr)
+        return 2
     prefix = None
     if a.account:
         prefix = account_env(a.account)

@@ -19,11 +19,16 @@ so a handover always starts a new session.
 - A lane copies its reporting line into the note's `## Reports to` exactly as it stands now
   (`orchestrator <name>`, `parent "<title>" uds:<address> session:<id>` or `independent`), so the
   successor reports to the same place. A released lane stays released.
-- Name the successor: the same name with the number after `#` raised by one (`Lane 4 #3` becomes
-  `Lane 4 #4`); a name without `#` gets ` #2`.
-- Save it as `<files.handoffDir>/handoff-<successor name in lowercase, spaces and # as dashes>.md`
-  (`Lane 4 #4` becomes `handoff-lane-4-4.md`). The config is `.claude/orca-strator.json`;
-  without one, use the project's notes folder.
+- Name the successor: the same name with the number after `#` raised by one and the label after
+  the middle dot kept as it is (`Lane 38 #4 · page access` becomes `Lane 38 #5 · page access`;
+  `Lane 4 #3` becomes `Lane 4 #4`; a name without `#` gets ` #2`). Let the script do it, so the
+  label survives: `python3 -I "${CLAUDE_PLUGIN_ROOT}/scripts/names.py" next "<your name>"`. The
+  label changes only when the orchestrator gave this lane a different job and wrote the new label
+  in the orders file; then add `--label "<new label>"`.
+- Save it as `<files.handoffDir>/handoff-<slug>.md`, where the slug is
+  `names.py slug "<successor name>"`: the name without its label, lowercase, spaces and `#` as
+  dashes (`Lane 38 #5 · page access` becomes `handoff-lane-38-5.md`). The config is
+  `.claude/orca-strator.json`; without one, use the project's notes folder.
 - If the project is a git repo and the notes folder is tracked, commit the note on its own.
 
 Without `start`: tell whoever you report to (the orchestrator, your parent, or the person) "handoff note ready: <path>" and keep

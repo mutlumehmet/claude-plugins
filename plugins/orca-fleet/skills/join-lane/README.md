@@ -19,7 +19,7 @@ The line comes from the launch prompt, then the handoff note's `## Reports to`, 
 Start one with the parent's address filled in for you (from inside the parent session):
 
 ```
-python3 -I "${CLAUDE_PLUGIN_ROOT}/scripts/successor.py" --name "Lane 1" --account work --reports-to parent \
+python3 -I "${CLAUDE_PLUGIN_ROOT}/scripts/successor.py" --name "Lane 1 · page access" --account work --reports-to parent \
   --cwd <project folder> --prompt "/orca-fleet:join-lane <brief>"
 ```
 

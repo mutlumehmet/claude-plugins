@@ -9,6 +9,12 @@ argument-hint: "[handoff note] [checker name]"
 A checker verifies merged changes the way a person would see them, once each, on staging. It
 never changes code and never merges.
 
+## Your name
+
+`Checker <X> #<n> · <label>`, for example `Checker A #17 · demo checks`: at most three plain
+words after the middle dot, no ids, chosen by the orchestrator and kept across handovers. If you
+have none, ask the orchestrator for one in your first report.
+
 ## Start
 
 1. Read `.claude/orca-strator.json`, the file its `rules` key names, and `checkers.testAccounts`:

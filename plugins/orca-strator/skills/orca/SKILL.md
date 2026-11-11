@@ -46,7 +46,7 @@ Script (reads only, except `--set`, which writes `~/.config/orca-strator/config.
 4. **Role, one AskUserQuestion:** what should this session be?
    - **Orchestrator** (runs the fleet): run `/orca-fleet:conduct`, passing a handoff note if they name
      one or one is obvious in the project's handoff folder.
-   - **Lane** (builds one stream of work): suggest a name like "Lane 1" if the session has none, then
+   - **Lane** (builds one stream of work): suggest a name like "Lane 1 · page access" (a short label of at most three plain words for the work) if the session has none, then
      `/orca-fleet:join-lane`.
    - **Checker** (verifies merged changes): `/orca-fleet:join-checker`.
    - **Just this session** (no fleet): nothing more; say what now works by itself (the band, the

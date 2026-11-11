@@ -22,9 +22,9 @@ Runs a **fleet** of Claude Code sessions on one project: an orchestrator that ke
 ## How a fleet runs
 
 1. Open one session for the orchestrator and run `/orca-fleet:conduct` (or `/orca-fleet:conduct <handoff note>` to take over).
-2. Open a session per lane, named `Lane 1`, `Lane 2` and so on, and run `/orca-fleet:join-lane`. Checkers run `/orca-fleet:join-checker`. Each reports to the orchestrator by itself. A lane can instead report to the session that started it, or work on its own with you: see [who a lane reports to](skills/join-lane/README.md#who-a-lane-reports-to).
+2. Open a session per lane, named `Lane 1 · page access`, `Lane 2 · email sync` and so on (a label of at most three plain words after the middle dot, no ids; the orchestrator picks it and handovers keep it), and run `/orca-fleet:join-lane`. Checkers run `/orca-fleet:join-checker`. Each reports to the orchestrator by itself. A lane can instead report to the session that started it, or work on its own with you: see [who a lane reports to](skills/join-lane/README.md#who-a-lane-reports-to).
 3. The orchestrator's status cron reads every session's context use and nudges the ones that should write a handoff note or hand over; its nudge cron wakes lanes that went idle with work left.
-4. A session that hands over writes its note, opens `<name> #2` in a new Terminal tab with the note as its first prompt, and closes once the successor says "took over".
+4. A session that hands over writes its note, opens `<name> #2` in a new Terminal tab (same label: `Lane 38 #4 · page access` opens `Lane 38 #5 · page access`) with the note as its first prompt, and closes once the successor says "took over".
 
 Sessions talk with SendMessage. [`orca-peers`](../orca-peers) finds their addresses in every account and reads their context use, so install it too. [`orca-move`](../orca-move) moves sessions to a twin account when one nears its limit, and [`watch-ci`](../dev-workflow/skills/watch-ci) watches merges, when installed.
 

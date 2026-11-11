@@ -29,6 +29,25 @@ of the same name.
 - **`status`**: the status round (the status cron sends this).
 - **`nudge`**: wake idle lanes (the nudge cron sends this).
 
+## Session names
+
+Every lane and checker is named `<base> #<n> · <label>`: `Lane 38 #4 · page access`,
+`Checker A #17 · demo checks`. The base (`Lane 38`, `Checker A`) and `#<n>` are as before; the
+label after the middle dot says what the work is, in at most three plain English words, with no
+section numbers, order numbers or ids (those change; the label should read right to the person at a
+glance). `${CLAUDE_PLUGIN_ROOT}/scripts/names.py check "<name>"` tests a name; `successor.py`
+refuses one whose label breaks the rule.
+
+- **You pick the label when you start a lane**, and pass the whole name to `successor.py --name`
+  (for example `--name "Lane 39 · email sync"`). A checker gets one too.
+- **Handovers keep it**: `hand-over start` opens `Lane 38 #5 · page access` after
+  `Lane 38 #4 · page access`.
+- **It changes only when a lane gets a different job.** Then you choose the new label, write it in
+  the orders file ("Lane 38 is now `invoice export`"), and the lane uses it at its next handover.
+- **Match sessions by the part before the dot.** The `fleet` prefixes still match the start of the
+  title. To find one lane, compare its base (`names.py base "<title>"`) with `Lane 38` exactly, so
+  `Lane 3` never matches `Lane 38`, and a relabelled lane is still the same lane.
+
 ## Start or take over
 
 1. **Read** the handoff note if given (`/orca-fleet:conduct <path>`), else the newest
@@ -39,7 +58,8 @@ of the same name.
    title starts with one of the `fleet` prefixes in the config. There is no default prefix: other
    projects' lanes may share a name like "Lane 1", so with no note and no `fleet` key, ask the
    person which sessions are this fleet before messaging anyone. A session in the note but not
-   live is gone: say so. Leave out any session whose `reports` in `peers --json` has `kind`
+   live is gone: say so. A note's sessions table may list a name without the label, or with an
+   older label: match by base and `#<n>` (see Session names). Leave out any session whose `reports` in `peers --json` has `kind`
    `parent` or `independent`, even with a matching title: it works for someone else, and this
    fleet's messages would pull it away. Name the ones you left out to the person, once.
 3. **Crons:** create two with CronCreate, minutes from `crons` in the config:
