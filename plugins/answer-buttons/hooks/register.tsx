@@ -31,8 +31,9 @@ export const SHORTER_PROMPT =
   'keep any yes/no question and any copyable draft exactly as they were, drop the rest. ' +
   'Reply in the same language as before.'
 export const STATUS_PROMPT =
-  'Where are we? Give me the current status in a few lines: what is done, what is in progress, ' +
-  'where you left off, anything waiting on me, and the next step. Keep it short.'
+  'Where are we? Answer in at most 4 short lines, one each, no other text: ' +
+  'Done: ..., Now: ..., Waiting on me: ... (or nothing), Next: .... ' +
+  'Under 15 words a line, no file paths, hashes or tables. Reply in the same language as before.'
 export const RECOMMEND_PROMPT =
   'What is your recommendation? Pick one option and say why in 2 or 3 sentences, ' +
   'then name the one thing that would change your mind.'
