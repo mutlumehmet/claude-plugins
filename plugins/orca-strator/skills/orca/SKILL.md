@@ -44,8 +44,11 @@ Script (reads only, except `--set`, which writes `~/.config/orca-strator/config.
    - Warning level: 80, 85, 90 (default) or 95. Write with `--set warn_percent=N`.
    Say that sessions already open pick the new settings up when they restart.
 4. **Role, one AskUserQuestion:** what should this session be?
-   - **Orchestrator** (runs the fleet): run `/orca-fleet:conduct`, passing a handoff note if they name
-     one or one is obvious in the project's handoff folder.
+   - **Admiral** (runs several fleets in this project from above; only offer it when the project
+     config has a `fleets` map, or the person wants a second fleet): `/orca-fleet:admiral`.
+   - **Orchestrator** (runs a fleet): run `/orca-fleet:conduct`, passing a handoff note if they name
+     one or one is obvious in the project's handoff folder. With a `fleets` map, ask which fleet
+     (one button per id) and pass `--fleet <id>`.
    - **Lane** (builds one stream of work): suggest a name like "Lane 1 · page access" (a short label of at most three plain words for the work) if the session has none, then
      `/orca-fleet:join-lane`.
    - **Checker** (verifies merged changes): `/orca-fleet:join-checker`.
@@ -67,6 +70,8 @@ Script (reads only, except `--set`, which writes `~/.config/orca-strator/config.
 | Cancel a move I started | `/orca-move:switch cancel` |
 | Move every session of this seat | `/orca-move:switch-all [seat]` |
 | Run the fleet as orchestrator | `/orca-fleet:conduct [handoff note]` |
+| Run several fleets from above | `/orca-fleet:admiral`, `/orca-fleet:admiral start-fleet <id> "<label>"` |
+| Run one of several fleets | `/orca-fleet:conduct --fleet <id> [handoff note]` |
 | Join as a lane or a checker | `/orca-fleet:join-lane`, `/orca-fleet:join-checker` |
 | Hand over to a fresh session | `/orca-fleet:hand-over` (note), `/orca-fleet:hand-over start` |
 

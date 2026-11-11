@@ -6,12 +6,15 @@ note as its first prompt. It runs in the given folder and, unless --account says
 same account as this session (the same CLAUDE_CONFIG_DIR). The same script starts a new lane.
 
 Usage: successor.py --name "<Lane 4 #4 · page access>" --prompt "<first prompt>" [--cwd <folder>] [--dry-run]
-                    [--account <id>] [--reports-to orchestrator|parent|independent]
+                    [--account <id>] [--reports-to orchestrator|parent|independent|admiral] [--fleet <id>]
 
 --account takes an id from `accounts_file:` in ~/.config/orca-strator/config.yaml (the same lookup
 as orca-peers), so nobody sets CLAUDE_CONFIG_DIR by hand. --reports-to adds a `reports-to:` line to
 the prompt for join-lane; with `parent` it names this session, with its current address. Without
-these two flags the command is what it always was.
+these flags the command is what it always was. --fleet adds `fleet:<id>` to that line, for a project
+that runs several fleets (see fleets.py): the lane records it and answers only its own fleet's
+orchestrator. An orchestrator or the Admiral uses this same script to start a lane, a checker or a
+new fleet's orchestrator.
 
 --name is `<base> #<n> · <label>` (see names.py); the label is optional, so older names still
 work, but a label longer than three words or carrying an id is refused before anything opens.
@@ -78,10 +81,11 @@ def account_env(account):
     return f"export CLAUDE_CONFIG_DIR={shlex.quote(known[account])} && "
 
 
-def reports_to_line(kind):
+def reports_to_line(kind, fleet=None):
     """The line join-lane reads at the end of the prompt, or None when it cannot be made."""
+    tail = f" fleet:{fleet}" if fleet else ""
     if kind != "parent":
-        return f"reports-to: {kind}"
+        return f"reports-to: {kind}{tail}"
     rec = reporting.this_session()
     me = reporting.identity(rec) if rec else None
     if not me or not me["address"]:
@@ -89,7 +93,7 @@ def reports_to_line(kind):
               "Run it from inside the parent session.", file=sys.stderr)
         return None
     name = me["name"].replace('"', "'")
-    return f'reports-to: parent "{name}" {me["address"]} session:{me["sessionId"]}'
+    return f'reports-to: parent "{name}" {me["address"]} session:{me["sessionId"]}{tail}'
 
 
 def command(name, prompt, cwd, account_prefix=None):
@@ -117,6 +121,7 @@ def main():
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--account")
     ap.add_argument("--reports-to", choices=reporting.KINDS)
+    ap.add_argument("--fleet")
     a = ap.parse_args()
     problem = names.label_problem(names.parse(a.name)[2])
     if problem:
@@ -128,11 +133,16 @@ def main():
         if prefix is None:
             return 2
     prompt = a.prompt
+    if a.fleet and not re.match(r"^[a-z][a-z0-9-]{0,23}$", a.fleet):
+        print(f"Not started: fleet id '{a.fleet}' must be lowercase letters, digits and dashes.", file=sys.stderr)
+        return 2
     if a.reports_to:
-        extra = reports_to_line(a.reports_to)
+        extra = reports_to_line(a.reports_to, a.fleet)
         if extra is None:
             return 2
         prompt = f"{prompt} {extra}"
+    elif a.fleet:
+        prompt = f"{prompt} fleet:{a.fleet}"
     line = command(a.name, prompt, os.path.abspath(os.path.expanduser(a.cwd)), prefix)
     if not a.dry_run and os.environ.get("TERM_PROGRAM") == "Apple_Terminal" and open_tab(line):
         print(f"Opened a new Terminal window for {a.name}.")

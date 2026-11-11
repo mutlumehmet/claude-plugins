@@ -18,6 +18,7 @@ Runs a **fleet** of Claude Code sessions on one project: an orchestrator that ke
 | [`join-lane`](skills/join-lane) | Makes this session a lane: one stream of work, `ready to merge #N, head <sha>, SAFE` when a PR is done |
 | [`join-checker`](skills/join-checker) | Makes this session a checker: works through the preview ledger, one staging check per merged change |
 | [`hand-over`](skills/hand-over) | Writes the handoff note at about 70% context and, with `start`, opens a fresh successor at about 85% |
+| [`admiral`](skills/admiral) | Runs several fleets in one project from above: starts and closes fleets, an hourly roll-up, the shared merge lock, numbered claims and the shared checker pool |
 
 ## How a fleet runs
 
@@ -25,6 +26,31 @@ Runs a **fleet** of Claude Code sessions on one project: an orchestrator that ke
 2. Open a session per lane, named `Lane 1 · page access`, `Lane 2 · email sync` and so on (a label of at most three plain words after the middle dot, no ids; the orchestrator picks it and handovers keep it), and run `/orca-fleet:join-lane`. Checkers run `/orca-fleet:join-checker`. Each reports to the orchestrator by itself. A lane can instead report to the session that started it, or work on its own with you: see [who a lane reports to](skills/join-lane/README.md#who-a-lane-reports-to).
 3. The orchestrator's status cron reads every session's context use and nudges the ones that should write a handoff note or hand over; its nudge cron wakes lanes that went idle with work left.
 4. A session that hands over writes its note, opens `<name> #2` in a new Terminal tab (same label: `Lane 38 #4 · page access` opens `Lane 38 #5 · page access`) with the note as its first prompt, and closes once the successor says "took over".
+
+## Several fleets in one project
+
+One repo often holds several streams of work at once (a main build, an agent layer, a data
+migration). Give each its own fleet: add a `fleets` map to the config, start each orchestrator with
+`/orca-fleet:conduct --fleet <id>`, and run `/orca-fleet:admiral` in one more session above them.
+
+- **Each fleet keeps to itself.** A lane records its fleet (`reporting.py --fleet <id>`, shown by
+  `/peers` as `fleet: <id>`), its orchestrator counts and nudges only its own fleet, and a lane
+  follows a "report to me" only from its own fleet's orchestrator.
+- **Fleets can talk.** `fleets.py list` gives every fleet's orchestrator and the Admiral.
+  Orchestrators agree merge order and shared files with each other; a lane may message another
+  fleet's lane to coordinate, copying its own orchestrator, but takes orders only from its own.
+- **What they share is guarded.** Every merge into the shared branch takes the merge lock
+  (`fleets.py lock take`), so two fleets never merge at once. Numbers that must not collide
+  (migration numbers, lane numbers) are claimed with `fleets.py claim` or `fleets.py next`.
+- **The Admiral** starts and closes fleets, gives the person one hourly roll-up, runs the shared
+  checker pool (it adds checkers when the ledger backs up, with no upper limit), breaks a stale lock,
+  settles clashes and keeps the person's loops. It never builds and routes through the orchestrators.
+- **Starting and closing sessions.** An orchestrator or the Admiral starts any lane with
+  `successor.py` and closes one with `fleets.py close` after asking it to park its work. `close`
+  refuses this session, the Admiral, and anything outside the caller's fleet (the Admiral may close
+  any session but itself).
+
+A config without `fleets` is one fleet, exactly as before.
 
 Sessions talk with SendMessage. [`orca-peers`](../orca-peers) finds their addresses in every account and reads their context use, so install it too. [`orca-move`](../orca-move) moves sessions to a twin account when one nears its limit, and [`watch-ci`](../dev-workflow/skills/watch-ci) watches merges, when installed.
 
@@ -42,17 +68,21 @@ Sessions talk with SendMessage. [`orca-peers`](../orca-peers) finds their addres
 | `crons.status`, `crons.nudge` | The minutes past the hour for the two crons | No | `13,43` and `4,19,34,49` |
 | `handover.prepare`, `handover.start` | Context percent for writing the note and for starting the successor | No | `70` and `85` |
 | `checkers.testAccounts` | Where checkers sign in, and with what | No | |
+| `fleets` | Several fleets: `{ "<id>": { "label", "files": {"orders"}, "crons" } }`; each entry lays its values over the top-level ones | No | one fleet |
+| `defaultFleet` | The fleet of sessions that recorded none (lanes started before the project had fleets) | No | none: such sessions are asked |
+| `admiral.crons.rollup`, `admiral.files.orders`, `admiral.checkers.min` | The Admiral's roll-up minute, its orders file, and checkers kept when the ledger is empty | No | `28`, `<handoffDir>/admiral-orders.md`, `1` |
 
 ## Templates
 
-Handoff notes for each role ([orchestrator](templates/handoff-orchestrator.md), [lane](templates/handoff-lane.md), [checker](templates/handoff-checker.md)), the [orders file](templates/orders.md), the [preview ledger](templates/preview-ledger.md) and the [open-items list](templates/open-items.md).
+Handoff notes for each role ([admiral](templates/handoff-admiral.md), [orchestrator](templates/handoff-orchestrator.md), [lane](templates/handoff-lane.md), [checker](templates/handoff-checker.md)), the [orders file](templates/orders.md), the [preview ledger](templates/preview-ledger.md) and the [open-items list](templates/open-items.md).
 
 ## What it reads and does
 
 - **Reads**: the project config and the files it names, the handoff notes, and live sessions through orca-peers.
-- **Writes**: the orders file, ledger, open-items list and handoff notes in your project; a lane's reporting line in `~/.config/orca-strator/reporting/`; scheduled crons in the orchestrator's session (session only).
+- **Writes**: the orders file, ledger, open-items list and handoff notes in your project; a lane's reporting line in `~/.config/orca-strator/reporting/`; with several fleets, the fleet directory, merge lock and claims in `~/.config/orca-strator/fleets/<project>/`; scheduled crons in the orchestrator's session (session only).
 - **Opens**: a new Terminal window for a successor, only during `hand-over start`, or for a new lane when you ask a session to start one. Elsewhere it copies the command for you to paste.
-- **Never**: decides merge rights by itself (they come from your rules file), forks a session, or closes a window for you.
+- **Closes**: a session only through `fleets.py close`, run by an orchestrator or the Admiral after the session parked its work, within the limits above.
+- **Never**: decides merge rights by itself (they come from your rules file), forks a session, or closes this session or the Admiral.
 - **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
 
 ## Install

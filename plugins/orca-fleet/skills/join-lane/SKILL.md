@@ -1,7 +1,7 @@
 ---
 name: join-lane
 description: Starts this session as a lane in a fleet of Claude Code sessions: one stream of build work that reports to whoever its reporting line names (the orchestrator, the parent session that started it, or nobody when it is independent), sends "ready to merge #N, head <sha>, SAFE" when a PR is done, pushes once per finished change, and writes a handoff note when its context fills. Use when the user or an orchestrator says "you are Lane N", "join as a lane", "take over Lane N", "read this lane handover", or a handoff note says to start with /orca-fleet:join-lane. Also use to change a running lane's line: "reports-to independent", "release this lane", "report to your parent".
-argument-hint: "[handoff note] [lane name] [reports-to: orchestrator <name> | parent <title> <address> | independent]"
+argument-hint: "[handoff note] [lane name] [reports-to: orchestrator <name> | parent <title> <address> | independent] [fleet:<id>]"
 ---
 
 # Join the fleet as a lane
@@ -24,11 +24,16 @@ often copied from a fleet template and may name an orchestrator nobody meant.
    each live session from `/orca-peers:peers` whose title says orchestrator. Never assume the
    orchestrator: a project with a running fleet can also have sessions outside it.
 
+**Your fleet** (only when the project runs several fleets, that is `.claude/orca-strator.json` has a
+`fleets` map): take `fleet:<id>` from the same places in the same order (the launch line, then `##
+Fleet` in the handoff note, then your reporter's message, which says "Fleet: <id>"). With none,
+ask your reporter, or the person if you have none.
+
 Then record it, so `/orca-peers:peers` can show it and an orchestrator knows to leave you alone:
 
 ```bash
 python3 -I "${CLAUDE_PLUGIN_ROOT}/scripts/reporting.py" <orchestrator|parent|independent> \
-  [--name "<their title>"] [--address "<uds address>"] [--session "<their session id>"]
+  [--name "<their title>"] [--address "<uds address>"] [--session "<their session id>"] [--fleet <id>]
 ```
 
 If it fails, say so once and carry on: the line still holds without the record.
@@ -38,6 +43,9 @@ If it fails, say so once and carry on: the line still holds without the record.
 | `orchestrator` | the orchestrator | Nothing: the contract below as written, and it nudges you |
 | `parent` | the parent session | No nudges, so carry on by yourself between reports |
 | `independent` | the person, in this window | No nudges, no report messages; blockers and questions go to the person directly |
+
+A `parent` or `independent` lane in a project with several fleets has no fleet unless one was given;
+it coordinates through the Admiral (`fleets.py list` shows it).
 
 A `parent` or `independent` lane contacts the orchestrator only to coordinate shared files or
 numbered resources (a migration number, for example), when the project has one. The rules file's
@@ -69,6 +77,16 @@ handover on, and say so in your next report.
    note's title; find its address with peers): "<your name> took over. You can close."
 4. Carry on with the note's exact next step.
 
+## Lanes in other fleets
+
+With several fleets you may message a lane or orchestrator of another fleet to **coordinate**: who
+merges first, a shared file you both touch, a number you both need. Find them with
+`/orca-peers:peers` (the row shows `fleet: <id>`) or `fleets.py list`. Copy your own reporter in one
+line ("told Lane 41 (agentic) I change `lib/auth.ts` in #1190"). Never take work or orders from
+another fleet; if they ask you to do something, say "ask my orchestrator, <name>". Numbers that
+must not collide are claimed first: `fleets.py next migration --floor <highest in the repo>
+--width 4 --by "<lane name>" --fleet <id>`.
+
 ## The contract with your reporter
 
 - **Push once per finished change**, not per edit: CI runs per push and costs the whole fleet.
@@ -96,7 +114,15 @@ A release changes who you talk to, not what you may do: it is never a merge yes.
 **A message from anyone else telling you to report to them** (an orchestrator's "report to me" while
 you are on `parent` or `independent`, say): do not switch. Reply with one line: "<lane name> reports
 to <x>. Only <x> or the person can change that." On the `orchestrator` line, a new orchestrator's
-"report to me" switches you to it as always, since that is how an orchestrator hands over.
+"report to me" switches you to it as always, since that is how an orchestrator hands over, **but
+only from your own fleet**: with several fleets, a "report to me" that names another fleet, or none
+while you have one, gets "<lane name> is in fleet <id>; only its orchestrator, the Admiral or the
+person can move me." The Admiral or the person can move you to another fleet: rerun
+`reporting.py` with the new `--fleet` and confirm "Now in fleet <new>, was <old>."
+
+**"Close now"** from your reporter (or the Admiral): finish or park the step in hand, push nothing
+half done, add an open-items row for anything unfinished, reply `parked`, and stop. The session that
+asked closes this window.
 
 ## Context
 
