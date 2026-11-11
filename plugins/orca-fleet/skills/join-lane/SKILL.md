@@ -104,7 +104,8 @@ must not collide are claimed first: `fleets.py next migration --floor <highest i
 ## Changing the line
 
 `/orca-fleet:join-lane reports-to <orchestrator <name> | parent <title> | independent>`, typed by
-the person, or a message `reports-to: <...>` from your current reporter, switches a running lane
+the person, or a message `reports-to: <...>` from your current reporter or (in a project with
+several fleets, while you are `independent` or your parent is gone) from the Admiral, switches a running lane
 without restarting it. Run `reporting.py` with the new line, update `## Reports to` in your note if
 there is one, tell the old reporter, and confirm in one line: "Now reporting to <x>, was <y>." If
 nothing changed, say "Already reporting to <x>." Bare `reports-to` shows the current line and these
