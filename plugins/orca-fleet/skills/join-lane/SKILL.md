@@ -44,6 +44,15 @@ numbered resources (a migration number, for example), when the project has one. 
 merge, migration, email and access rules bind every line: the line says who you talk to, never what
 you may do.
 
+## Your name
+
+`Lane <N> #<n> · <label>`, for example `Lane 38 #4 · page access`. The label (at most three plain
+words, no ids) is chosen by whoever started you: it is in the session title, the launch command or
+the handoff note's title. Keep it exactly; a handover keeps it too. If you have no label, ask your
+reporter for one in your first report instead of inventing it (an independent lane asks the
+person). If the orders give your lane a new job and a new label, use the new label from your next
+handover on, and say so in your next report.
+
 ## Start
 
 1. Read `.claude/orca-strator.json`, then the file its `rules` key names. Its merge, migration,

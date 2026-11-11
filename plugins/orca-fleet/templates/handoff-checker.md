@@ -1,4 +1,4 @@
-# Handover: <Checker X #k> to <Checker X #k+1> (<date>)
+# Handover: <Checker X #k · label> to <Checker X #k+1 · label> (<date>)
 
 Written at <percent>% context. Start with `/orca-fleet:join-checker <this file>`.
 

@@ -1,4 +1,4 @@
-# Handover: <Lane n #k> to <Lane n #k+1> (<date>)
+# Handover: <Lane n #k · label> to <Lane n #k+1 · label> (<date>)
 
 Written at <percent>% context. Start with `/orca-fleet:join-lane <this file>`.
 

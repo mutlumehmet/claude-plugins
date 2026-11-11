@@ -16,7 +16,7 @@ Written at <percent>% context. Start with `/orca-fleet:conduct <this file>`.
 ## Sessions
 | Session | Address | Context | Doing now | Next |
 |---|---|---|---|---|
-| <Lane 1 #2> | uds:... | <n>% | <PR, branch, sha> | <next item> |
+| <Lane 1 #2 · label> | uds:... | <n>% | <PR, branch, sha> | <next item> |
 
 ## Waiting on the person
 1. <decision or action, with the exact command or link>

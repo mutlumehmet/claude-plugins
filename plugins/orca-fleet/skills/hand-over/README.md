@@ -4,7 +4,7 @@ Part of [`orca-fleet`](../../README.md), an Orca Strator plugin.
 
 ![orca-fleet: conduct runs the fleet and its crons, lanes and checkers report to it, and a session near full context hands over to a fresh one](../../../../docs/images/orca-fleet-flow.png)
 
-Hands this session's work to a fresh one. Bare, it writes the handoff note from its role's template. With `start` it also opens the successor (`<name> #N+1`) in a new Terminal window with the note as its first prompt; the successor reports in and tells this session it took over, and this session then stops its crons.
+Hands this session's work to a fresh one. Bare, it writes the handoff note from its role's template. With `start` it also opens the successor (`<name> #N+1`, keeping the label after the middle dot: `Lane 38 #4 · page access` opens `Lane 38 #5 · page access`) in a new Terminal window with the note as its first prompt; the successor reports in and tells this session it took over, and this session then stops its crons.
 
 ## Use
 
