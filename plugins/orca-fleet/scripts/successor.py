@@ -106,7 +106,16 @@ def command(name, prompt, cwd, account_prefix=None):
     return f"cd {shlex.quote(cwd)} && {account_prefix or ''}{env}command claude -n {shlex.quote(name)} {shlex.quote(prompt)}"
 
 
+def tab_line(line):
+    """The line typed into a new Terminal tab: the session, then `exit 0` so the tab's shell ends
+    (and Terminal closes the window) when the session closes. A failed `cd` stops the chain before
+    `exit`, so the error stays on screen. The clipboard copy keeps the plain line."""
+    head, sep, rest = line.partition(" && ")
+    return f"{head} && {{ {rest} ; exit 0; }}" if sep else line
+
+
 def open_tab(line):
+    line = tab_line(line)
     esc = line.replace("\\", "\\\\").replace('"', '\\"')
     r = subprocess.run(["osascript", "-e", f'tell application "Terminal" to do script "{esc}"'],
                        capture_output=True, text=True, timeout=20)
