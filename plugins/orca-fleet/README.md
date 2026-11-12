@@ -33,6 +33,9 @@ One repo often holds several streams of work at once (a main build, an agent lay
 migration). Give each its own fleet: add a `fleets` map to the config, start each orchestrator with
 `/orca-fleet:conduct --fleet <id>`, and run `/orca-fleet:admiral` in one more session above them.
 
+- **Names say the fleet.** `Orchestrator <id> #n`, `Lane <id> <N> #n · <label>` (lane numbers
+  stay unique project wide), `Admiral #n`; checkers keep `Checker A #n`. `/peers` groups the list by
+  fleet: the Admiral and shared checkers, then each fleet's orchestrator and lanes.
 - **Each fleet keeps to itself.** A lane records its fleet (`reporting.py --fleet <id>`, shown by
   `/peers` as `fleet: <id>`), its orchestrator counts and nudges only its own fleet, and a lane
   follows a "report to me" only from its own fleet's orchestrator.

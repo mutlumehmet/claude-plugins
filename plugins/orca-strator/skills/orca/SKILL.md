@@ -49,7 +49,8 @@ Script (reads only, except `--set`, which writes `~/.config/orca-strator/config.
    - **Orchestrator** (runs a fleet): run `/orca-fleet:conduct`, passing a handoff note if they name
      one or one is obvious in the project's handoff folder. With a `fleets` map, ask which fleet
      (one button per id) and pass `--fleet <id>`.
-   - **Lane** (builds one stream of work): suggest a name like "Lane 1 · page access" (a short label of at most three plain words for the work) if the session has none, then
+   - **Lane** (builds one stream of work): suggest a name like "Lane 1 · page access" (with several
+     fleets "Lane <fleet> 1 · page access") (a short label of at most three plain words for the work) if the session has none, then
      `/orca-fleet:join-lane`.
    - **Checker** (verifies merged changes): `/orca-fleet:join-checker`.
    - **Just this session** (no fleet): nothing more; say what now works by itself (the band, the

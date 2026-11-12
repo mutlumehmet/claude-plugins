@@ -9,7 +9,12 @@ only, for every config dir it knows, and drops records whose process is gone or 
 The record format is not documented by Claude Code, so every field is optional here and unknown
 fields are ignored. Nothing is ever written to a config dir.
 
-Usage: peers.py [--json] [filter words...]
+Usage: peers.py [--json] [--flat] [filter words...]
+
+When a project runs several orca fleets, the list is grouped: the Admiral and the shared checkers,
+then each fleet (its orchestrator, then its lanes by number), then every other session. A row's fleet
+comes from the orca fleet directory, the session's reporting line, or its name (`Lane v1 38`,
+`Orchestrator agentic`). `--flat` prints the plain list. JSON rows carry `fleet` and `fleetRole`.
 
 Context use: the session's own reading when the orca-peers hooks module has saved one
 (`~/.config/orca-strator/context/<sessionId>.json`: tokens, window and percent as Claude Code
@@ -227,6 +232,63 @@ def reporting_line(sid):
     return line if isinstance(line, dict) and line.get("kind") else None
 
 
+FLEETS_DIR = Path("~/.config/orca-strator/fleets").expanduser()
+_LANE = re.compile(r"^Lane\s+([a-z][a-z0-9-]*)\s+\d+\b")
+_ORCH = re.compile(r"^Orchestrator\s+([a-z][a-z0-9-]*)(?:\s+#\d+)?(?:\s*·.*)?$")
+
+
+def registered_roles():
+    """{sessionId: "admiral" | "fleet:<id>"} from every project's fleet directory (orca-fleet), plus
+    {"name:<title>": the same} so a lane that names its orchestrator lands in that fleet."""
+    out = {}
+    for f in glob.glob(str(FLEETS_DIR / "*" / "directory.json")):
+        try:
+            d = json.loads(Path(f).read_text())
+        except (OSError, ValueError):
+            continue
+        adm = (d.get("admiral") or {}).get("sessionId")
+        if adm:
+            out[adm] = "admiral"
+            out["name:" + (d["admiral"].get("name") or "")] = "admiral"
+        for fid, fl in (d.get("fleets") or {}).items():
+            sid = ((fl or {}).get("orchestrator") or {}).get("sessionId")
+            if sid and fl.get("status") != "closed":
+                out[sid] = f"fleet:{fid}"
+                out["name:" + (fl["orchestrator"].get("name") or "")] = f"fleet:{fid}"
+    return out
+
+
+def fleet_group(row, roles):
+    """("admiral", None), ("fleet", <id>) or (None, None) for one row."""
+    role = roles.get(row["sessionId"])
+    if role == "admiral" or row["title"].startswith("Admiral"):
+        return "admiral", None
+    if role and role.startswith("fleet:"):
+        return "fleet", role[6:]
+    rep = row.get("reports") or {}
+    if rep.get("fleet"):
+        return "fleet", rep["fleet"]
+    boss = roles.get("name:" + (rep.get("name") or "")) if rep.get("name") else None
+    if rep.get("kind") == "admiral" or boss == "admiral" or (rep.get("name") or "").startswith("Admiral"):
+        return "admiral", None
+    if boss and boss.startswith("fleet:"):
+        return "fleet", boss[6:]
+    m = _LANE.match(row["title"]) or _ORCH.match(row["title"])
+    return ("fleet", m.group(1)) if m else (None, None)
+
+
+def role_rank(title):
+    t = title.lower()
+    if t.startswith("admiral"):
+        return (0, 0)
+    if "orchestrator" in t:
+        return (1, 0)
+    m = re.search(r"\d+", title)
+    if t.startswith("lane"):
+        return (2, int(m.group()) if m else 0)
+    return (3, 0)
+
+
 def first_prompt(path):
     try:
         with open(path, encoding="utf-8", errors="replace") as f:
@@ -281,7 +343,7 @@ def my_pids():
 def main():
     args = sys.argv[1:]
     as_json = "--json" in args
-    words = " ".join(a for a in args if a != "--json").lower().split()
+    words = " ".join(a for a in args if a not in ("--json", "--flat")).lower().split()
     mine = my_pids()
     try:
         configured = int(read_config().get("context_window") or 0)
@@ -315,6 +377,11 @@ def main():
             if words and not all(w in hay for w in words):
                 continue
             rows.append(row)
+    roles = registered_roles()
+    for r in rows:
+        kind, fid = fleet_group(r, roles)
+        r["fleet"] = fid
+        r["fleetRole"] = kind
     rows.sort(key=lambda r: (r["account"], r["project"], r["title"]))
     if as_json:
         print(json.dumps(rows, indent=2))
@@ -322,15 +389,39 @@ def main():
     if not rows:
         print("No live session matches." if words else "No live Claude Code session found.")
         return 0
-    for r in rows:
+    def line(r):
         c = r["context"]
         ctx = (("~" if c["source"] == "estimate" else "") + f"{c['percent']}%") if c else "·"
         flag = f"  {c['flag'].upper()}" if c and c["flag"] else ""
         rep = r["reports"]
         reports = (f"  reports: {rep['kind']}{' ' + rep['name'] if rep.get('name') else ''}"
                    f"{'  fleet: ' + rep['fleet'] if rep.get('fleet') else ''}") if rep else ""
-        print(f"{r['account']:<9} {r['project'][:22]:<22} {r['title'][:48]:<48} {r['state']:<8} {ctx:>4}  "
-              f"{r['address'] or '(no address)'}{'  (this session)' if r['self'] else ''}{flag}{reports}")
+        return (f"{r['account']:<9} {r['project'][:22]:<22} {r['title'][:48]:<48} {r['state']:<8} {ctx:>4}  "
+                f"{r['address'] or '(no address)'}{'  (this session)' if r['self'] else ''}{flag}{reports}")
+
+    grouped = [r for r in rows if r["fleetRole"]]
+    if not grouped or "--flat" in args:
+        for r in rows:
+            print(line(r))
+        return 0
+    # Several fleets: the Admiral first, then each fleet (its orchestrator, then lanes by number), then the rest
+    projects = sorted({r["project"] for r in grouped})
+    for proj in projects:
+        mine_rows = [r for r in grouped if r["project"] == proj]
+        adm = sorted((r for r in mine_rows if r["fleetRole"] == "admiral"), key=lambda r: role_rank(r["title"]))
+        if adm:
+            print(f"[{proj}] Admiral and shared checkers")
+            for r in adm:
+                print("  " + line(r))
+        for fid in sorted({r["fleet"] for r in mine_rows if r["fleetRole"] == "fleet"}):
+            print(f"[{proj}] fleet {fid}")
+            for r in sorted((r for r in mine_rows if r["fleet"] == fid), key=lambda r: role_rank(r["title"])):
+                print("  " + line(r))
+    rest = [r for r in rows if not r["fleetRole"]]
+    if rest:
+        print("Other sessions")
+        for r in rest:
+            print("  " + line(r))
     return 0
 
 

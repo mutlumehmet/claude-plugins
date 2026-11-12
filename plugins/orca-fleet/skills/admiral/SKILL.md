@@ -54,11 +54,22 @@ needs no Admiral: say so and stop, unless the person is setting up the first two
 Run `fleets.py list` and `peers --json`. Then:
 
 - **Each fleet's orchestrator:** gone with no successor: tell the person, with the command to start one
-  from its newest handoff note (`successor.py --name "<id> orchestrator #<n+1>" --fleet <id>
+  from its newest handoff note (`successor.py --name "Orchestrator <id> #<n+1>" --fleet <id>
   --prompt "/orca-fleet:conduct --fleet <id> <note>"`); start it yourself only if the person said so
   this session. Past `handover.prepare` or `handover.start`: tell it, as `conduct status` does for lanes.
   Never nudge its lanes yourself; that is its job.
-- **Sessions that belong to no fleet** but carry a fleet title: name them to the person once.
+- **Sessions in this project that belong to no fleet** (no fleet on their reporting line and no
+  fleet in their name: independent sessions, and parent-line sessions whose parent is gone). The
+  Admiral looks after them as the orchestrators look after lanes, but never gives them work:
+  - **Report** in the roll-up: context use, idle for hours, overlap with a fleet's work.
+  - **Handover warnings** at `handover.prepare` and `handover.start`, worded as for a lane.
+  - **Move into a fleet** when its work overlaps that fleet's: message it `reports-to: orchestrator
+    <name> fleet:<id>` (join-lane accepts this from the Admiral), and tell that orchestrator and the
+    person in one line.
+  - **Close** one whose work is done and that has been idle for hours: "Close now", wait for
+    `parked`, then `fleets.py close`; tell the person after.
+  Never touch a session of another project, one `waiting` on the person, or a parent-line session
+  whose parent is still live (ask the parent). If the rules file says to ask first, ask.
 - **Merge lock:** `fleets.py lock show`. Held past its time by a session that is gone: break it
   (`lock break --by "<your name>"`) and tell that fleet's orchestrator.
 - **Clashes:** two fleets touching the same files, two migrations in flight, a red default branch
@@ -83,7 +94,7 @@ Tell the person at most eight lines, only when something changed or waits on the
    orders file `<handoffDir>/<id>-orders.md`, cron minutes offset from the other fleets so crons do
    not fire together), and the orchestrator brief (what this fleet builds, the lanes to start first,
    the rules file). Write them after the yes; create the orders file from the template.
-3. Start its orchestrator: `successor.py --name "<id> orchestrator #1" --fleet <id> --cwd
+3. Start its orchestrator: `successor.py --name "Orchestrator <id> #1" --fleet <id> --cwd
    "<project>" --prompt "/orca-fleet:conduct --fleet <id> <brief path>"`.
 4. Add an Admiral orders entry: "fleet <id> started: <label>". Wait for the orchestrator's first line.
 
