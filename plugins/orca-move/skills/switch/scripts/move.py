@@ -226,7 +226,9 @@ def plan(target=None):
         "terminal": os.environ.get("TERM_PROGRAM") or "",
         "cwd": cwd,
         "script": str(script),
-        "line": f"sh ~/{script.relative_to(HOME)}",
+        # `&& exit 0`: when the resumed session closes normally, the tab's shell ends too and
+        # Terminal closes the window instead of leaving an empty prompt behind.
+        "line": f"sh ~/{script.relative_to(HOME)} && exit 0",
         "body": f"cd {shlex.quote(cwd)} && {env} && exec claude --resume {sid} '/orca-move:after-move'\n",
         "note": str(MOVES / f"{sid}.md"),
         "autoExit": mod_loaded(rec["pid"], rec.get("procStart"), cur_dir),
