@@ -65,3 +65,9 @@ test("ignores a request written for another session", async ($, on) => {
   await tick()
   expect(seen.commands).toEqual([])
 })
+
+test('tells orca-quota where move.py lives', async ($, on) => {
+  const { disk } = engine(on)
+  await start($)
+  expect(disk[HOME + '/.config/orca-strator/moves/move-py']).toMatch(/\/skills\/switch\/scripts\/move\.py\n$/)
+})

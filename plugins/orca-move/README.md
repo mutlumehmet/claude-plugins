@@ -9,7 +9,7 @@ When one Claude account nears its usage limit, this moves a live session (or all
 | Skill | What it does |
 |---|---|
 | [`switch`](skills/switch) | Moves this session to a twin account |
-| [`switch-all`](skills/switch-all) | Asks every session of this account to move, a few at a time, this one last |
+| [`switch-all`](skills/switch-all) | Moves every session of this account at once with `move-all` (one `!` line), this one last |
 | [`after-move`](skills/after-move) | Runs in the resumed session: restores crons and background work, announces the new address |
 
 It also holds one small mod: the part of a move that has to happen inside Claude Code. When `switch` asks for it, the mod runs `/exit` through Claude Code itself once the session is idle, and only while the prompt box is empty. Nothing is ever typed into a Claude prompt.
@@ -26,6 +26,27 @@ It also holds one small mod: the part of a move that has to happen inside Claude
 
 A session never runs in two places: the line is typed only after the old process is gone.
 
+## Moving a whole account: `move-all`
+
+`switch-all` hands you one line to run with `!`:
+
+```
+! python3 -I <orca-move>/skills/switch/scripts/move.py move-all <twin> [--account <from>] [--wait 60] [--force] [--assume-limited] [--dry-run]
+```
+
+It moves every live session of the account from outside, in seconds, without asking each one to take a turn. That is why it also works for sessions already out of quota. For each session:
+
+- **idle**, or **waiting at the usage limit**: it writes the resume script and a short move note (title, reporting line, fleet), ends the process with SIGTERM, waits up to 30 seconds for it to exit, then types the resume line into the session's own Terminal tab. No Terminal tab: it prints the line to paste.
+- **busy**: it waits up to `--wait` seconds for the session to settle, then skips it.
+- **running a background command** (a CI watch, for example): moved only when the account is at its limit, since moving ends that command.
+- **waiting on a permission prompt**: never ended without `--force`; the prompt waits for you.
+
+"At its limit" means an orca-quota reading of 100% whose reset is still ahead, or `--assume-limited`. It prints one line per session, moved or skipped and why, and moves the session it runs in last (through `switch`'s own exit). `--dry-run` prints the same lines and changes nothing.
+
+It ends other sessions' processes, so you run it yourself; a Claude session should hand you the line rather than run it. Because it cannot read another session's crons, its move notes say so, and `after-move` rebuilds the crons from the project's `.claude/orca-strator.json` by role (orchestrator, Admiral) and tells the session's reporting line its new address.
+
+With [`orca-quota`](../orca-quota)'s `/quota auto on`, the first session of an account to reach the warning level runs `move-all` for the whole account, so no session reaches the hard limit.
+
 Changed your mind after `switch` ran? `/orca-move:switch cancel` stops the helper and withdraws the exit request; the session stays where it is.
 
 ## Setup
@@ -39,7 +60,8 @@ Install it in every account of the family (twins that share `plugins/` share it 
 - **Reads**: its own pid record and transcript start (for the session id, folder and terminal tab), the Orca Strator config and accounts file, and orca-quota' quota readings.
 - **Writes**: move notes, resume scripts, a small plan file and a log per move in `~/.config/orca-strator/moves/`. `after-move` keeps the note as `<id>.done.md` and removes the rest.
 - **Types**: one line, `sh ~/.config/orca-strator/moves/<id8>.sh`, into the shell of the tab the session ran in, only after that session's process has ended. Never into a Claude prompt.
-- **Mod hooks**: `session.start` (starts a two second check for a move request addressed to this session); it reads the prompt box only when such a request exists, and runs `/exit` only then.
+- **Ends processes**: only `move-all`, run by you: SIGTERM to the Claude processes of the account it moves, by the rules above.
+- **Mod hooks**: `session.start` (writes where its `move.py` lives to `moves/move-py` for orca-quota, and starts a two second check for a move request addressed to this session); it reads the prompt box only when such a request exists, and runs `/exit` only then.
 - **Never**: reads login tokens, moves a session between unrelated accounts, or sends anything off the machine.
 - **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
 

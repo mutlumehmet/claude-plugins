@@ -6,8 +6,10 @@
 // prints them, and a toast warns once when this account passes the threshold,
 // naming the account in its family with the most room left. It never reads
 // login tokens. It moves a session only when you turned that on with
-// /quota auto on: then, at the warning level, it runs /orca-move:switch for this
-// session to the twin with most room (orca-move does the move). An account with no
+// /quota auto on: then, at the warning level, the first session of the account to
+// get there runs orca-move's move-all for every session of the account (itself last), so
+// none of them reaches the hard limit; without move-all it runs /orca-move:switch for this
+// session only. The twin with most room is the target. An account with no
 // session running keeps its last reading, so the band dims a reading older
 // than an hour and shows its age. Each window on the band carries its time to
 // reset (↻40m), from the reset time saved with the reading. Auto refresh (on by
@@ -20,7 +22,7 @@ const WINDOWS = [['five_hour', '5h'], ['seven_day', '7d']]
 const REFRESH_MS = 20000
 const STALE_MS = 3600000 // older readings are dimmed on the band, with their age
 
-let warnAt = 90
+let warnAt = 85
 let me = null // { id, family }
 let accounts = [] // [{ id, configDir, family }] from accounts_file, when set
 let dir = null
@@ -43,7 +45,7 @@ const HELP = [
   '/quota warn <50-99>: warn when this account passes that percent',
   '/quota hide: fold the band to one button',
   '/quota show: open the band again',
-  '/quota auto on: at the warning level, move this session to the twin with most room by itself (needs orca-move)',
+  '/quota auto on: at the warning level, move every session of this account to the twin with most room (needs orca-move)',
   '/quota auto off: only warn (the default)',
   '/quota refresh on: refresh accounts idle for over an hour on this machine, one tiny prompt each (the default)',
   '/quota refresh off: never run anything in another account',
@@ -93,7 +95,7 @@ export function register(on) {
       if (want === auto) return { text: 'Auto move is already ' + value + '.' }
       auto = want
       await $.store.set('auto', want)
-      return { text: want ? 'Auto move on: at ' + warnAt + '% this session moves itself to the twin with most room.' : 'Auto move off: it only warns.' }
+      return { text: want ? 'Auto move on: at ' + warnAt + '% every session of this account moves to the twin with most room.' : 'Auto move off: it only warns.' }
     }
     if (word === 'refresh') {
       if (value !== 'on' && value !== 'off') return { text: 'Use /quota refresh on or /quota refresh off. Now: ' + (refresh ? 'on' : 'off') + '.' }
@@ -294,7 +296,10 @@ async function refreshIdle($) {
 
 // A claim file per account: the session whose claim is on file owns that account's refresh for an hour
 async function claim($, id, now) {
-  const path = dir + '/refresh/' + id + '.json'
+  return claimFile($, dir + '/refresh/' + id + '.json', now)
+}
+
+async function claimFile($, path, now) {
   try {
     const c = JSON.parse(await $.fs.read(path))
     if (c && now - c.at < STALE_MS) return false
@@ -308,7 +313,12 @@ async function claim($, id, now) {
   }
 }
 
+// Moves the whole account in one go when orca-move has said where its move.py lives: every session
+// of this account reaches the warning level at about the same time, so the first one to claim the
+// account runs `move.py move-all` for all of them (itself last) and the others leave it to that run.
+// Without that file it falls back to moving just this session with /orca-move:switch.
 async function moveTo($, target) {
+  if (await moveAll($, target)) return
   try {
     const known = (await $.command.list()).some(c => c.name === MOVE)
     if (!known) throw new Error('missing')
@@ -316,6 +326,36 @@ async function moveTo($, target) {
   } catch {
     moving = false
     $.ui.toast('Auto move needs the orca-move plugin in this session. Install orca-move, or run /orca-move:switch ' + target + ' yourself.', { timeoutMs: 15000 })
+  }
+}
+
+async function moveAll($, target) {
+  const moves = home + '/.config/orca-strator/moves'
+  let script = ''
+  try {
+    script = String(await $.fs.read(moves + '/move-py')).trim()
+  } catch {
+    return false
+  }
+  if (!script.endsWith('move.py')) return false
+  const now = await $.clock.now()
+  if (!(await claimFile($, moves + '/move-all-' + me.id + '.json', now))) {
+    $.ui.toast('Another session of ' + me.id + ' is already moving every session to the twin with room.', { timeoutMs: 12000 })
+    return true
+  }
+  $.ui.toast('Moving every session of ' + me.id + ' to ' + target + ' (this one last).', { timeoutMs: 12000 })
+  try {
+    const ran = await $.process.run(['python3', '-I', script, 'move-all', target, '--account', me.id, '--wait', '60'],
+      { cwd: moves, timeoutMs: 600000 })
+    if (ran.exitCode !== 0) {
+      $.ui.log('orca-quota: move-all exited ' + ran.exitCode + ': ' + ran.stdout + ran.stderr, { to: 'debug' })
+      return false
+    }
+    $.ui.log('orca-quota: ' + ran.stdout, { to: 'debug' })
+    return true
+  } catch (err) {
+    $.ui.log('orca-quota: could not run move-all: ' + err, { to: 'debug' })
+    return false
   }
 }
 

@@ -3,7 +3,8 @@
 // waits for this process to end. This mod watches for that request; once it is there it runs
 // /exit through Claude Code itself (queued until the session is idle), so nothing is ever typed
 // into the prompt. It exits only while the prompt box is empty: a draft would be lost, so instead
-// it says so once and waits for the person to clear it or run /exit themselves.
+// it says so once and waits for the person to clear it or run /exit themselves. At start it also
+// writes where its move.py lives to moves/move-py, for orca-quota's auto move of a whole account.
 
 const CHECK_MS = 2000
 
@@ -19,6 +20,10 @@ export function register(on) {
     id = await $.session.id()
     told = false
     leaving = false
+    // Tells orca-quota where move.py lives, so its auto move can run move-all for the whole account
+    try {
+      await $.fs.write(dir + '/move-py', $.plugin.root + '/skills/switch/scripts/move.py\n')
+    } catch {}
     $.clock.every(CHECK_MS, () => { void check($) })
     return next(e)
   })

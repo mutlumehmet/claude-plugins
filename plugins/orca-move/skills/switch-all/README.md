@@ -4,7 +4,7 @@ Part of [`orca-move`](../../README.md), an [Orca Strator](../../README.md) plugi
 
 ![orca-move: tells the others and saves its crons, exits only with an empty prompt box, resumes in the twin account in the same tab, and announces its new address](../../../../docs/images/orca-move-flow.png)
 
-Moves every live session of this account to a twin account. It lists them, asks you once, then asks each session to run `switch` itself (at most three at a time, so each saves its own crons and tells its own peers), and moves this session last.
+Moves every live session of this account to a twin account. It shows a dry run of `move-all` and hands you one `!` line that ends each idle session (or one waiting at the usage limit) and resumes it in its own Terminal tab, in seconds, even when the account is already out of quota. Busy sessions get a short wait; a session waiting on a permission prompt is skipped unless you add `--force`. This session moves last. Asking each session to run `switch` itself stays as the fallback.
 
 ## Use
 

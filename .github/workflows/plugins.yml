@@ -19,7 +19,7 @@ jobs:
       - name: Generated sound pack tables match their sounds/*/pack.json
         run: for s in plugins/*/scripts/packs.py; do python3 "$s" --check; done
       - name: Python tests of plugin scripts
-        run: for t in plugins/*/scripts/test_*.py; do python3 -I "$t"; done
+        run: for t in plugins/*/scripts/test_*.py plugins/*/skills/*/scripts/test_*.py; do python3 -I "$t"; done
       - name: Validate the marketplace and every plugin
         run: |
           claude plugin validate .
