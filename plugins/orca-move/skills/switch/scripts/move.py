@@ -17,7 +17,16 @@ the same conversation. The move itself is three steps, and only the last one typ
                         Terminal.app, tab not found), it copies that line to the clipboard and
                         shows a notification instead.
 
+  move-all <account>   moves every live session of this account (or --account <from>) from outside:
+                        ends each idle session, or one waiting at the usage limit, with SIGTERM and
+                        types its resume line into its own Terminal tab. A busy session gets --wait
+                        seconds (default 60) to settle; one waiting on a permission prompt or a
+                        question is skipped unless --force. --assume-limited treats the account as
+                        out of quota even when orca-quota has no reading. --dry-run changes nothing.
+                        Run it yourself (`!` in a session, or a terminal): it ends other processes.
+
 Usage: move.py plan [account] [--json] | move.py go <account> | move.py cancel | move.py status
+       move.py move-all <account> [--account <from>] [--wait N] [--force] [--assume-limited] [--dry-run]
 Reads ~/.config/orca-strator/config.yaml (`accounts_file:`), the same as orca-peers. Never reads
 or copies login tokens: each account must already be logged in on its own.
 """
@@ -339,6 +348,266 @@ def go(target):
     return 0
 
 
+# ---------------------------------------------------------------- move-all
+# Moves every live session of an account from outside, without asking each one to run `go`.
+# It ends each Claude process itself (SIGTERM) and types the resume line into the session's own
+# Terminal tab, so it also works for sessions that are out of quota and can no longer take a turn.
+# Run by the person (for example with `!`): it ends other sessions' processes.
+
+REPORTING = HOME / ".config/orca-strator/reporting"
+TERM_WAIT_S = 30  # how long a session gets to exit after SIGTERM
+
+
+def limited(ident):
+    """True when orca-quota's reading says the account is out: a window at 100% or more whose reset
+    is still ahead (or has no reset time)."""
+    try:
+        r = json.loads((QUOTA / f"{ident}.json").read_text())
+    except (OSError, ValueError):
+        return False
+    from datetime import datetime
+    for w in (r.get("windows") or {}).values():
+        if (w.get("percent") or 0) < 100:
+            continue
+        reset = w.get("resetsAt")
+        if not reset:
+            return True
+        try:
+            if datetime.fromisoformat(reset.replace("Z", "+00:00")).timestamp() > time.time():
+                return True
+        except ValueError:
+            return True
+    return False
+
+
+def decide(rec, at_limit, force=False):
+    """What move-all does with one session record: ("move", why) now, ("wait", why) for a busy one,
+    or ("skip", why). A session waiting on a permission prompt or a question is never ended unless
+    forced, because that would throw away the answer it is waiting for."""
+    st = rec.get("status") or "unknown"
+    wf = (rec.get("waitingFor") or "").strip()
+    if st == "idle":
+        return "move", "idle"
+    if st == "waiting":
+        if "limit" in wf.lower():
+            return "move", "waiting at the usage limit"
+        if at_limit and "dialog" not in wf.lower():
+            # Out of quota it cannot take the next turn anyway. A permission dialog still waits for
+            # the person, so it stays behind --force.
+            return "move", f"waiting ({wf or 'unknown'}), account at its limit"
+        if force:
+            return "move", f"waiting ({wf or 'unknown'}), forced"
+        return "skip", f"waiting ({wf or 'unknown'}), not ended without --force"
+    if st == "shell":
+        # Idle at the prompt but with a background command still running (a CI watch, say).
+        # Moving ends that command; the move note tells the session to start it again.
+        if at_limit:
+            return "move", "background command running, account at its limit"
+        return "wait", "running a background command (moving ends it)"
+    return "wait", st
+
+
+def live_records(cfg_dir):
+    out = []
+    for f in sorted(glob.glob(os.path.join(cfg_dir, "sessions", "*.json"))):
+        try:
+            r = json.loads(Path(f).read_text())
+        except (OSError, ValueError):
+            continue
+        if not isinstance(r, dict) or not r.get("sessionId") or not r.get("pid"):
+            continue
+        if r.get("kind") not in (None, "interactive"):
+            continue
+        if alive(r["pid"], r.get("procStart")):
+            out.append(r)
+    return out
+
+
+def reread(cfg_dir, rec):
+    try:
+        r = json.loads(Path(cfg_dir, "sessions", f"{rec['pid']}.json").read_text())
+        return r if r.get("sessionId") == rec["sessionId"] else rec
+    except (OSError, ValueError):
+        return rec
+
+
+def reporting_of(sid):
+    try:
+        return json.loads((REPORTING / f"{sid}.json").read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def note_text(rec, src, target):
+    sid = rec["sessionId"]
+    title = rec.get("name") or sid
+    rep = reporting_of(sid)
+    line = rep.get("kind") or "unknown"
+    if rep.get("name"):
+        line += f": {rep['name']}"
+    if rep.get("address"):
+        line += f" ({rep['address']}, check with peers, it may have moved too)"
+    tell = f"- {rep['name']}: \"{title} moved to {target}. New address: <this session's uds address>\"" if rep.get("name") else "none known"
+    return (f"# Move note: {title}, {src} -> {target}, {time.strftime('%d %b %Y %H:%M')} (move-all)\n\n"
+            "## Crons\n"
+            "unknown: moved from outside by move-all, which cannot read a session's crons. "
+            "Rebuild them from the project's .claude/orca-strator.json by role (see after-move).\n\n"
+            "## Background work\n"
+            "unknown: anything that ran in the background ended with the old process. "
+            "Look at the end of the transcript and start again what is still needed.\n\n"
+            f"## Reports to\n{line}\n\n"
+            f"## Fleet\n{rep.get('fleet') or 'none recorded'}\n\n"
+            f"## Tell after the move\n{tell}\n\n"
+            "## Waiting on\nwhatever the transcript says this session was doing.\n")
+
+
+def send_term(pid):
+    try:
+        os.kill(pid, 15)
+        return True
+    except (ProcessLookupError, PermissionError):
+        return False
+
+
+def prepare(rec, src, target, accs):
+    """Writes the resume script, the move record and the move note for one session. Returns the record."""
+    sid = rec["sessionId"]
+    src_dir, tdir = accs[src]["dir"], accs[target]["dir"]
+    cwd = first_cwd(src_dir, sid, rec.get("cwd") or str(HOME))
+    env = "unset CLAUDE_CONFIG_DIR" if tdir == real("~/.claude") else f"export CLAUDE_CONFIG_DIR={shlex.quote(tdir)}"
+    script = MOVES / f"{sid[:8]}.sh"
+    tty = ps(rec["pid"], "tty=")
+    p = {"ok": True, "session": sid, "pid": rec["pid"], "procStart": rec.get("procStart"), "title": rec.get("name"),
+         "from": src, "to": target, "toDir": tdir, "tty": tty if tty and tty != "??" else None,
+         "terminal": "", "cwd": cwd, "script": str(script), "via": "move-all",
+         "line": f"sh ~/{script.relative_to(HOME)}" if str(script).startswith(str(HOME)) else f"sh {script}",
+         "body": f"cd {shlex.quote(cwd)} && {env} && exec claude --resume {sid} '/orca-move:after-move'\n",
+         "note": str(MOVES / f"{sid}.md")}
+    MOVES.mkdir(parents=True, exist_ok=True)
+    script.write_text("#!/bin/sh\n# orca-move: resume this session in " + target + "\n" + p["body"])
+    (MOVES / f"{sid[:8]}.json").write_text(json.dumps(p, indent=2))
+    note = Path(p["note"])
+    if not note.exists():  # a note the session wrote itself (switch) is better than ours
+        note.write_text(note_text(rec, src, target))
+    return p
+
+
+def end_and_resume(p):
+    """SIGTERM, wait for the exit, then type the resume line into the session's Terminal tab.
+    Returns (moved, message)."""
+    pid = p["pid"]
+    send_term(pid)
+    end = time.time() + TERM_WAIT_S
+    while alive(pid, p.get("procStart")) and time.time() < end:
+        time.sleep(1)
+    if alive(pid, p.get("procStart")):
+        return False, f"still running {TERM_WAIT_S}s after SIGTERM; paste later: {p['line']}"
+    log(p["session"], f"ended by move-all ({p['from']} -> {p['to']})")
+    if not p.get("tty"):
+        return True, f"ended, no terminal tab known; paste in any terminal: {p['line']}"
+    for _ in range(20):
+        if not tab_busy(p["tty"]):
+            break
+        time.sleep(0.5)
+    time.sleep(0.5)
+    if type_in_tab(p["tty"], p["line"]):
+        log(p["session"], "typed " + p["line"])
+        return True, f"resumed in its tab ({p['tty']})"
+    return True, f"ended, tab {p['tty']} not found in Terminal; paste there: {p['line']}"
+
+
+def move_all(target, account=None, wait=60, force=False, dry=False, assume_limited=False):
+    accs = accounts()
+    cur_dir = real(os.environ.get("CLAUDE_CONFIG_DIR") or "~/.claude")
+    src = account or next((k for k, v in accs.items() if v["dir"] == cur_dir), None)
+    if not src or src not in accs:
+        print(f"Unknown source account {src or cur_dir}. Known: {', '.join(accs)}. Name it with --account.")
+        return 1
+    if target not in accs:
+        print(f"Unknown account {target}. Known: {', '.join(accs)}.")
+        return 1
+    if target == src:
+        print(f"Sessions of {src} already run as {src}.")
+        return 1
+    if accs[target]["family"] != accs[src]["family"]:
+        print(f"{target} is not a twin of {src}: sessions only move between twins, which share their transcripts.")
+        return 1
+    src_dir = accs[src]["dir"]
+    me = this_session(src_dir) if cur_dir == src_dir else None
+    me_sid = me.get("sessionId") if me else None
+    at_limit = assume_limited or limited(src)
+    recs = [r for r in live_records(src_dir) if r["sessionId"] != me_sid]
+    verb = "would move" if dry else "moved"
+    print(f"move-all {src} -> {target}: {len(recs) + (1 if me_sid else 0)} live session(s)"
+          + (", account at its limit" if at_limit else "") + (" (dry run, nothing changes)" if dry else ""))
+    counts = {"moved": 0, "skipped": 0}
+
+    def act(rec, why):
+        title = rec.get("name") or rec["sessionId"][:8]
+        if dry:
+            print(f"{verb} {title}: {why}")
+            counts["moved"] += 1
+            return
+        ok, msg = end_and_resume(prepare(rec, src, target, accs))
+        print(f"{'moved' if ok else 'skipped'} {title}: {msg}")
+        counts["moved" if ok else "skipped"] += 1
+
+    waiting = []
+    for r in recs:
+        what, why = decide(r, at_limit, force)
+        if what == "move":
+            act(r, why)
+        elif what == "skip":
+            print(f"skipped {r.get('name') or r['sessionId'][:8]}: {why}")
+            counts["skipped"] += 1
+        else:
+            waiting.append(r)
+    end = time.time() + (0 if dry else wait)
+    while waiting:
+        still = []
+        for r in waiting:
+            r2 = reread(src_dir, r)
+            if not alive(r2["pid"], r2.get("procStart")):
+                print(f"skipped {r2.get('name') or r2['sessionId'][:8]}: it ended by itself")
+                counts["skipped"] += 1
+                continue
+            what, why = decide(r2, at_limit, force)
+            if what == "move":
+                act(r2, why)
+            elif what == "skip":
+                print(f"skipped {r2.get('name') or r2['sessionId'][:8]}: {why}")
+                counts["skipped"] += 1
+            else:
+                still.append(r2)
+        waiting = still
+        if not waiting:
+            break
+        if time.time() >= end:
+            for r in waiting:
+                title = r.get("name") or r["sessionId"][:8]
+                if force:
+                    act(r, f"still {decide(r, at_limit)[1]} after {wait}s, forced")
+                else:
+                    print(f"skipped {title}: still {decide(r, at_limit)[1]} after {wait}s (rerun later, or --force)")
+                    counts["skipped"] += 1
+            break
+        time.sleep(1)
+    if me_sid:
+        if dry:
+            print(f"{verb} this session last: it exits after this turn and resumes in its tab")
+            counts["moved"] += 1
+        else:
+            print("this session moves last, through `go`:")
+            note = MOVES / f"{me_sid}.md"
+            if not note.exists():
+                MOVES.mkdir(parents=True, exist_ok=True)
+                note.write_text(note_text(me, src, target))
+            go(target)
+            counts["moved"] += 1
+    print(f"done: {counts['moved']} {verb}, {counts['skipped']} skipped.")
+    return 0
+
+
 def cancel():
     """Withdraws this session's pending move: stops its helper and removes the exit request."""
     cur_dir = real(os.environ.get("CLAUDE_CONFIG_DIR") or "~/.claude")
@@ -394,6 +663,17 @@ def main():
         return 0 if p["ok"] else 1
     if cmd == "go" and rest:
         return go(rest[0])
+    if cmd == "move-all" and rest and not rest[0].startswith("-"):
+        target, opts = rest[0], rest[1:]
+        def opt(name, default=None):
+            return opts[opts.index(name) + 1] if name in opts and opts.index(name) + 1 < len(opts) else default
+        try:
+            wait = int(opt("--wait", 60))
+        except ValueError:
+            print("--wait takes whole seconds, e.g. --wait 90")
+            return 2
+        return move_all(target, account=opt("--account"), wait=wait, force="--force" in opts,
+                        dry="--dry-run" in opts, assume_limited="--assume-limited" in opts)
     if cmd == "cancel":
         return cancel()
     if cmd == "status":

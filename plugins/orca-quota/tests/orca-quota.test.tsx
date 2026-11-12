@@ -295,3 +295,35 @@ test('shared config turns auto move on for every account; /quota auto off overri
   const r = await $.command.run({ command: 'quota', args: 'auto off' })
   expect(r.text).toContain('Auto move off')
 })
+
+const MOVES = HOME + '/.config/orca-strator/moves'
+
+test('auto move with move-all: the first session moves the whole account in one run', async ($, on) => {
+  const { seen, runs } = engine(on, {
+    files: { [Q + '/b.json']: row('b', 'default', 3), [MOVES + '/move-py']: '/plugins/orca-move/skills/switch/scripts/move.py\n' },
+  })
+  await $.command.run({ command: 'quota', args: 'auto on' })
+  await measure($, limits(86))
+  await settle()
+  const all = runs.filter(r => r.argv.includes('move-all'))
+  expect(all.length).toBe(1)
+  expect(all[0].argv).toEqual(['python3', '-I', '/plugins/orca-move/skills/switch/scripts/move.py', 'move-all', 'b', '--account', 'default', '--wait', '60'])
+  expect(seen.moves).toEqual([])
+  expect(seen.toasts.some(t => t.includes('Moving every session of default to b'))).toBe(true)
+})
+
+test('auto move with move-all: a session that finds the account already claimed leaves it to that run', async ($, on) => {
+  const { seen, runs } = engine(on, {
+    files: {
+      [Q + '/b.json']: row('b', 'default', 3),
+      [MOVES + '/move-py']: '/plugins/orca-move/skills/switch/scripts/move.py\n',
+      [MOVES + '/move-all-default.json']: JSON.stringify({ at: NOW - 60000, by: 'default:other' }),
+    },
+  })
+  await $.command.run({ command: 'quota', args: 'auto on' })
+  await measure($, limits(90))
+  await settle()
+  expect(runs.filter(r => r.argv.includes('move-all'))).toEqual([])
+  expect(seen.moves).toEqual([])
+  expect(seen.toasts.some(t => t.includes('already moving every session'))).toBe(true)
+})
