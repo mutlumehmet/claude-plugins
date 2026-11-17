@@ -40,7 +40,7 @@
 # starts with "WATCH RESULT:".
 
 set -uo pipefail
-REPO=""; TIMEOUT=60; MTIMEOUT=240; INTERVAL=20; MERGE=0; TARGET=""; GATES=(); SUPERSEDED=(); GATED=()
+REPO=""; TIMEOUT=60; MTIMEOUT=240; INTERVAL=60; MERGE=0; TARGET=""; GATES=(); SUPERSEDED=(); GATED=()
 while [ $# -gt 0 ]; do
   case "$1" in
     --repo) REPO="$2"; shift 2;;
