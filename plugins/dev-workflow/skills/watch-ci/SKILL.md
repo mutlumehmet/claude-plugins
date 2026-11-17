@@ -50,7 +50,7 @@ Options:
 | `--gated-status NAME` | A commit status that fails only because the gate job failed (for example a deploy that waits for the gate before going live). While a gate job has failed it does not change the verdict, so a superseded or infrastructure failure keeps its own verdict; otherwise it is a real failure. Repeatable. | none |
 | `--timeout MIN` | Give up watching CI after this many minutes | 60 |
 | `--merge-timeout MIN` | Give up waiting for the merge after this many minutes | 240 |
-| `--interval SEC` | Seconds between polls | 20 |
+| `--interval SEC` | Seconds between polls (60 keeps several watchers inside GitHub's 5,000 calls an hour; each poll costs 3 or more calls) | 60 |
 
 **Check which repo you mean.** The default is the repo of the folder the session runs in.
 If the code being merged lives in a different repo (a notes folder that is its own repo, a
