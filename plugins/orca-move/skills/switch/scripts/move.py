@@ -434,8 +434,13 @@ def write_seat(cfg_dir, change):
     except (OSError, ValueError):
         return False
     change(data)
+    # The file can hold MCP server keys: the copy is created owner-only and keeps the original's mode.
     tmp = path.with_name(path.name + ".orca-move.tmp")
-    tmp.write_text(json.dumps(data, indent=2))
+    mode = path.stat().st_mode & 0o777
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
+        f.write(json.dumps(data, indent=2))
+    os.chmod(tmp, mode)
     os.replace(tmp, path)
     return True
 
