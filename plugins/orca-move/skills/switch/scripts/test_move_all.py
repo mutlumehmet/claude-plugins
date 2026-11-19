@@ -50,8 +50,10 @@ class Decide(unittest.TestCase):
     def test_permission_prompt_moves_with_force(self):
         self.assertEqual(move.decide(rec(1, "waiting", "dialog open"), False, force=True)[0], "move")
 
-    def test_question_is_skipped_below_the_limit(self):
-        self.assertEqual(move.decide(rec(1, "waiting", "input needed"), False)[0], "skip")
+    def test_question_moves_and_asks_again(self):
+        what, why = move.decide(rec(1, "waiting", "input needed"), False)
+        self.assertEqual(what, "move")
+        self.assertIn("asks again", why)
 
     def test_busy_waits(self):
         self.assertEqual(move.decide(rec(1, "busy"), False)[0], "wait")
@@ -92,7 +94,17 @@ class Limited(unittest.TestCase):
 class MoveAll(unittest.TestCase):
     """The whole command on fake accounts: src and dst are twins, sessions are files on disk."""
 
+    PATCHED = ("MOVES", "QUOTA", "REPORTING", "TERM_WAIT_S", "accounts", "alive", "send_term", "open_window",
+               "resumed_pid", "read_config", "preflight_checks", "ps", "this_session")
+
+    def tearDown(self):
+        for k, v in self.saved.items():
+            setattr(move, k, v)
+        move.time.sleep = self.sleep
+
     def setUp(self):
+        self.saved = {k: getattr(move, k) for k in self.PATCHED}
+        self.sleep = move.time.sleep
         root = Path(tempfile.mkdtemp())
         self.src, self.dst = root / "src", root / "dst"
         (self.src / "sessions").mkdir(parents=True)
@@ -106,8 +118,10 @@ class MoveAll(unittest.TestCase):
                                  "dst": {"dir": str(self.dst), "family": "f"}}
         move.alive = lambda pid, start=None: pid in self.live
         move.send_term = lambda pid: (self.ended.append(pid), self.live.discard(pid))
-        move.type_in_tab = lambda tty, text: (self.typed.append((tty, text)), True)[1]
-        move.tab_busy = lambda tty: False
+        move.open_window = lambda script: (self.typed.append(str(script)), True)[1]
+        move.resumed_pid = lambda sid, tdir: 1
+        move.read_config = lambda: {}
+        move.preflight_checks = lambda *a, **k: ([], [])
         move.ps = lambda pid, fields: "ttys001" if fields == "tty=" else ""
         move.this_session = lambda d: None
         move.time.sleep = lambda s: None
@@ -139,15 +153,14 @@ class MoveAll(unittest.TestCase):
         self.add(rec(13, "busy"))
         code, out = self.run_it(wait=0)
         self.assertEqual(self.ended, [11])
-        self.assertEqual(len(self.typed), 1)
-        self.assertEqual(self.typed[0][0], "ttys001")
-        self.assertIn("sh ", self.typed[0][1])
+        self.assertEqual(self.typed, [str(move.MOVES / "00000011.sh")])
         script = move.MOVES / "00000011.sh"
         self.assertIn("exec claude --resume 00000011-", script.read_text())
         self.assertIn(f"CLAUDE_CONFIG_DIR={self.dst}", script.read_text())
         self.assertTrue((move.MOVES / "00000011-0000-4000-8000-000000000000.md").exists())
         self.assertIn("skipped S12", out)
         self.assertIn("skipped S13: still busy", out)
+        self.assertIn("running on dst: S11", out)
         self.assertIn("done: 1 moved, 2 skipped.", out)
 
     def test_busy_that_goes_idle_within_the_wait_is_moved(self):
@@ -204,6 +217,201 @@ class MoveAll(unittest.TestCase):
         code, out = self.run_it(wait=0)
         self.assertEqual(code, 1)
         self.assertIn("not a twin", out)
+
+    def test_waiting_on_a_question_moves_with_a_reask_section(self):
+        self.add(rec(16, "waiting", "input needed"))
+        self.run_it(wait=0)
+        self.assertEqual(self.ended, [16])
+        note = (move.MOVES / "00000016-0000-4000-8000-000000000000.md").read_text()
+        self.assertIn("## Re-ask on arrival", note)
+        self.assertIn("AskUserQuestion", note)
+        self.assertIn("## MCP servers", note)
+
+    def test_an_idle_session_gets_no_reask(self):
+        self.add(rec(11, "idle"))
+        self.run_it(wait=0)
+        note = (move.MOVES / "00000011-0000-4000-8000-000000000000.md").read_text()
+        self.assertNotIn("Re-ask", note)
+
+    def test_refuses_while_preflight_lists_anything(self):
+        self.add(rec(11, "idle"))
+        move.preflight_checks = lambda *a, **k: (["sign in once on dst: miro."], [])
+        code, out = self.run_it(wait=0)
+        self.assertEqual(code, 1)
+        self.assertIn("Refused", out)
+        self.assertEqual(self.ended, [])
+        code, out = self.run_it(wait=0, skip_preflight=True)
+        self.assertEqual(self.ended, [11])
+
+    def test_a_window_not_seen_on_the_target_is_reported(self):
+        self.add(rec(11, "idle"))
+        move.resumed_pid = lambda sid, tdir: None
+        clock = {"t": 1000.0}
+
+        def tick():
+            clock["t"] += 5
+            return clock["t"]
+        real_time = move.time.time
+        move.time.time = tick
+        try:
+            _, out = self.run_it(wait=0)
+        finally:
+            move.time.time = real_time
+        self.assertIn("NOT SEEN on dst", out)
+
+
+class Resume(unittest.TestCase):
+    def setUp(self):
+        self.real_read_config, self.real_ps = move.read_config, move.ps
+        self.real_read_seat = move.read_seat
+
+    def tearDown(self):
+        move.read_config, move.ps, move.read_seat = self.real_read_config, self.real_ps, self.real_read_seat
+
+    def test_ps_runs_in_the_c_locale(self):
+        self.assertEqual(move.C_ENV["LC_ALL"], "C")
+        seen = {}
+        real_run = move.subprocess.run
+
+        def run(cmd, **kw):
+            seen["env"] = kw.get("env")
+            return real_run(["true"], capture_output=True, text=True)
+        move.subprocess.run = run
+        try:
+            move.ps(os.getpid(), "lstart=")
+        finally:
+            move.subprocess.run = real_run
+        self.assertEqual(seen["env"]["LC_ALL"], "C")
+
+    def test_body_sources_the_env_file_and_adds_chrome(self):
+        move.read_config = lambda: {"resume_env_file": "/x/secrets.env"}
+        body = move.resume_body("/p", "/seat", "abc", chrome=True)
+        self.assertTrue(body.startswith("[ -f /x/secrets.env ] && { set -a; . /x/secrets.env; set +a; }; cd /p"))
+        self.assertIn("exec claude --chrome --resume abc '/orca-move:after-move'", body)
+
+    def test_body_without_config_is_plain(self):
+        move.read_config = lambda: {}
+        body = move.resume_body("/p", "/seat", "abc")
+        self.assertEqual(body, "cd /p && export CLAUDE_CONFIG_DIR=/seat && exec claude --resume abc '/orca-move:after-move'\n")
+
+    def test_chrome_follows_the_old_process_or_the_source_seat(self):
+        move.read_seat = lambda d: {}
+        move.ps = lambda pid, f: "claude --chrome --resume x"
+        self.assertTrue(move.wants_chrome(1, "/s"))
+        move.ps = lambda pid, f: "claude --resume x"
+        self.assertFalse(move.wants_chrome(1, "/s"))
+        move.read_seat = lambda d: {"claudeInChromeDefaultEnabled": True}
+        self.assertTrue(move.wants_chrome(1, "/s"))
+        move.ps = lambda pid, f: "claude --no-chrome"
+        self.assertFalse(move.wants_chrome(1, "/s"))
+
+
+class Preflight(unittest.TestCase):
+    """Two fake seats on disk; the MCP health check is replaced."""
+
+    def setUp(self):
+        root = Path(tempfile.mkdtemp())
+        self.s, self.t = root / "s", root / "t"
+        self.s.mkdir()
+        self.t.mkdir()
+        self.saved = (move.accounts, move.mcp_health, move.read_config, move.SEATS_SEEN)
+        move.accounts = lambda: {"s": {"dir": str(self.s), "family": "f"}, "t": {"dir": str(self.t), "family": "f"}}
+        self.health = {}
+        move.mcp_health = lambda d, cwd: dict(self.health.get(d, {}))
+        move.read_config = lambda: {}
+        move.SEATS_SEEN = root / "seats-seen"
+        self.src = {"oauthAccount": {"emailAddress": "a@example.com"}, "mcpServers": {"m1": {"command": "x"}},
+                    "projects": {"/p": {"hasTrustDialogAccepted": True, "enabledMcpjsonServers": ["db"]}},
+                    "claudeInChromeDefaultEnabled": True, "hasCompletedClaudeInChromeOnboarding": True,
+                    "chromeExtension": {"pairedDeviceId": "d"}, "cachedChromeExtensionInstalled": True}
+        (self.s / ".claude.json").write_text(json.dumps(self.src))
+
+    def tearDown(self):
+        move.accounts, move.mcp_health, move.read_config, move.SEATS_SEEN = self.saved
+
+    def seat(self, data):
+        (self.t / ".claude.json").write_text(json.dumps(data))
+
+    def test_a_ready_seat_is_clean(self):
+        self.seat(self.src)
+        self.assertEqual(move.preflight_checks("s", "t", ["/p"]), ([], []))
+
+    def test_not_logged_in_is_listed_and_not_fixed(self):
+        self.seat({k: v for k, v in self.src.items() if k != "oauthAccount"})
+        todo, fixed = move.preflight_checks("s", "t", ["/p"], fix=True)
+        self.assertEqual(len(todo), 1)
+        self.assertIn("not logged in", todo[0])
+        self.assertNotIn("oauthAccount", json.loads((self.t / ".claude.json").read_text()))
+
+    def test_fix_copies_settings_but_never_the_login(self):
+        self.seat({"oauthAccount": {"emailAddress": "b@example.com"}})
+        todo, _ = move.preflight_checks("s", "t", ["/p"])
+        self.assertEqual(len(todo), 3)  # servers, project, chrome
+        todo, fixed = move.preflight_checks("s", "t", ["/p"], fix=True)
+        self.assertEqual(todo, [])
+        self.assertEqual(len(fixed), 3)
+        got = json.loads((self.t / ".claude.json").read_text())
+        self.assertEqual(got["oauthAccount"]["emailAddress"], "b@example.com")
+        self.assertIn("m1", got["mcpServers"])
+        self.assertTrue(got["projects"]["/p"]["hasTrustDialogAccepted"])
+        self.assertEqual(got["projects"]["/p"]["enabledMcpjsonServers"], ["db"])
+        self.assertTrue(got["claudeInChromeDefaultEnabled"])
+        self.assertEqual(move.preflight_checks("s", "t", ["/p"]), ([], []))
+
+    def test_only_servers_that_work_on_the_source_need_a_sign_in(self):
+        self.seat(self.src)
+        self.health = {str(self.s): {"miro": "ok", "canva": "auth"}, str(self.t): {"miro": "auth", "canva": "auth"}}
+        todo, _ = move.preflight_checks("s", "t", ["/p"])
+        self.assertEqual(len(todo), 1)
+        self.assertIn("sign in once on t: miro.", todo[0])
+        self.assertIn("command claude", todo[0])
+
+    def test_a_new_seat_runs_the_hook_once_with_fix(self):
+        self.seat(self.src)
+        mark = self.t / "hook-ran"
+        move.read_config = lambda: {"after_new_seat": f"touch {mark}"}
+        todo, _ = move.preflight_checks("s", "t", ["/p"])
+        self.assertIn("new seat", todo[0])
+        self.assertFalse(mark.exists())
+        todo, fixed = move.preflight_checks("s", "t", ["/p"], fix=True)
+        self.assertEqual(todo, [])
+        self.assertTrue(mark.exists())
+        mark.unlink()
+        self.assertEqual(move.preflight_checks("s", "t", ["/p"], fix=True), ([], []))
+        self.assertFalse(mark.exists())
+
+
+class SelfMove(unittest.TestCase):
+    """The helper after this session's own exit: a new window unless it already reopened."""
+
+    def setUp(self):
+        root = Path(tempfile.mkdtemp())
+        self.saved = {k: getattr(move, k) for k in ("MOVES", "alive", "resume_running", "resumed_pid",
+                                                     "open_window", "SELF_GRACE_S", "WAIT_START_S")}
+        move.MOVES = root
+        move.alive = lambda pid, start=None: False
+        move.SELF_GRACE_S = 0
+        move.WAIT_START_S = 0
+        self.opened = []
+        move.open_window = lambda s: (self.opened.append(s), True)[1]
+        move.resumed_pid = lambda sid, d: None
+        (root / "abcdef12.json").write_text(json.dumps({"session": "abcdef12-x", "pid": 9, "to": "t", "toDir": "/t",
+                                                        "script": str(root / "abcdef12.sh"), "line": "sh x"}))
+
+    def tearDown(self):
+        for k, v in self.saved.items():
+            setattr(move, k, v)
+
+    def test_opens_a_new_window_after_the_exit(self):
+        move.resume_running = lambda sid: False
+        move.helper("abcdef12-x")
+        self.assertEqual(len(self.opened), 1)
+
+    def test_does_nothing_when_already_reopened_by_hand(self):
+        move.SELF_GRACE_S = 5
+        move.resume_running = lambda sid: True
+        move.helper("abcdef12-x")
+        self.assertEqual(self.opened, [])
 
 
 if __name__ == "__main__":

@@ -2,9 +2,9 @@
 
 Part of [`orca-move`](../../README.md), an [Orca Strator](../../README.md) plugin.
 
-![orca-move: tells the others and saves its crons, exits only with an empty prompt box, resumes in the twin account in the same tab, and announces its new address](../../../../docs/images/orca-move-flow.png)
+![orca-move: tells the others and saves its crons, exits only with an empty prompt box, resumes in the twin account, and announces its new address](../../../../docs/images/orca-move-flow.png)
 
-Moves every live session of this account to a twin account. It shows a dry run of `move-all` and hands you one `!` line that ends each idle session (or one waiting at the usage limit) and resumes it in its own Terminal tab, in seconds, even when the account is already out of quota. Busy sessions get a short wait; a session waiting on a permission prompt is skipped unless you add `--force`. This session moves last. Asking each session to run `switch` itself stays as the fallback.
+Moves every live session of this account to a twin account. It runs preflight on the target seat first (logins, MCP servers, trust, Chrome) and waits until it is clean, shows a dry run of `move-all`, and hands you one `!` line that ends each idle or waiting session and reopens it in a new Terminal window, in seconds, even when the account is already out of quota. A session waiting on a question asks it again on arrival. Busy sessions get a short wait; a session waiting on a permission prompt is skipped unless you add `--force`. Then it checks with peers that everyone arrived. This session moves last. Asking each session to run `switch` itself stays as the fallback.
 
 ## Use
 

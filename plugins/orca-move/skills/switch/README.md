@@ -2,9 +2,9 @@
 
 Part of [`orca-move`](../../README.md), an [Orca Strator](../../README.md) plugin.
 
-![orca-move: tells the others and saves its crons, exits only with an empty prompt box, resumes in the twin account in the same tab, and announces its new address](../../../../docs/images/orca-move-flow.png)
+![orca-move: tells the others and saves its crons, exits only with an empty prompt box, resumes in the twin account, and announces its new address](../../../../docs/images/orca-move-flow.png)
 
-Moves this live session to a twin account: tells the sessions it works with, saves its crons in a move note, exits once idle with an empty prompt box, and resumes the same conversation in the twin account in the same Terminal tab.
+Moves this live session to a twin account: checks the target seat is ready (preflight), tells the sessions it works with, saves its crons in a move note, exits once idle with an empty prompt box, and resumes the same conversation in the twin account in a new Terminal window.
 
 ## Use
 
