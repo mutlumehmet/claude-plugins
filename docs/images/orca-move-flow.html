@@ -1,0 +1,65 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>orca-move flow</title>
+<!-- Source of orca-move-flow.png. Render: Chrome --headless=new --hide-scrollbars --force-device-scale-factor=2 --window-size=1200,627 --screenshot=orca-move-flow.png file://$PWD/orca-move-flow.html -->
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1200px; height: 627px; background: #f4f3f1; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #1c1c1c; }
+  .wrap { position: absolute; left: 39px; right: 39px; top: 96px; }
+  .top { display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 14px; font-weight: 700; font-size: 16px; }
+  .star { color: #e0795a; font-size: 34px; line-height: 1; font-weight: 300; margin-right: 0; }
+  .tag { background: #1c1c1c; color: #fff; padding: 6px 8px; letter-spacing: .06em; font-size: 14px; }
+  .cmd { background: #1c1c1c; color: #fff; font-family: Menlo, monospace; font-size: 22px; padding: 13px 18px; border-radius: 4px; box-shadow: 4px 4px 0 #1c1c1c; letter-spacing: .02em; }
+  h1 { margin-top: 30px; font-size: 38px; font-weight: 800; letter-spacing: -0.02em; display: flex; align-items: center; gap: 10px; }
+  h1 .hl { background: #e0795a; color: #fff; padding: 2px 12px; border: 2px solid #1c1c1c; box-shadow: 5px 5px 0 #1c1c1c; }
+  .row { margin-top: 22px; display: flex; align-items: center; gap: 0; }
+  .card { flex: 1; background: #fff; border: 2px solid #1c1c1c; box-shadow: 5px 5px 0 #1c1c1c; height: 240px; padding: 14px 15px; }
+  .arrow { width: 52px; text-align: center; font-size: 24px; }
+  .pill { display: inline-block; border: 2px solid #1c1c1c; font-weight: 700; letter-spacing: .06em; font-size: 13px; padding: 5px 9px; margin-bottom: 14px; }
+  .p1 { background: #dcd9ef; } .p2 { background: #d6ebe2; } .p3 { background: #e0795a; color: #fff; }
+  ul { list-style: none; }
+  li { display: flex; align-items: center; gap: 12px; font-size: 14px; margin-bottom: 13px; }
+  li::before { content: ""; width: 14px; height: 14px; background: #4a8a73; border: 1.5px solid #1c1c1c; flex: none; }
+  .chip { display: inline-block; border: 2px solid #1c1c1c; border-radius: 12px; font-family: Menlo, monospace; font-weight: 700; font-size: 12px; padding: 2px 7px; }
+  .code { background: #1c1c1c; color: #fff; font-family: Menlo, monospace; font-size: 10.5px; padding: 9px 9px; border-radius: 3px; }
+  .quote { border: 2px solid #1c1c1c; background: #fdf6f2; font-size: 12px; padding: 8px 10px; border-radius: 3px; line-height: 1.3; }
+  .foot { margin-top: 12px; font-weight: 700; font-size: 13px; }
+</style></head>
+<body><div class="wrap">
+  <div class="top">
+    <div class="brand"><span class="star">✳</span><span>Claude</span><span class="tag">ORCA STRATOR</span></div>
+    <div class="cmd">/orca-move:switch</div>
+  </div>
+  <h1>Near the limit? <span class="hl">Move to the twin</span></h1>
+  <div class="row">
+    <div class="card">
+      <div class="pill p1">1 · BEFORE</div>
+      <ul>
+        <li>Checks the twin is ready (preflight)</li>
+        <li>Tells the orchestrator, lanes, checkers</li>
+        <li>Saves crons and watches in a move note</li>
+      </ul>
+      <span class="chip">moves/&lt;session&gt;.md</span>
+    </div>
+    <div class="arrow">→</div>
+    <div class="card">
+      <div class="pill p2">2 · THE MOVE</div>
+      <ul>
+        <li>Exits itself, only with an empty prompt box</li>
+        <li>Waits until the old process has ended</li>
+        <li>Reopens it in a new Terminal window</li>
+      </ul>
+      <div class="code">$ sh ~/.config/orca-strator/moves/1a2b3c4d.sh</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="card">
+      <div class="pill p3">3 · AFTER</div>
+      <ul>
+        <li>Same conversation, twin account</li>
+        <li>Crons, watches and open questions back</li>
+      </ul>
+      <div class="quote">orchestrator: "Lane 2 moved to twin. New address: uds:/tmp/cc-socks/4180.sock"</div>
+      <div class="foot">switch-all moves every session, this one last.</div>
+    </div>
+  </div>
+</div></body></html>
