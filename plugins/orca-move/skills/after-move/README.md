@@ -2,9 +2,9 @@
 
 Part of [`orca-move`](../../README.md), an [Orca Strator](../../README.md) plugin.
 
-![orca-move: tells the others and saves its crons, exits only with an empty prompt box, resumes in the twin account in the same tab, and announces its new address](../../../../docs/images/orca-move-flow.png)
+![orca-move: tells the others and saves its crons, exits only with an empty prompt box, resumes in the twin account, and announces its new address](../../../../docs/images/orca-move-flow.png)
 
-Runs in the resumed session (the resume line passes it as the first prompt). It reads the move note, recreates the crons and background work, and sends the new `uds:` message address to every session on the note's list, checking each one's current address first.
+Runs in the resumed session (the resume line passes it as the first prompt). It first checks the session arrived whole (right account, its MCP servers, Chrome) and puts any gap at the top of its report. It reads the move note, recreates the crons and background work, and sends the new `uds:` message address to every session on the note's list, checking each one's current address first. A session that was waiting on a question asks it again.
 
 ## Use
 

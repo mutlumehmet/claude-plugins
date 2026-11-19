@@ -1,6 +1,6 @@
 ---
 name: switch
-description: Moves this live Claude Code session to a twin account (another login of the same person whose config dir shares the same projects), for example when this account nears its usage limit. It tells the sessions this one works with, saves its scheduled jobs in a move note, exits, and resumes the same conversation in the twin account in the same terminal tab. Use whenever the user says "switch", "switch to <account>", "move this session to <account>", "we are near the limit, move", "continue in workb", or a session it works with asks it to move.
+description: Moves this live Claude Code session to a twin account (another login of the same person whose config dir shares the same projects), for example when this account nears its usage limit. It tells the sessions this one works with, saves its scheduled jobs in a move note, exits, and resumes the same conversation in the twin account in a new terminal window. Use whenever the user says "switch", "switch to <account>", "move this session to <account>", "we are near the limit, move", "continue in workb", or a session it works with asks it to move.
 argument-hint: "[account] | cancel"
 ---
 
@@ -22,6 +22,13 @@ quota left by orca-quota' readings), the terminal tab, and the resume line. If i
 
 Moving between twins is the only kind of move: another family has its own transcripts, and a
 session never runs in two places at once.
+
+## 1b. Preflight
+
+Run `move.py preflight <target> --fix`. It copies the plain settings the target seat lacks (user
+MCP servers, trust for this folder, Chrome) and lists what only the person can do, such as
+signing in once to online MCP servers on that seat. Show the list and wait until it says clean;
+`go` refuses otherwise (`go <target> --skip-preflight` only when the person asks).
 
 ## 2. Tell the sessions this one works with
 
@@ -66,18 +73,22 @@ Then delete every cron with CronDelete. They would fire into a session that is a
 ## 4. Go
 
 Run `move.py go <target>` (the target from step 1). It writes the resume script, asks the
-orca-move mod to run `/exit` once this turn ends, and starts a helper that resumes the session
-in the same Terminal tab after the old process has ended.
+orca-move mod to run `/exit` once this turn ends, and starts a helper. 45 seconds after the old
+process has ended, the helper opens a new Terminal window that resumes the session, unless it is
+already running again (someone pasted the line).
 
 End the turn with one short message: the move, and the fallback line it printed, for example:
 
 ```
-Moving to workb. If the tab does not reopen the session within a minute, run /exit and paste:
-sh ~/.config/orca-strator/moves/1a2b3c4d.sh
+Moving to workb. A new window reopens this session about 45 s after it exits. If none does,
+paste in any terminal: sh ~/.config/orca-strator/moves/1a2b3c4d.sh
 ```
 
+If other sessions keep messaging this one, each message starts a new turn and the exit never
+comes: put "type /exit when messages pause" first in the message.
+
 If `go` says this session started before orca-move was installed, there is no mod to exit it:
-put "type /exit now" first in your last message. The helper still resumes it in the same tab.
+put "type /exit now" first in your last message. The helper still reopens it in a new window.
 
 Do not run anything after `go`: the exit waits for this turn to end, and only happens while the
 prompt box is empty. If the person typed a draft, the mod says so and the move waits; their own
@@ -96,5 +107,5 @@ address is unchanged."
 - Never read, copy or move login tokens. Each account must already be logged in.
 - Never type into another session's prompt. Other sessions move by running this skill themselves
   (that is what `switch-all` asks them to do).
-- Outside macOS Terminal.app the helper cannot type the line; it copies it to the clipboard and
-  shows a notification instead. Say so in the last message when `plan` reported it.
+- Outside macOS Terminal.app the helper cannot open a window; it copies the line to the clipboard
+  and shows a notification instead. Say so in the last message when `plan` reported it.

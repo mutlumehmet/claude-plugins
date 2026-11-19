@@ -4,44 +4,46 @@ Part of **Orca Strator**, a set of small plugins for running many Claude Code se
 
 When one Claude account nears its usage limit, this moves a live session (or all of them) to a **twin account**: a second login whose config directory shares the same `projects/` folder, so `claude --resume` there opens the very same conversation. Before the move the session tells the sessions it works with and saves its scheduled jobs; after it, it brings them back and sends its new message address.
 
-![orca-move: tells the others and saves its crons, exits only with an empty prompt box, resumes in the twin account in the same tab, and announces its new address](../../docs/images/orca-move-flow.png)
+![orca-move: tells the others and saves its crons, exits only with an empty prompt box, resumes in the twin account, and announces its new address](../../docs/images/orca-move-flow.png)
 
 | Skill | What it does |
 |---|---|
-| [`switch`](skills/switch) | Moves this session to a twin account |
-| [`switch-all`](skills/switch-all) | Moves every session of this account at once with `move-all` (one `!` line), this one last |
-| [`after-move`](skills/after-move) | Runs in the resumed session: restores crons and background work, announces the new address |
+| [`switch`](skills/switch) | Checks the target seat, then moves this session to a twin account |
+| [`switch-all`](skills/switch-all) | Preflight, dry run, then moves every session of this account at once with `move-all` (one `!` line), this one last |
+| [`after-move`](skills/after-move) | Runs in the resumed session: checks its tools arrived, restores crons and background work, announces the new address, asks again a question the move closed |
 
 It also holds one small mod: the part of a move that has to happen inside Claude Code. When `switch` asks for it, the mod runs `/exit` through Claude Code itself once the session is idle, and only while the prompt box is empty. Nothing is ever typed into a Claude prompt.
 
 ## How a move works
 
 1. `/orca-move:switch [account]` picks the target: the account you name, or the twin with the most quota left (from [`orca-quota`](../orca-quota) readings, when installed).
-2. It messages the sessions it works with (the orchestrator, lanes, checkers) that it is moving.
-3. It writes a move note, `~/.config/orca-strator/moves/<session id>.md`: its crons, background work worth restarting, who to tell afterwards and what it is waiting on. Then it deletes its crons.
-4. It writes a resume script, `~/.config/orca-strator/moves/<first 8 of the id>.sh`, and starts a detached helper.
-5. When the turn ends, the mod runs `/exit` (or tells you to clear a draft first; your own `/exit` works too).
-6. Once the old process has ended, the helper types one short line at the shell prompt of the same Terminal tab: `sh ~/.config/orca-strator/moves/<id8>.sh`. It runs `claude --resume <id> '/orca-move:after-move'` under the twin's config dir.
-7. `after-move` reads the note, recreates the crons and background work, and messages everyone on the list its new `uds:` address.
+2. `move.py preflight <account> --fix` checks the target seat (see [Preflight](#preflight)) and lists anything only you can do. The move waits until it is clean.
+3. It messages the sessions it works with (the orchestrator, lanes, checkers) that it is moving.
+4. It writes a move note, `~/.config/orca-strator/moves/<session id>.md`: its crons, background work worth restarting, who to tell afterwards and what it is waiting on. Then it deletes its crons.
+5. It writes a resume script, `~/.config/orca-strator/moves/<first 8 of the id>.sh`, and starts a detached helper.
+6. When the turn ends, the mod runs `/exit` (or tells you to clear a draft first; your own `/exit` works too). A message from another session starts a new turn first, so with chatty peers type `/exit` yourself when they pause.
+7. 45 seconds after the old process has ended, unless the session already runs again (you pasted the line yourself), the helper opens a new Terminal window running `sh ~/.config/orca-strator/moves/<id8>.sh`. That runs `claude [--chrome] --resume <id> '/orca-move:after-move'` under the twin's config dir, with `--chrome` when the old session had Chrome. A new window, not the old tab: tty numbers get reused, and typing into the old tab missed or hit the wrong one.
+8. `after-move` checks that the account, MCP servers and Chrome tools arrived (gaps first in its report), reads the note, recreates the crons and background work, messages everyone on the list its new `uds:` address, and asks again any question the move closed.
 
-A session never runs in two places: the line is typed only after the old process is gone.
+A session never runs in two places: the window opens only after the old process is gone.
 
 ## Moving a whole account: `move-all`
 
 `switch-all` hands you one line to run with `!`:
 
 ```
-! python3 -I <orca-move>/skills/switch/scripts/move.py move-all <twin> [--account <from>] [--wait 60] [--force] [--assume-limited] [--dry-run]
+! python3 -I <orca-move>/skills/switch/scripts/move.py move-all <twin> [--account <from>] [--wait 60] [--force] [--assume-limited] [--dry-run] [--skip-preflight]
 ```
 
-It moves every live session of the account from outside, in seconds, without asking each one to take a turn. That is why it also works for sessions already out of quota. For each session:
+It refuses until preflight is clean (`--skip-preflight` overrides). Then it moves every live session of the account from outside, in seconds, without asking each one to take a turn. That is why it also works for sessions already out of quota. For each session:
 
-- **idle**, or **waiting at the usage limit**: it writes the resume script and a short move note (title, reporting line, fleet), ends the process with SIGTERM, waits up to 30 seconds for it to exit, then types the resume line into the session's own Terminal tab. No Terminal tab: it prints the line to paste.
+- **idle**, or **waiting at the usage limit**: it writes the resume script and a short move note (title, reporting line, fleet, the MCP servers it had), ends the process with SIGTERM, waits up to 30 seconds for it to exit, then opens a new Terminal window with the resume script. When Terminal cannot, it prints the line to paste.
+- **waiting on a question**: moved the same way, and its note gets a `## Re-ask on arrival` section: `after-move` asks the same question again (same options and previews), so it comes back waiting.
 - **busy**: it waits up to `--wait` seconds for the session to settle, then skips it.
 - **running a background command** (a CI watch, for example): moved only when the account is at its limit, since moving ends that command.
-- **waiting on a permission prompt**: never ended without `--force`; the prompt waits for you.
+- **waiting on a permission prompt**: never ended without `--force`; the prompt waits for you. Forced, its note says to redo that step.
 
-"At its limit" means an orca-quota reading of 100% whose reset is still ahead, or `--assume-limited`. It prints one line per session, moved or skipped and why, and moves the session it runs in last (through `switch`'s own exit). `--dry-run` prints the same lines and changes nothing.
+"At its limit" means an orca-quota reading of 100% whose reset is still ahead, or `--assume-limited`. It prints one line per session, moved or skipped and why, then checks that each window it opened shows the session running on the target ("running on <twin>" or "NOT SEEN"), and moves the session it runs in last (through `switch`'s own exit). `--dry-run` prints the same lines and changes nothing.
 
 It ends other sessions' processes, so you run it yourself; a Claude session should hand you the line rather than run it. Because it cannot read another session's crons, its move notes say so, and `after-move` rebuilds the crons from the project's `.claude/orca-strator.json` by role (orchestrator, Admiral) and tells the session's reporting line its new address.
 
@@ -49,20 +51,40 @@ With [`orca-quota`](../orca-quota)'s `/quota auto on`, the first session of an a
 
 Changed your mind after `switch` ran? `/orca-move:switch cancel` stops the helper and withdraws the exit request; the session stays where it is.
 
+## Preflight
+
+A seat the sessions never ran on lacks what they had: user-scope MCP servers, trust for the project folder, Chrome, and the logins of online MCP servers. Sessions moved there arrive without those tools. `move.py preflight <twin> [--account <from>] [--fix]` checks, for every project folder of the sessions moving:
+
+- the twin is logged in;
+- it has the user MCP servers the source has (`--fix` copies their settings);
+- each project folder is trusted, with the same `.mcp.json` servers approved (`--fix` copies);
+- Chrome is set up like the source when the source has it on (`--fix` copies the four Chrome keys);
+- every MCP server that works on the source also connects on the twin (`claude mcp list` run as the twin). Online servers need one sign-in per seat; preflight names them and the line that opens a setup window there (`CLAUDE_CONFIG_DIR=<dir> command claude`, where `command` skips a shell function named `claude` that might pick another seat). It never copies those logins: refresh tokens rotate, and two seats sharing one would log each other out.
+- a twin moved to for the first time runs your `after_new_seat` command once with `--fix`, if you set one.
+
+It prints "clean" or a numbered to-do list and exits 1 until clean. `go` and `move-all` run the same checks (without fixing) and refuse while anything is listed.
+
 ## Setup
 
 Twins must already exist and be logged in on their own; this never reads or copies login tokens. Optional: the same `~/.config/orca-strator/config.yaml` that [`orca-peers`](../orca-peers) and [`orca-quota`](../orca-quota) read, pointing at an accounts file that names your accounts and marks twins with `twinOf` (see the orca-quota README). Without it, an account whose `projects/` is a link into another account's counts as that account's twin.
+
+Two optional keys in that config file, both off by default:
+
+| Key | What it is for | Example |
+|---|---|---|
+| `resume_env_file` | A shell file of `KEY=value` lines sourced by every resume script before `claude` starts. A terminal opened before you added a key to your shell profile does not have it, and an MCP server needing it would fail. | `resume_env_file: ~/.config/mcp/secrets.env` |
+| `after_new_seat` | A command preflight `--fix` runs once the first time a twin is moved to, for example to restart an app that reads the accounts file only at start. | `after_new_seat: launchctl kickstart -k gui/501/com.example.sessions` |
 
 Install it in every account of the family (twins that share `plugins/` share it automatically), and install [`orca-peers`](../orca-peers) too, so a moving session can find the addresses of the sessions it tells.
 
 ## What it reads and does
 
-- **Reads**: its own pid record and transcript start (for the session id, folder and terminal tab), the Orca Strator config and accounts file, and orca-quota' quota readings.
-- **Writes**: move notes, resume scripts, a small plan file and a log per move in `~/.config/orca-strator/moves/`. `after-move` keeps the note as `<id>.done.md` and removes the rest.
-- **Types**: one line, `sh ~/.config/orca-strator/moves/<id8>.sh`, into the shell of the tab the session ran in, only after that session's process has ended. Never into a Claude prompt.
+- **Reads**: its own pid record and transcript start (for the session id and folder), the Orca Strator config and accounts file, orca-quota's readings, and for preflight each seat's `.claude.json` (only the MCP server, project and Chrome settings it compares) and `claude mcp list`.
+- **Writes**: move notes, resume scripts, a small plan file and a log per move in `~/.config/orca-strator/moves/`. `after-move` keeps the note as `<id>.done.md` and removes the rest. Preflight `--fix` writes the copied settings into the twin's `.claude.json`, and the twins it has seen to `~/.config/orca-strator/seats-seen`.
+- **Opens**: one new Terminal window per moved session, running `sh ~/.config/orca-strator/moves/<id8>.sh`, only after that session's process has ended. Never types into a Claude prompt or an existing tab.
 - **Ends processes**: only `move-all`, run by you: SIGTERM to the Claude processes of the account it moves, by the rules above.
 - **Mod hooks**: `session.start` (writes where its `move.py` lives to `moves/move-py` for orca-quota, and starts a two second check for a move request addressed to this session); it reads the prompt box only when such a request exists, and runs `/exit` only then.
-- **Never**: reads login tokens, moves a session between unrelated accounts, or sends anything off the machine.
+- **Never**: reads or copies login tokens (including MCP logins), moves a session between unrelated accounts, or sends anything off the machine.
 - **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
 
 ## Install
@@ -79,6 +101,7 @@ A mod runs inside Claude Code with your permissions. Read the code before you in
 ## Known gaps
 
 - Terminal.app only for the automatic resume; iTerm, Ghostty and others paste the line.
+- Each moved session opens its own window; the old tabs stay open at their shell prompt, to close when you like.
 - A shell function or alias named `claude` is bypassed on purpose: the resume script runs the `claude` on `PATH` with the twin's config dir.
 - A session manager app that offers to reopen sessions which closed together may offer the sessions a `switch-all` just moved; dismiss that offer, or two copies could open.
 
