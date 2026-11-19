@@ -98,6 +98,9 @@ def accounts():
     return found
 
 
+C_ENV = dict(os.environ, LC_ALL="C")
+
+
 def proc_info(pid):
     """(start time text, command) of a live pid, or None."""
     try:
@@ -107,8 +110,10 @@ def proc_info(pid):
     except PermissionError:
         pass
     try:
+        # C locale: Claude Code records procStart as ps prints it there ("Mon Nov 16 ..."); en_GB
+        # prints "Mon 16 Nov ..." and no session would ever look live.
         out = subprocess.run(["ps", "-p", str(pid), "-o", "lstart=,comm="],
-                             capture_output=True, text=True, timeout=5).stdout.strip()
+                             capture_output=True, text=True, timeout=5, env=C_ENV).stdout.strip()
     except (OSError, subprocess.SubprocessError):
         return None
     if not out:
@@ -333,7 +338,7 @@ def my_pids():
             break
         pids.add(pid)
         try:
-            out = subprocess.run(["ps", "-p", str(pid), "-o", "ppid="], capture_output=True, text=True, timeout=5).stdout.strip()
+            out = subprocess.run(["ps", "-p", str(pid), "-o", "ppid="], capture_output=True, text=True, timeout=5, env=C_ENV).stdout.strip()
             pid = int(out)
         except (ValueError, OSError, subprocess.SubprocessError):
             break
