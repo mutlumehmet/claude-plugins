@@ -85,7 +85,10 @@ Run `fleets.py list` and `peers --json`. Then:
   ("pause: no new pushes until I say").
 - **Yourself** past `handover.prepare`: run `/orca-fleet:hand-over`.
 
-Tell the person at most eight lines, only when something changed or waits on them.
+Tell the person at most eight lines, only when something changed or waits on them. Report each
+fleet as a whole (healthy, blocked, waiting on the person), not the items its orchestrator handles;
+the person reads those in that fleet's window. A detail belongs in the roll-up only when it waits on
+the person or crosses fleets.
 
 ## `start-fleet <id> "<label>" [brief]`
 

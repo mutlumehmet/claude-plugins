@@ -181,6 +181,12 @@ fleet's lanes: ask their orchestrator. The Admiral's orders reach you by message
 file; follow them as you would the person's routing, but merge rights still come only from the
 rules file.
 
+What other fleets tell you about their own work (items they log, PRs, merges, stage moves) is for
+your files, not for the person: they already see it in that fleet's window, and repeating it buries
+what needs them. Log it where your rules say, answer the sender if it needs an answer, and say
+nothing to the person unless it blocks or changes your fleet's work (a red default branch that holds
+your release, a shared file, a hand-off to you).
+
 ## `status` round
 
 Run peers with `--json` and keep this fleet's sessions (as in step 2 above; with several fleets,
@@ -196,7 +202,8 @@ Then check the merge queue (messages "ready to merge #N, head <sha>, SAFE") and 
 branch with `watch-ci` if it is installed. Merge only as the rules file allows, and with several
 fleets only while you hold the merge lock. Close any session that handed over and whose successor
 has reported in (see Starting and closing lanes). Give the person a
-status of at most six lines, and only when something changed or something waits on them.
+status of at most six lines, and only when something changed in your fleet or something waits on
+them; other fleets' news stays out (see Talking to other fleets).
 
 ## `nudge` round
 
