@@ -95,6 +95,11 @@ must not collide are claimed first: `fleets.py next migration --floor <highest i
   project's validation passed on that head). If the rules let lanes merge their own, merge, then
   send `merged #<N> as <sha>`.
 - **Merged and visible to people?** Add a ledger row (`files.ledger`) for the checkers.
+- **Merged? Remove your worktree** before you take the next change or park: from the main checkout,
+  `git worktree remove <your worktree path>` (never `--force`). Skip it, and say so to your reporter,
+  if it still holds uncommitted work or commits that are not in the merged PR. Why: every lane makes
+  a worktree per change and nobody else removes them; one project reached 290 folders, 252 of them
+  for branches already merged and deleted.
 - **Anything new** (a decision, a question, a deferral): a row in the open-items file, same turn.
 - **Read the orders** whenever the orchestrator says "orders updated".
 - **Blocked:** tell your reporter what blocks you and what would unblock it, then stop. On the
