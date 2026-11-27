@@ -20,6 +20,9 @@ so a handover always starts a new session.
   transcript (path below) for every message the person typed since the last note, and write each
   in `## Asked by the person in this window, not finished` with its state and owner, unless it is
   finished. A request is never folded into a fleet table cell or a one-line summary.
+- **Copy every Done when list word for word** (from the brief, orders or open item) into the
+  note, each line marked holds (with evidence), left, or not checked. A list is never summarised:
+  it is what the successor reports against, and nothing is done until every line holds.
 - **Every row needs an open-items id.** Any row in that table or in `## Sent to other sessions,
   not yet confirmed` without one: add it to the open-items file now. Do not start the successor
   while a row has none.

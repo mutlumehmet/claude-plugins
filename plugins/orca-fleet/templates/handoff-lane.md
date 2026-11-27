@@ -9,6 +9,9 @@ Written at <percent>% context. Start with `/orca-fleet:join-lane <this file>`.
 - Worktree: <path>, branch <branch>, head <sha>, pushed: <yes/no>
 - Open PR: #<n>, CI <green/red/running>, validator <SAFE/not run>
 
+## Done when
+<the list from the brief, word for word, each line marked holds (with evidence) / left / not checked>
+
 ## In flight
 <the change being made: what is done, what is left, the exact next step>
 

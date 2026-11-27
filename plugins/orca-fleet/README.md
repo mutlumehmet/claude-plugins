@@ -66,6 +66,8 @@ Sessions talk with SendMessage. [`orca-peers`](../orca-peers) finds their addres
 | `fleet` | Title prefixes of this fleet's sessions, e.g. `["Lane", "Checker"]` | No, but without it and without a handoff note `conduct` asks before messaging anyone | none |
 | `rules` | The file that says who may merge what and what always needs a person; every role follows it | Yes | |
 | `decisions` | Where questions for the person are recorded (a database, an inbox file), so sessions keep working instead of waiting on a question box | No | the decision list the rules file names, else the open-items file |
+| `investigator` | The project's investigator agent, run when the person corrects a status, to find why it was wrong and propose one fix to the skill or rule that owns it | No | an agent named `*-investigator` in the project or user agents folder, else none (the session says what was missed and which source would have caught it) |
+| `validator` | The project's validator agent, run on a status answer that crosses fleets or that the person may act on, against its Done when list and the live source | No | an agent named `*-validator` in the project or user agents folder, else the session checks each line itself |
 | `repo`, `ci.gateJob`, `ci.gatedStatus` | The repository and CI names, for watching merges | No | |
 | `files.orders`, `files.ledger`, `files.openItems` | The orders file, the preview ledger and the open-items list; created from the templates when missing | Yes | |
 | `files.handoffDir` | Where handoff notes go | Yes | |
@@ -78,7 +80,7 @@ Sessions talk with SendMessage. [`orca-peers`](../orca-peers) finds their addres
 
 ## Templates
 
-Handoff notes for each role ([admiral](templates/handoff-admiral.md), [orchestrator](templates/handoff-orchestrator.md), [lane](templates/handoff-lane.md), [checker](templates/handoff-checker.md)), the [orders file](templates/orders.md), the [preview ledger](templates/preview-ledger.md) and the [open-items list](templates/open-items.md).
+The [brief](templates/brief.md) for a new lane or fleet (with its Done when list), handoff notes for each role ([admiral](templates/handoff-admiral.md), [orchestrator](templates/handoff-orchestrator.md), [lane](templates/handoff-lane.md), [checker](templates/handoff-checker.md)), the [orders file](templates/orders.md), the [preview ledger](templates/preview-ledger.md) and the [open-items list](templates/open-items.md).
 
 ## What it reads and does
 
@@ -87,6 +89,7 @@ Handoff notes for each role ([admiral](templates/handoff-admiral.md), [orchestra
 - **Opens**: a new Terminal window for a successor, only during `hand-over start`, or for a new lane when you ask a session to start one. Elsewhere it copies the command for you to paste.
 - **Closes**: a session only through `fleets.py close`, run by an orchestrator or the Admiral after the session parked its work, within the limits above.
 - **Asks**: questions for you go to the project's decision channel (the `decisions` key, else your rules file's decision list, else the open-items list) and up the reporting line, and the session keeps working. A question box, which stops a session until you answer, is kept for when nothing else can move or you are talking in that window; a session that must wait says "waiting on the person" so the Admiral can point you to it. Before asking, a session checks your own words in the session, orders and open items, and does not ask you to confirm what you already decided.
+- **Done when**: every lane brief, orchestrator brief and open item carries 3 to 8 checkable lines, written from the primary source (not memory), agreed with you. Sessions report against them, and nothing is reported done or closed until every line holds, measured now. A status answer you may act on, or one that crosses fleets, goes through the project's validator agent first; when you correct a status, the project's investigator agent (if any) finds the cause and proposes one fix for your yes.
 - **Never**: decides merge rights by itself (they come from your rules file), forks a session, or closes this session or the Admiral.
 - **Privacy**: see [PRIVACY.md](../../PRIVACY.md).
 

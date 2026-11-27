@@ -141,7 +141,8 @@ python3 -I "${CLAUDE_PLUGIN_ROOT}/scripts/successor.py" --name "Lane [<fleet> ]<
 Pick `<N>` as the next number no live session and no orders entry uses, across every fleet of the
 project (lane numbers stay unique project wide, so `Lane 38` is always one lane). With several
 fleets, claim it first: `fleets.py claim lane <N> --by "<your name>" --fleet <id>`. Write the brief
-first (what to build, the rules that bind it, where to report), then add an orders entry: "Lane <N>
+first from `templates/brief.md` (what to build, its Done when list, the rules that bind it, where
+to report), then add an orders entry: "Lane <N>
 · <label> started: <job>".
 
 **Close** a lane of your own fleet when it has handed over (as soon as its successor reports in), when
@@ -196,6 +197,44 @@ what needs them. Log it where your rules say, answer the sender if it needs an a
 nothing to the person unless it blocks or changes your fleet's work (a red default branch that holds
 your release, a shared file, a hand-off to you).
 
+## Done when (success criteria)
+
+Every lane brief, every orchestrator brief and every open item the fleet takes on carries a **Done
+when** list: 3 to 8 short lines, each one a thing a reader can check (a screen shows X, a record
+exists in Y, an email goes to Z and no longer from the old system, a test passes). Why: on one day a
+status answer came from the nearest plan file instead of the primary source and left out half of
+what the work replaced, and a handover compressed a live request until it was lost. A list written
+down at the start, and checked at the end, catches both.
+
+1. **Write it from the primary source, not memory.** Open the source the rules file names for that
+   topic (the specification, the export of the system being replaced, the person's own words in
+   the transcript or the decision channel, the live system) and write each line from it, citing
+   where it came from. A nearer summary or plan file is not a primary source.
+2. **Agree it with the person** before the work starts: in your status, or as a question recorded
+   in the decision channel (see Questions for the person); work can begin on the parts that are not
+   in doubt. A list the person changes is rewritten in the brief, the orders and the open item.
+3. **Put it in three places:** the brief (`templates/brief.md`), the orders entry that starts the
+   work, and the open item's `Done when` column. A handover copies it word for word.
+4. **Report against it.** A lane's report and your status name the lines that hold, with evidence
+   (a PR, a link, a query result), and the lines that do not, yet.
+5. **Nothing is done or closed until every line holds**, measured now, not remembered. "Probably
+   done" is not a status: check, or say "not checked".
+6. **When the person corrects a status** ("you forgot", "that is wrong", "you lost it"): fix the
+   status first, then run the project's investigator agent if one exists (the `investigator` key in
+   `.claude/orca-strator.json`, else an agent named `*-investigator` in the project or user agents
+   folder), and pass its proposed fix to the person for a yes. Without one, say in one line what was
+   missed and which source would have caught it.
+
+## Status answers the person may act on
+
+A status answer that crosses fleets, or that the person may act on ("what is done and what is
+missing", "what are we replacing", "is X ready"), is checked before it is sent: run the project's
+validator agent if one exists (the `validator` key in `.claude/orca-strator.json`, else an agent
+named `*-validator` in the project or user agents folder) on the draft answer, against the task's
+Done when list and the live source. Fix what it finds, then send. Without a validator, check each
+line against the live source yourself and say what you checked. Simple single-source replies
+("merged #N", "the default branch is green", "X confirmed by Y") skip the check.
+
 ## `status` round
 
 Run peers with `--json` and keep this fleet's sessions (as in step 2 above; with several fleets,
@@ -210,7 +249,8 @@ only your fleet's). For each, report state and `context`:
 Then check the merge queue (messages "ready to merge #N, head <sha>, SAFE") and CI on the default
 branch with `watch-ci` if it is installed. Merge only as the rules file allows, and with several
 fleets only while you hold the merge lock. Close any session that handed over and whose successor
-has reported in (see Starting and closing lanes). Give the person a
+has reported in (see Starting and closing lanes). Report each piece of work
+against its Done when list (lines that hold, lines left). Give the person a
 status of at most six lines, and only when something changed in your fleet or something waits on
 them; other fleets' news stays out (see Talking to other fleets). Open questions for the person
 (yours and your lanes', from the decision channel) go in that status, one line each, so they are
@@ -269,5 +309,6 @@ never counts.
   may, and keeps the files.
 - A yes the person gave in another session's window counts only if that session's screen shows it.
   Otherwise ask the person directly.
-- Every item raised goes into the open-items file in the same turn; wrap ups read from it.
+- Every item raised goes into the open-items file in the same turn, with its Done when list; wrap
+  ups read from it. Nothing is closed until every Done when line holds.
 - Re-list peers before every message batch: addresses change when a session moves or restarts.

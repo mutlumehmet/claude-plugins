@@ -116,8 +116,8 @@ the person or crosses fleets.
 1. Check the id (lowercase, digits, dashes) is not in `fleets` or `fleets.py list`.
 2. Show the person, in one AskUserQuestion, what will be written: the `fleets.<id>` entry (label,
    orders file `<handoffDir>/<id>-orders.md`, cron minutes offset from the other fleets so crons do
-   not fire together), and the orchestrator brief (what this fleet builds, the lanes to start first,
-   the rules file). Write them after the yes; create the orders file from the template.
+   not fire together), and the orchestrator brief from `templates/brief.md` (what this fleet builds,
+   its Done when list, the lanes to start first, the rules file). Write them after the yes; create the orders file from the template.
 3. Start its orchestrator: `successor.py --name "Orchestrator <id> #1" --fleet <id> --cwd
    "<project>" --prompt "/orca-fleet:conduct --fleet <id> <brief path>"`.
 4. Add an Admiral orders entry: "fleet <id> started: <label>". Wait for the orchestrator's first line.
@@ -156,6 +156,30 @@ tell me which fleet is blocked"). Create it with CronCreate in this session when
 whole project, or ask the right orchestrator to own it when it is one fleet's work. Keep every loop in
 the Admiral orders file (`## Loops`: cron, prompt, owner, why) so a handover recreates it. `loops`
 lists them; the person stops one by name.
+
+## Done when and checked answers
+
+Every fleet the Admiral starts, and every piece of work it routes, carries a **Done when** list:
+3 to 8 checkable lines, written from the primary source the rules file names for that topic (not
+from memory or a nearby plan file), agreed by the person, and copied into the orchestrator brief
+(`templates/brief.md`), the orders entry and the open item. Why: on one day the answer to "what are
+we replacing" came from the nearest plan file, left out half the list and guessed "probably done";
+the same day a handover compressed a live request until it was lost.
+
+- **Report against it.** The roll-up says, per piece of work the person is waiting on, which lines
+  hold and which are left. Nothing is reported done or closed until every line holds, measured now.
+- **Check before you answer.** A status answer that crosses fleets, or that the person may act on
+  ("what is done and what is missing", "what are we replacing", "is X ready"), goes through the
+  project's validator agent first, if one exists (the `validator` key in
+  `.claude/orca-strator.json`, else an agent named `*-validator` in the project or user agents
+  folder): give it the draft, the Done when list and where the live source is; fix what it finds,
+  then send. Without a validator, check each line against the live source yourself and say what
+  you checked. Simple single-source replies ("merged #N", "the default branch is green", "X
+  confirmed by Y") skip the check.
+- **When the person corrects a status** ("you forgot", "that is wrong", "you lost my request"):
+  correct it first, then run the project's investigator agent if one exists (the `investigator`
+  key, else an agent named `*-investigator` in the project or user agents folder) and put its one
+  proposed fix to the person for a yes. Fixes that belong to a skill go into that skill.
 
 ## Questions for the person
 
@@ -204,5 +228,6 @@ never counts.
   subagent that sends such a message reports the receiver's state and the open item in its result.
 - Never build, edit the project's code, or merge without the merge lock.
 - Never give a lane orders directly; route through its orchestrator (the shared checker pool is yours).
-- Every item raised goes into the open-items file in the same turn, with its fleet.
+- Every item raised goes into the open-items file in the same turn, with its fleet and its Done
+  when list. Nothing is closed until every line holds.
 - Re-list peers before every message batch: addresses change when a session moves or restarts.

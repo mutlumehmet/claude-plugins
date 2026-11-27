@@ -9,6 +9,8 @@
     "gatedStatus": "deploy-preview"
   },
   "rules": "CLAUDE.md",
+  "investigator": "project-investigator",
+  "validator": "project-validator",
   "decisions": "Questions for the person go to notes/decisions-inbox.md, one block each: question, choices, recommendation, what waits on it.",
   "files": {
     "orders": "notes/orders.md",
