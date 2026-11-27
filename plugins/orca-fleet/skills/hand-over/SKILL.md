@@ -23,8 +23,17 @@ so a handover always starts a new session.
 - **Copy every Done when list word for word** (from the brief, orders or open item) into the
   note, each line marked holds (with evidence), left, or not checked. A list is never summarised:
   it is what the successor reports against, and nothing is done until every line holds.
-- **Every row needs an open-items id.** Any row in that table or in `## Sent to other sessions,
-  not yet confirmed` without one: add it to the open-items file now. Do not start the successor
+- **List every yes you are still waiting for (every role).** Each yes this session asked the
+  person for and did not get, and each drafted message not sent (an email, a WhatsApp, a ticket
+  reply), goes in `## Waiting on the person's yes in this window` (admiral and orchestrator) or
+  under `## Waiting on` (lane): the time asked, the exact yes sentence, what is held behind it
+  (the draft text or its file path), channel and recipient, and its open-items id. Before saving,
+  grep your note for `no yes`, `not sent`, `drafted` and `waiting`; any hit in another section
+  that is a pending yes or an unsent draft moves there. Why: the successor never saw the person
+  ask, so a held draft that sits in a clash or decision table is never asked again (27 Nov 2026,
+  a staff reply waited a full Admiral handover unseen).
+- **Every row needs an open-items id.** Any row in that table, in `## Waiting on the person's yes in
+  this window`, or in `## Sent to other sessions, not yet confirmed` without one: add it to the open-items file now. Do not start the successor
   while a row has none.
 - **Sweep for work you passed on (admiral and orchestrator).** Before writing, list every message
   this session and its subagents sent to another session since the last note (your SendMessage
