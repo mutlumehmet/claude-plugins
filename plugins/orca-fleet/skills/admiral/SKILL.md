@@ -85,6 +85,12 @@ Run `fleets.py list` and `peers --json`. Then:
   to the person and reads no messages until it is answered: tell the person in one line which
   window holds the question and what is stuck behind it, or start the lane yourself if the person
   said so. A receiver gone or idle for a round with no reply: resend once, then tell the person.
+- **Questions for the person:** every "waiting on the person" or "question for the person" line
+  from an orchestrator, lane or checker since the last round, and the open rows in the decision
+  channel (see Questions for the person). Check each against the person's own words first and
+  answer any they already settled. Put the rest in the roll-up, one line each: the question, where
+  it is recorded, which window waits on it and what is stuck behind it. A session that peers shows
+  `waiting` with no such line: name it too.
 - **Merge lock:** `fleets.py lock show`. Held past its time by a session that is gone: break it
   (`lock break --by "<your name>"`) and tell that fleet's orchestrator.
 - **Clashes:** two fleets touching the same files, two migrations in flight, a red default branch
@@ -150,6 +156,37 @@ tell me which fleet is blocked"). Create it with CronCreate in this session when
 whole project, or ask the right orchestrator to own it when it is one fleet's work. Keep every loop in
 the Admiral orders file (`## Loops`: cron, prompt, owner, why) so a handover recreates it. `loops`
 lists them; the person stops one by name.
+
+## Questions for the person
+
+A question box (AskUserQuestion) stops a session until the person answers, and while it waits it
+reads no messages. Why this matters: on one day six to eight orchestrators sat waiting at once,
+work from the Admiral and other fleets stalled for hours, and one box only asked the person to
+confirm what they had already said. The Admiral is where the person sees what waits on them, so it
+both follows this and makes it work for the fleets:
+
+1. **Is it a question at all?** Before asking, look for the person's own words on it: this
+   session's conversation, the Admiral and fleet orders files, the open-items file and the decision
+   channel. If they already said it, act on it and tell them in one line. Never ask the person to
+   confirm what they already decided, and when an orchestrator asks you something the person
+   already settled, answer it from their words instead of passing it up.
+2. **Write it down, then keep working.** The decision channel is the `decisions` entry in
+   `.claude/orca-strator.json` when set (a description of where the project keeps questions for
+   the person, for example a database or an inbox file), else the decision list the rules file
+   names, else the open-items file. Record a question there so the person can answer without
+   opening any window: the question, the choices, your recommendation and why, what waits on it.
+   Then carry on with everything that does not depend on it, and raise it in the roll-up.
+3. **Open a box only** when nothing else can move until the answer, or when the person is talking
+   with you in this window right now (the Admiral window is often where they are, so this is more
+   common here than in a fleet).
+4. **Alert the person to boxes elsewhere.** When a session says "waiting on the person", or peers
+   shows one `waiting`, tell the person in one line which window holds it and what is stuck behind
+   it, in the same turn when other fleets wait on it, else in the next roll-up.
+
+This changes how a question is asked, never what needs the person's yes. When the rules file says
+to ask something with a question box (a merge yes, for example), do as it says. Merge, release,
+email and access yeses still follow the rules file, and a yes relayed by another session still
+never counts.
 
 ## Rules
 

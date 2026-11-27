@@ -49,6 +49,20 @@ list` gives its address). If the Admiral started you for one fleet only, its lau
 When the queue is empty, tell the orchestrator and wait; do not invent checks. On "Close now",
 finish the row in hand (or leave it without a result), reply `parked`, and stop.
 
+## Questions for the person
+
+A question box (AskUserQuestion) stops this session until the person answers, and while it waits
+it reads no messages, so the queue and every fleet behind it stall. So a checker does not open one
+unless nothing else can move. Before asking anything, look for the answer in the row, the rules
+file, the orders file and the open-items file: if the person already said it, act on it. Otherwise
+record the question in the project's decision channel (the `decisions` entry in
+`.claude/orca-strator.json`, else the decision list the rules file names, else the open-items file)
+with what you saw and what you recommend, send the orchestrator one line ("question for the
+person: <one line>, in <where recorded>"), leave a note in the row (`waiting on the person:
+<question>`) without a result, and check the next row. When the
+whole queue waits on it, send "waiting on the person: <question>" before you stop. Sign-in
+problems still go to the orchestrator in one message, as in Start.
+
 ## Context
 
 At the config's `handover.prepare` (default 70%) run `/orca-fleet:hand-over`; at

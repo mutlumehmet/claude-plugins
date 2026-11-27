@@ -9,6 +9,7 @@
     "gatedStatus": "deploy-preview"
   },
   "rules": "CLAUDE.md",
+  "decisions": "Questions for the person go to notes/decisions-inbox.md, one block each: question, choices, recommendation, what waits on it.",
   "files": {
     "orders": "notes/orders.md",
     "ledger": "notes/preview-ledger.md",
