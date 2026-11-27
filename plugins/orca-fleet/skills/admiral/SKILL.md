@@ -30,6 +30,16 @@ needs no Admiral: say so and stop, unless the person is setting up the first two
 
 1. **Read** the handoff note if given, else the newest `handoff-admiral*` in `files.handoffDir`; then
    the Admiral orders file, newest first; then `fleets.py list` and `/orca-peers:peers`.
+   Then read the old Admiral's transcript for the person's own messages since its last note
+   (path in `## My transcript (backup)`; `sessionId` is in `~/.claude-<seat>/sessions/<pid>.json`,
+   any seat on this machine) and compare them with the note's `## Asked by the person in this
+   window, not finished`; add any that are missing to the open-items file before you report.
+   Then work through the note's `## Sent to other sessions, not yet confirmed`: for each row, ask
+   the receiver whether it took it, and treat it as yours until it says so. **The note is a
+   summary; the old Admiral's transcript is the backup** (path in `## My transcript (backup)`,
+   any seat). When the person asks about something the note names only in passing, or the note
+   leaves out, read that transcript (and its `subagents/` folder) before answering, never guess
+   from the note's wording.
 2. **Register:** `python3 -I "${CLAUDE_PLUGIN_ROOT}/scripts/fleets.py" register admiral` (add
    `--takeover` when taking over from a note; it refuses to replace a live Admiral otherwise). Name
    yourself `Admiral #<n>` (a handover raises `n`).
@@ -70,6 +80,11 @@ Run `fleets.py list` and `peers --json`. Then:
     `parked`, then `fleets.py close`; tell the person after.
   Never touch a session of another project, one `waiting` on the person, or a parent-line session
   whose parent is still live (ask the parent). If the rules file says to ask first, ask.
+- **Work passed on, no receipt:** every row the Admiral (or a subagent of it) sent to another
+  session with no "taken" reply yet. A receiver that peers shows `waiting` is blocked on a question
+  to the person and reads no messages until it is answered: tell the person in one line which
+  window holds the question and what is stuck behind it, or start the lane yourself if the person
+  said so. A receiver gone or idle for a round with no reply: resend once, then tell the person.
 - **Merge lock:** `fleets.py lock show`. Held past its time by a session that is gone: break it
   (`lock break --by "<your name>"`) and tell that fleet's orchestrator.
 - **Clashes:** two fleets touching the same files, two migrations in flight, a red default branch
@@ -112,6 +127,10 @@ the person or crosses fleets.
 ## Starting and closing any session
 
 Like an orchestrator, you may start a lane or checker anywhere the work needs one, and close one.
+**Before starting a lane for a fleet, re-list peers and ask its orchestrator first**, unless peers
+shows it gone or `waiting` (blocked on the person) and the person said to go ahead; tell the
+orchestrator in the same turn so it does not start a second one. Why: on 27 Nov 2026 a resent brief
+and the Admiral both started lane 169 in the same minute.
 Prefer to ask the fleet's orchestrator to do it for its own fleet; do it yourself when that
 orchestrator is gone, for the shared checker pool, or when the person asks you. `fleets.py close`
 lets the Admiral close any session except itself, after "Close now" and `parked` as in `conduct`.
@@ -140,6 +159,12 @@ lists them; the person stops one by name.
   updated there in the same turn: what it does, schedule, where it runs, owner, how to stop it,
   status. A stopped job keeps its row, marked stopped with the date. Why: session crons die with
   their session, and nobody can find or stop a job that is written down nowhere.
+- **Work you pass on needs a receipt.** When you, or a subagent you started, hand new work to
+  another session: put it in the open-items file in the same turn (with the fleet), check the
+  receiver's state in peers first (`waiting` means it will not read the message until the person
+  answers it: say so to the person at once), ask for a reply "taken: <lane or PR>", and keep it in
+  your handoff note's `## Sent to other sessions, not yet confirmed` until that reply arrives. A
+  subagent that sends such a message reports the receiver's state and the open item in its result.
 - Never build, edit the project's code, or merge without the merge lock.
 - Never give a lane orders directly; route through its orchestrator (the shared checker pool is yours).
 - Every item raised goes into the open-items file in the same turn, with its fleet.

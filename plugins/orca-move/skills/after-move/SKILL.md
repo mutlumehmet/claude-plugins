@@ -55,7 +55,9 @@ background jobs ended; its message address changed.
 7. Rename the note to `<session id>.done.md` (keep it as the record), delete
    `~/.config/orca-strator/moves/<first 8 of the id>.sh`, `.json` and `.exit` if present.
 8. Report in two or three lines: any gap from step 2 first, then the account it now runs in, what
-   was restored, who was told, and what it is still waiting on (from `## Waiting on`).
+   was restored, who was told, and what it is still waiting on (from `## Waiting on`). For each
+   piece of work in `## Waiting on` that was sent to another session with no "taken" reply, ask
+   that receiver again (new address from peers) whether it took it.
 9. **Re-ask on arrival:** when the note has that section, this session was waiting on the person
    and the move closed its question box. Write the report of step 8 first, as text: the question
    box covers the screen, and a report after it would wait for the answer. Then find the last open question at the end of the transcript

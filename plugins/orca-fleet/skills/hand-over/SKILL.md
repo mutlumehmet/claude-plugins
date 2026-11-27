@@ -16,6 +16,25 @@ so a handover always starts a new session.
 - Copy `${CLAUDE_PLUGIN_ROOT}/templates/handoff-<role>.md` and fill every section from the files
   and the conversation. Exact ids, branches, shas, PR numbers, paths and commands; nothing from
   memory that a file can confirm. The next session knows only what the note says.
+- **List what the person asked in this window (admiral and orchestrator).** Read your own
+  transcript (path below) for every message the person typed since the last note, and write each
+  in `## Asked by the person in this window, not finished` with its state and owner, unless it is
+  finished. A request is never folded into a fleet table cell or a one-line summary.
+- **Every row needs an open-items id.** Any row in that table or in `## Sent to other sessions,
+  not yet confirmed` without one: add it to the open-items file now. Do not start the successor
+  while a row has none.
+- **Sweep for work you passed on (admiral and orchestrator).** Before writing, list every message
+  this session and its subagents sent to another session since the last note (your SendMessage
+  calls, and those in `<transcript folder>/<sessionId>/subagents/*.jsonl`). Each one that asked
+  for new work goes in `## Sent to other sessions, not yet confirmed` with its open item id, unless
+  the receiver has already replied that it took it. Also check the person's own requests from this
+  session: each one is either done, in the open-items file, or in that table. Why: on 27 Nov 2026
+  an Admiral's subagent sent a fix to an orchestrator that sat on a question to the person, the
+  message was never read, the note named it in four words, and the next Admiral could not say who
+  was working on it (nobody was).
+- **Write your transcript path** in `## My transcript (backup)`: read `sessionId` from
+  `~/.claude-<seat>/sessions/<your pid>.json` (the file whose `name` is yours). The successor reads
+  it when the note is thin. Seats share one machine, so a successor on another seat can read it.
 - A lane copies its reporting line into the note's `## Reports to` exactly as it stands now
   (`orchestrator <name>`, `parent "<title>" uds:<address> session:<id>` or `independent`), so the
   successor reports to the same place. A released lane stays released. In a project with several
