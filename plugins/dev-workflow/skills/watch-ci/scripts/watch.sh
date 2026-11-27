@@ -34,13 +34,24 @@
 #                       verdict; otherwise it is a real failure. Repeatable.
 #   --timeout MIN       give up after MIN minutes of watching CI (default 60)
 #   --merge-timeout MIN give up waiting for the merge after MIN (default 240)
-#   --interval SEC      poll interval (default 20)
+#   --interval SEC      poll interval in seconds (default 60)
+#   --no-dedupe         poll GitHub even if another watcher already watches
+#                       the same commit
+#
+# One watcher per commit: once the commit is known, the first watcher on a
+# (repo, commit, options) becomes the leader and polls GitHub; any later
+# watcher on the same key, from any session or account of the same user on
+# this machine, follows it without calling the API and prints the leader's
+# result with the same exit code. If the leader dies, a follower takes over.
+# State lives in $WATCH_CI_STATE_DIR (default ${TMPDIR:-/tmp}/watch-ci).
 #
 # Exit: 0 GREEN, 1 RED, 2 NO CI / TIMEOUT / ERROR, 3 SUPERSEDED. The last line always
 # starts with "WATCH RESULT:".
 
 set -uo pipefail
-REPO=""; TIMEOUT=60; MTIMEOUT=240; INTERVAL=60; MERGE=0; TARGET=""; GATES=(); SUPERSEDED=(); GATED=()
+REPO=""; TIMEOUT=60; MTIMEOUT=240; INTERVAL=60; MERGE=0; TARGET=""; GATES=(); SUPERSEDED=(); GATED=(); DEDUPE=1
+# Our own names, never values inherited from the environment.
+unset SHA PR; SHA=""; PR=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --repo) REPO="$2"; shift 2;;
@@ -51,7 +62,8 @@ while [ $# -gt 0 ]; do
     --merge-timeout) MTIMEOUT="$2"; shift 2;;
     --interval) INTERVAL="$2"; shift 2;;
     --merge) MERGE=1; shift;;
-    -h|--help) sed -n '2,41p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
+    --no-dedupe) DEDUPE=0; shift;;
+    -h|--help) sed -n '2,49p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
     -*) echo; echo "WATCH RESULT: ERROR unknown option $1 (see --help)"; exit 2;;
     *) TARGET="$1"; shift;;
   esac
@@ -112,8 +124,82 @@ if [ -z "$TARGET" ]; then
   TARGET=$(gh api "repos/$REPO" --jq .default_branch 2>/dev/null) || { result "ERROR cannot read $REPO (check gh auth status)"; exit 2; }
 fi
 
+# --- One watcher per commit --------------------------------------------------
+# Several sessions often watch the same commit (on 27 Nov 2026, 38 watchers on
+# one Mac, six on one commit, spent the 5,000 calls an hour GitHub allows a
+# user). The leader holds a symlink "leader" -> "<pid>-<nonce>" (ln -s is
+# atomic); followers read files only. The leader writes "result.<token>"
+# (exit code, then its full output) with an atomic rename before it lets go.
+STATE_BASE="${WATCH_CI_STATE_DIR:-${TMPDIR:-/tmp}/watch-ci}"; STATE_BASE="${STATE_BASE%/}"
+KEYDIR=""; TOKEN="$$-$(date +%s)-$RANDOM"
+key_dir() { # $1 = sha. Options that change the verdict are part of the key.
+  local opts
+  opts=$(printf '%s\n' "g:${GATES[@]+${GATES[*]}}" "s:${SUPERSEDED[@]+${SUPERSEDED[*]}}" "t:${GATED[@]+${GATED[*]}}" | cksum | awk '{print $1}')
+  printf '%s/%s/%s/%s' "$STATE_BASE" "$(printf '%s' "$REPO" | tr 'A-Z/' 'a-z_')" "$(printf '%s' "$1" | tr 'A-Z' 'a-z')" "$opts"
+}
+lock_owner() { readlink "$KEYDIR/leader" 2>/dev/null; }
+token_alive() { local pid="${1%%-*}"; [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; }
+live_leader() { local o; o=$(lock_owner) && [ -n "$o" ] && token_alive "$o"; }
+# Replace a dead leader's lock. A short "takeover" mutex (mkdir is atomic)
+# makes sure two followers never both remove a lock and each create one.
+take_over() { # $1 = the dead token seen
+  local rc=1
+  if ! mkdir "$KEYDIR/takeover" 2>/dev/null; then
+    # A takeover mutex older than 2 min belongs to a process that died in it.
+    [ -n "$(find "$KEYDIR/takeover" -maxdepth 0 -mmin +2 2>/dev/null)" ] && rmdir "$KEYDIR/takeover" 2>/dev/null
+    return 1
+  fi
+  if [ "$(lock_owner)" = "$1" ] && ! token_alive "$1"; then
+    rm -f "$KEYDIR/leader"; ln -s "$TOKEN" "$KEYDIR/leader" 2>/dev/null && rc=0
+  fi
+  rmdir "$KEYDIR/takeover" 2>/dev/null
+  return $rc
+}
+kill_tree() { local c; for c in $(pgrep -P "$1" 2>/dev/null); do kill_tree "$c"; done; kill -TERM "$1" 2>/dev/null; }
+release() { [ "$(lock_owner)" = "$TOKEN" ] && rm -f "$KEYDIR/leader"; rm -f "$KEYDIR/code.$TOKEN" "$KEYDIR/log.$TOKEN"; }
+# Wait for the leader with token $1. Prints its result and exits with its
+# code; returns 1 if it went away without one (the caller then takes over).
+follow() {
+  local owner="$1" fpoll="$INTERVAL" fend r
+  [ "$fpoll" -gt 5 ] 2>/dev/null && fpoll=5; [ "$fpoll" -lt 1 ] 2>/dev/null && fpoll=0.1
+  fend=$(( $(date +%s) + TIMEOUT*60 ))
+  say "Another watcher (pid ${owner%%-*}) already watches $LABEL in $REPO. Following it: no GitHub API calls from this one."
+  while :; do
+    r="$KEYDIR/result.$owner"
+    if [ -f "$r" ]; then
+      tail -n +2 "$r"; exit "$(head -n 1 "$r")"
+    fi
+    if [ "$(lock_owner)" != "$owner" ] || ! token_alive "$owner"; then
+      [ -f "$r" ] && continue
+      say "The watcher it followed (pid ${owner%%-*}) stopped without a result. Taking over."
+      return 1
+    fi
+    [ "$(date +%s)" -ge "$fend" ] && { result "TIMEOUT $LABEL: the watcher it followed (pid ${owner%%-*}) had no result after $TIMEOUT min"; exit 2; }
+    sleep "$fpoll"
+  done
+}
+# Lead: run the watch, stream its output, store the result for followers.
+lead() {
+  local code
+  trap 'for c in $(pgrep -P $$ 2>/dev/null); do kill_tree "$c"; done; release; exit 130' TERM INT HUP
+  { ( watch_commit ); echo $? > "$KEYDIR/code.$TOKEN"; } 2>&1 | tee "$KEYDIR/log.$TOKEN" &
+  wait $!
+  code=$(cat "$KEYDIR/code.$TOKEN" 2>/dev/null) || code=2; [ -n "$code" ] || code=2
+  { echo "$code"; cat "$KEYDIR/log.$TOKEN"; } > "$KEYDIR/result.$TOKEN.tmp" && mv -f "$KEYDIR/result.$TOKEN.tmp" "$KEYDIR/result.$TOKEN"
+  release
+  exit "$code"
+}
+# ------------------------------------------------------------------------------
+
 LABEL="$TARGET"
-if [[ "$TARGET" =~ ^[0-9]+$ ]]; then
+# A full commit sha that a live leader already watches needs no API call.
+if [ "$DEDUPE" -eq 1 ] && [ "$MERGE" -eq 0 ] && [[ "$TARGET" =~ ^[0-9a-fA-F]{40}$ ]]; then
+  KEYDIR=$(key_dir "$TARGET")
+  live_leader && { SHA=$(printf '%s' "$TARGET" | tr 'A-F' 'a-f'); LABEL="commit ${SHA:0:8}"; }
+fi
+if [ -n "${SHA:-}" ]; then
+  :
+elif [[ "$TARGET" =~ ^[0-9]+$ ]]; then
   PR="$TARGET"; LABEL="PR #$PR"
   if [ "$MERGE" -eq 1 ]; then
     say "Waiting for $LABEL to be merged (up to $MTIMEOUT min)."
@@ -138,6 +224,7 @@ else
   [[ "$SHA" == "$TARGET"* ]] && LABEL="commit ${SHA:0:8}" || LABEL="$TARGET ${SHA:0:8}"
 fi
 
+watch_commit() {
 say "Watching $LABEL in $REPO (timeout $TIMEOUT min)."
 start=$(date +%s); end=$(( start + TIMEOUT*60 )); stable=0; last=""; seen=""; gatelast=""
 timed_out() { [ "$(date +%s)" -ge "$end" ] && { result "TIMEOUT $LABEL $1 after $TIMEOUT min"; exit 2; }; }
@@ -322,3 +409,25 @@ else
   result "RED $LABEL: a real check failed, read the job log before rerunning."
 fi
 exit 1
+}
+
+# A PR head or branch is resolved once, here: a later push makes a new commit,
+# so a new watch on the same PR keys a new lock (the newer sha).
+if [ "$DEDUPE" -eq 0 ] || ! mkdir -p "$(key_dir "$SHA")" 2>/dev/null; then watch_commit; fi
+KEYDIR=$(key_dir "$SHA")
+# Results older than 6 hours are no use to anyone: clear them out.
+find "$STATE_BASE" -type f -name 'result.*' -mmin +360 -delete 2>/dev/null
+tries=0
+while :; do
+  ln -s "$TOKEN" "$KEYDIR/leader" 2>/dev/null && lead
+  owner=$(lock_owner) || owner=""
+  # Neither a lock of ours nor a readable one: the state dir is unusable, so
+  # watch without dedupe rather than spin.
+  if [ -z "$owner" ]; then tries=$((tries+1)); [ "$tries" -ge 50 ] && watch_commit; sleep 0.1; continue; fi
+  if token_alive "$owner"; then
+    follow "$owner"
+  else
+    take_over "$owner" && { say "A watcher on this commit (pid ${owner%%-*}) is gone without a result. Taking over."; lead; }
+    sleep 0.2
+  fi
+done
