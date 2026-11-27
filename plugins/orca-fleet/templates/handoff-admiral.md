@@ -18,6 +18,17 @@ Written at <percent>% context. Start with `/orca-fleet:admiral <this file>`.
 - Checker pool: <Checker A #17 · demo checks, uds:..., queue n rows>.
 - Budgets: <CI spend, account limits>.
 
+## Sent to other sessions, not yet confirmed
+Every piece of work this session, or a subagent it started, passed to another session since the last
+note, until the receiver replied that it took it (named the lane or PR). A row leaves only on that reply.
+| What (open item id) | Sent to | Sent at | Receiver state then | Confirmed? |
+|---|---|---|---|---|
+| <S9-1348 ticket screenshot fix> | <Orchestrator onboarding #3, uds:...> | <11:38> | <waiting on the person> | <no> |
+
+## My transcript (backup)
+`~/.claude-<seat>/projects/<project slug>/<sessionId>.jsonl` (sessionId from `~/.claude-<seat>/sessions/<pid>.json`).
+Subagent output: `<same folder>/<sessionId>/subagents/`. Any seat on this machine can read it.
+
 ## Loops
 | Cron | Prompt | Owner | Why |
 |---|---|---|---|

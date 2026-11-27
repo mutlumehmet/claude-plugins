@@ -89,7 +89,10 @@ refuses one whose label breaks the rule.
 
 1. **Read** the handoff note if given (`/orca-fleet:conduct <path>`), else the newest
    `handoff-*orchestrator*` or sprint handoff in `files.handoffDir`. Read the files its "Read first"
-   section names. Then the orders file, newest entries first.
+   section names. Then the orders file, newest entries first. Ask the receiver of each row in the
+   note's `## Sent to other sessions, not yet confirmed` whether it took it. When the person asks
+   about something the note names only in passing, read the old orchestrator's transcript (path in
+   `## My transcript (backup)`, any seat) before answering.
 2. **Fleet:** (several fleets: only sessions of your fleet, as above.) List live sessions with `/orca-peers:peers` (or the `peers` skill; it covers every
    account). The fleet is the sessions in the note's sessions table, plus any live session whose
    title starts with one of the `fleet` prefixes in the config. There is no default prefix: other
@@ -180,6 +183,12 @@ of merges, a shared file, or a hand off of work between fleets. You never give o
 fleet's lanes: ask their orchestrator. The Admiral's orders reach you by message or in its orders
 file; follow them as you would the person's routing, but merge rights still come only from the
 rules file.
+
+**Work you hand to another fleet needs a receipt:** open item in the same turn, check the
+receiver's state in peers first (a `waiting` orchestrator reads nothing until the person answers
+its question: tell the person at once), ask for "taken: <lane or PR>", and keep it in your handoff
+note's `## Sent to other sessions, not yet confirmed` until that reply. No reply by your next
+status round: resend once, then tell the person and the Admiral.
 
 What other fleets tell you about their own work (items they log, PRs, merges, stage moves) is for
 your files, not for the person: they already see it in that fleet's window, and repeating it buries
