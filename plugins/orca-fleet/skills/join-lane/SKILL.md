@@ -95,6 +95,12 @@ must not collide are claimed first: `fleets.py next migration --floor <highest i
   project's validation passed on that head). If the rules let lanes merge their own, merge, then
   send `merged #<N> as <sha>`.
 - **Merged and visible to people?** Add a ledger row (`files.ledger`) for the checkers.
+- **Job registry:** when `.claude/orca-strator.json` has `jobRegistry` (a description of where the
+  project lists everything that runs on its own, for example a Notion data source), every cron,
+  loop, timer, watcher or scheduled job you create, change, pause or stop gets its row added or
+  updated there in the same turn: what it does, schedule, where it runs, owner, how to stop it,
+  status. A stopped job keeps its row, marked stopped with the date. Why: session crons die with
+  their session, and nobody can find or stop a job that is written down nowhere.
 - **Merged? Remove your worktree** before you take the next change or park: from the main checkout,
   `git worktree remove <your worktree path>` (never `--force`). Skip it, and say so to your reporter,
   if it still holds uncommitted work or commits that are not in the merged PR. Why: every lane makes

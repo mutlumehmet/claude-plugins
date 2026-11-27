@@ -34,6 +34,9 @@ background jobs ended; its message address changed.
    - the Admiral (title `Admiral #n`): `admiral.crons.rollup` with `/orca-fleet:admiral rollup`;
    - anyone else (lanes, checkers, sessions outside a fleet): no crons.
    Without that file, or with a role it does not cover, recreate nothing and say so in the report.
+   When the project config has `jobRegistry`, update the registry row of each cron you recreated
+   (new cron id, this session's name and seat, last checked), because the old ids died with the
+   old process.
 4. **Background work:** start again each command under `## Background work`, in the background,
    the same way it ran before. Skip anything the note marks as finished.
 5. **New address:** find this session's own address: the `messagingSocketPath` in
