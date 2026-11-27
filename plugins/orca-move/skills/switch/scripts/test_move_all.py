@@ -156,12 +156,21 @@ class MoveAll(unittest.TestCase):
         self.assertEqual(self.typed, [str(move.MOVES / "00000011.sh")])
         script = move.MOVES / "00000011.sh"
         self.assertIn("exec claude --resume 00000011-", script.read_text())
+        self.assertNotIn(" -n ", script.read_text())  # an automatic name stays automatic
         self.assertIn(f"CLAUDE_CONFIG_DIR={self.dst}", script.read_text())
         self.assertTrue((move.MOVES / "00000011-0000-4000-8000-000000000000.md").exists())
         self.assertIn("skipped S12", out)
         self.assertIn("skipped S13: still busy", out)
         self.assertIn("running on dst: S11", out)
         self.assertIn("done: 1 moved, 2 skipped.", out)
+
+    def test_a_named_session_reopens_with_its_name(self):
+        r = rec(14, "idle", name="Orchestrator v2 #7")
+        r["nameSource"] = "user"
+        self.add(r)
+        self.run_it(wait=0)
+        body = (move.MOVES / "00000014.sh").read_text(encoding="utf-8")
+        self.assertIn("exec claude -n 'Orchestrator v2 #7' --resume 00000014-", body)
 
     def test_busy_that_goes_idle_within_the_wait_is_moved(self):
         r = rec(13, "busy")
@@ -304,6 +313,47 @@ class Resume(unittest.TestCase):
         self.assertTrue(move.wants_chrome(1, "/s"))
         move.ps = lambda pid, f: "claude --no-chrome"
         self.assertFalse(move.wants_chrome(1, "/s"))
+
+    def test_body_keeps_the_session_name(self):
+        move.read_config = lambda: {}
+        body = move.resume_body("/p", "/seat", "abc", chrome=True, name="Lane 38 #4 \u00b7 it's \"done\"")
+        self.assertIn("exec claude --chrome -n 'Lane 38 #4 \u00b7 it'\"'\"'s \"done\"' --resume abc", body)
+        self.assertEqual(move.shlex.split(body.split("exec ", 1)[1])[:4],
+                         ["claude", "--chrome", "-n", "Lane 38 #4 \u00b7 it's \"done\""])
+
+    def test_body_names_remote_control_too(self):
+        move.read_config = lambda: {}
+        body = move.resume_body("/p", "/seat", "abc", name="Admiral #16", remote_control=True)
+        self.assertIn("exec claude -n 'Admiral #16' --remote-control 'Admiral #16' --resume abc", body)
+        body = move.resume_body("/p", "/seat", "abc", remote_control=True)
+        self.assertIn("exec claude --remote-control --resume abc", body)
+
+    def test_name_is_one_safe_line(self):
+        self.assertEqual(move.clean_name("a\nb\x07c  d"), "a b c d")
+        self.assertIsNone(move.clean_name("  \n "))
+        self.assertIsNone(move.clean_name(None))
+        self.assertEqual(len(move.clean_name("x" * 500)), 200)
+
+    def test_remote_control_follows_the_old_process(self):
+        move.ps = lambda pid, f: "claude --remote-control --resume x"
+        self.assertTrue(move.wants_remote_control(1))
+        move.ps = lambda pid, f: "claude --resume x --remote-control-session-name-prefix h"
+        self.assertFalse(move.wants_remote_control(1))
+
+    def test_session_name_prefers_a_set_name_then_the_transcript(self):
+        d = Path(tempfile.mkdtemp())
+        sid = "11111111-0000-4000-8000-000000000000"
+        (d / "projects" / "-p").mkdir(parents=True)
+        rows = [{"type": "user", "message": "hi"},
+                {"type": "custom-title", "customTitle": "Old name", "sessionId": sid},
+                {"type": "custom-title", "customTitle": "Lane 2 #3 \u00b7 page access", "sessionId": sid}]
+        (d / "projects" / "-p" / f"{sid}.jsonl").write_text("\n".join(json.dumps(r) for r in rows) + "\n")
+        r = {"sessionId": sid, "name": "Set by hand", "nameSource": "user"}
+        self.assertEqual(move.session_name(r, str(d)), "Set by hand")
+        r = {"sessionId": sid, "name": "host-polished-kahn", "nameSource": "derived"}
+        self.assertEqual(move.session_name(r, str(d)), "Lane 2 #3 \u00b7 page access")
+        r = {"sessionId": "22222222-0000-4000-8000-000000000000", "name": "host-polished-kahn", "nameSource": "derived"}
+        self.assertIsNone(move.session_name(r, str(d)))
 
 
 class Preflight(unittest.TestCase):

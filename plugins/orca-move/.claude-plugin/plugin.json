@@ -1,6 +1,6 @@
 {
   "name": "orca-move",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Part of Orca Strator (included in the orca-strator bundle). Moves a live session, or every session of an account, to a twin account when one nears its limit, and tells the sessions it works with where it went.",
   "author": {
     "name": "Mehmet Mutlu"
