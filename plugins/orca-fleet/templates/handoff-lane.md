@@ -23,3 +23,7 @@ Written at <percent>% context. Start with `/orca-fleet:join-lane <this file>`.
 
 ## Waiting on
 <whoever this lane reports to, the person, CI>
+
+A yes this lane asked the person for and did not get, or a drafted message not sent: one line each,
+with the exact yes sentence, what is held behind it (draft text or file path), channel and recipient,
+and its open-items id.

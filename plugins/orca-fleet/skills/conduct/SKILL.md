@@ -89,7 +89,10 @@ refuses one whose label breaks the rule.
 
 1. **Read** the handoff note if given (`/orca-fleet:conduct <path>`), else the newest
    `handoff-*orchestrator*` or sprint handoff in `files.handoffDir`. Read the files its "Read first"
-   section names. Then the orders file, newest entries first. Ask the receiver of each row in the
+   section names. Then the orders file, newest entries first. Grep the note for `no yes`,
+   `not sent`, `drafted` and `waiting`, and move any pending yes or unsent draft into
+   `## Waiting on the person's yes in this window`; your report to the person opens with every
+   row of that section, word for word. Ask the receiver of each row in the
    note's `## Sent to other sessions, not yet confirmed` whether it took it. When the person asks
    about something the note names only in passing, read the old orchestrator's transcript (path in
    `## My transcript (backup)`, any seat) before answering.

@@ -30,6 +30,12 @@ needs no Admiral: say so and stop, unless the person is setting up the first two
 
 1. **Read** the handoff note if given, else the newest `handoff-admiral*` in `files.handoffDir`; then
    the Admiral orders file, newest first; then `fleets.py list` and `/orca-peers:peers`.
+   **Pending yeses first.** Before reporting, grep the whole note for `no yes`, `not sent`,
+   `drafted` and `waiting` (case insensitive), and move every hit that is a yes the person has not
+   given, or a message not sent, into `## Waiting on the person's yes in this window`. The
+   takeover report opens with every row of that section, word for word. Why: on 27 Nov 2026 a
+   reply drafted for a staff member sat under `## Clashes and decisions in flight`, the next
+   Admiral built its report from the other sections, and the person was never asked again.
    Then read the old Admiral's transcript for the person's own messages since its last note
    (path in `## My transcript (backup)`; `sessionId` is in `~/.claude-<seat>/sessions/<pid>.json`,
    any seat on this machine) and compare them with the note's `## Asked by the person in this
@@ -56,8 +62,11 @@ needs no Admiral: say so and stop, unless the person is setting up the first two
 
    Tell every checker of the shared pool (peers rows with `reports: admiral`) the same, and to report
    to you.
-6. **Report** to the person: one line per fleet (id, orchestrator, context, lanes, what waits on
-   them), the pool, and what you do first.
+6. **Report** to the person. Open with every row of the note's `## Waiting on the person's yes in
+   this window`, word for word (the yes sentence, what is held behind it, channel, open item), so
+   the person can answer each at once; write "none waiting on your yes" when it is empty. Then one
+   line per fleet (id, orchestrator, context, lanes, what waits on them), the pool, and what you do
+   first.
 
 ## `rollup` round (hourly)
 
