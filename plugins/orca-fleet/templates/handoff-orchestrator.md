@@ -21,6 +21,13 @@ Written at <percent>% context. Start with `/orca-fleet:conduct <this file>`.
 ## Waiting on the person
 1. <decision or action, with the exact command or link>
 
+## Asked by the person in this window, not finished
+Built from this session's own transcript: every message the person typed since the last note.
+One row each, nothing compressed into another table. Every row has an open-items id.
+| Asked at | What they asked, in their words | State now | Who owns it (session, lane, PR) | Open item |
+|---|---|---|---|---|
+| <11:38> | <"Ryan wants me to share screenshots on ticket system..."> | <cause found, fix sent, not taken> | <Orchestrator onboarding #3 (unread)> | <S9-1348> |
+
 ## Sent to other sessions, not yet confirmed
 Every piece of work this session, or a subagent it started, passed to another session since the last
 note, until the receiver replied that it took it (named the lane or PR). A row leaves only on that reply.

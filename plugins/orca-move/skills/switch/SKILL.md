@@ -65,7 +65,9 @@ to start it again; finished or obsolete ones are left out>
 
 ## Waiting on
 <what this session was waiting for (a CI run, a reply, a merge, a person's answer) and what to do
-when it comes>
+when it comes. Include every piece of work this session or its subagents sent to another session
+with no "taken" reply yet: what, to whom, and its open item id; after-move asks each receiver
+again>
 ```
 
 Then delete every cron with CronDelete. They would fire into a session that is about to exit.

@@ -30,6 +30,10 @@ needs no Admiral: say so and stop, unless the person is setting up the first two
 
 1. **Read** the handoff note if given, else the newest `handoff-admiral*` in `files.handoffDir`; then
    the Admiral orders file, newest first; then `fleets.py list` and `/orca-peers:peers`.
+   Then read the old Admiral's transcript for the person's own messages since its last note
+   (path in `## My transcript (backup)`; `sessionId` is in `~/.claude-<seat>/sessions/<pid>.json`,
+   any seat on this machine) and compare them with the note's `## Asked by the person in this
+   window, not finished`; add any that are missing to the open-items file before you report.
    Then work through the note's `## Sent to other sessions, not yet confirmed`: for each row, ask
    the receiver whether it took it, and treat it as yours until it says so. **The note is a
    summary; the old Admiral's transcript is the backup** (path in `## My transcript (backup)`,
@@ -123,6 +127,10 @@ the person or crosses fleets.
 ## Starting and closing any session
 
 Like an orchestrator, you may start a lane or checker anywhere the work needs one, and close one.
+**Before starting a lane for a fleet, re-list peers and ask its orchestrator first**, unless peers
+shows it gone or `waiting` (blocked on the person) and the person said to go ahead; tell the
+orchestrator in the same turn so it does not start a second one. Why: on 27 Nov 2026 a resent brief
+and the Admiral both started lane 169 in the same minute.
 Prefer to ask the fleet's orchestrator to do it for its own fleet; do it yourself when that
 orchestrator is gone, for the shared checker pool, or when the person asks you. `fleets.py close`
 lets the Admiral close any session except itself, after "Close now" and `parked` as in `conduct`.
