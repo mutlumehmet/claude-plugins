@@ -108,9 +108,41 @@ must not collide are claimed first: `fleets.py next migration --floor <highest i
   for branches already merged and deleted.
 - **Anything new** (a decision, a question, a deferral): a row in the open-items file, same turn.
 - **Read the orders** whenever the orchestrator says "orders updated".
-- **Blocked:** tell your reporter what blocks you and what would unblock it, then stop. On the
-  `orchestrator` or `parent` line, do not ask the person directly unless the rules file says lanes
-  may.
+- **Blocked:** tell your reporter what blocks you and what would unblock it, then carry on with
+  anything that does not depend on it; stop only when nothing does. On the `orchestrator` or
+  `parent` line, do not ask the person directly unless the rules file says lanes may. A question
+  for the person follows Questions for the person below.
+
+## Questions for the person
+
+A question box (AskUserQuestion) stops this session until the person answers, and while it waits
+it reads no messages, so your reporter and other fleets queue behind it. Why this matters: on one
+day six to eight sessions sat waiting at once, work across fleets stalled for hours, and one box
+only asked the person to confirm what they had already said. So a question is non blocking by
+default:
+
+1. **Is it a question at all?** Before asking, look for the person's own words on it: this
+   session's conversation, your brief or handoff note, the orders file, the open-items file and
+   the decision channel below. If they already said it, act on it and tell your reporter in one
+   line ("doing X, as the person said in <where>"). Never ask the person to confirm what they
+   already decided.
+2. **Write it down, then keep working.** Record it in the project's decision channel: the
+   `decisions` entry in `.claude/orca-strator.json` when set (a description of where the project
+   keeps questions for the person, for example a database or an inbox file), else the decision
+   list the rules file names, else a row in the open-items file. Write it so the person can answer
+   without opening this window: the question, the choices, your recommendation and why, what waits
+   on it. Send your reporter one line: "question for the person: <one line>, in <where
+   recorded>". Then carry on with everything that does not depend on the answer.
+3. **Open a box only** when nothing else can move until the answer, or when the person is talking
+   with you in this window right now (on the `orchestrator` or `parent` line, only where the rules
+   file lets lanes ask the person). If you must wait, first send your reporter one line: "waiting on
+   the person: <question>", so the orchestrator or Admiral can tell them which window holds it.
+
+This changes how a question is asked, never what needs the person's yes. When the rules file says
+to ask something with a question box (a merge yes, for example), do as it says. Merge, release,
+email and access yeses still follow the rules file, and a yes relayed by another session still
+never counts. On the `independent` line your reporter is the person: record the question and keep
+working the same way, and say "waiting on you: <question>" in this window when you must stop.
 
 ## Changing the line
 

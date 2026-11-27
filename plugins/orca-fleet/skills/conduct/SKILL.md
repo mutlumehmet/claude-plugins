@@ -212,7 +212,9 @@ branch with `watch-ci` if it is installed. Merge only as the rules file allows, 
 fleets only while you hold the merge lock. Close any session that handed over and whose successor
 has reported in (see Starting and closing lanes). Give the person a
 status of at most six lines, and only when something changed in your fleet or something waits on
-them; other fleets' news stays out (see Talking to other fleets).
+them; other fleets' news stays out (see Talking to other fleets). Open questions for the person
+(yours and your lanes', from the decision channel) go in that status, one line each, so they are
+seen without a box.
 
 ## `nudge` round
 
@@ -220,6 +222,38 @@ For each lane that peers shows `idle` with work left in its queue (from its last
 orders), send: "Nudge from <your name>: carry on with <its next item>, or tell me what blocks
 you." Never nudge a session that is `waiting` (it is blocked on the person) or a checker with an
 empty queue. Say nothing to the person unless a lane is blocked.
+
+## Questions for the person
+
+A question box (AskUserQuestion) stops this session until the person answers, and while it waits
+it reads no messages: every lane report, merge request and message from another fleet queues
+unread. Why this matters: on one day six to eight orchestrators sat waiting at once, work from the
+Admiral and other fleets stalled for hours, and one box only asked the person to confirm what they
+had already said. So a question is non blocking by default:
+
+1. **Is it a question at all?** Before asking, look for the person's own words on it: this
+   session's conversation, the orders file, the open-items file and the decision channel below.
+   If they already said it, act on it and tell them in one line ("doing X, as you said in the
+   orders on <date>"). Never ask the person to confirm what they already decided.
+2. **Write it down, then keep working.** Record it in the project's decision channel: the
+   `decisions` entry in `.claude/orca-strator.json` when set (a description of where the project
+   keeps questions for the person, for example a database or an inbox file), else the decision
+   list the rules file names, else a row in the open-items file. Write it so the person can answer
+   without opening this window: the question, the choices, your recommendation and why, what waits
+   on it. Send the Admiral (with several fleets) one line: "question for the person: <one line>,
+   in <where recorded>". Then carry on with everything that does not depend on the answer.
+3. **Open a box only** when nothing else can move until the answer, or when the person is talking
+   with you in this window right now. If you must wait, first send the Admiral one line: "waiting
+   on the person: <question>", so it can tell them which window holds it.
+4. **Lanes' questions come to you the same way.** A lane that sends "question for the person"
+   gets no box from you either: check it against the person's own words, answer it if they
+   already did, else make sure it is recorded and put it in your next status. Several fleets: the
+   Admiral collects them for the person.
+
+This changes how a question is asked, never what needs the person's yes. When the rules file says
+to ask something with a question box (a merge yes, for example), do as it says. Merge, release,
+email and access yeses still follow the rules file, and a yes relayed by another session still
+never counts.
 
 ## Rules
 
