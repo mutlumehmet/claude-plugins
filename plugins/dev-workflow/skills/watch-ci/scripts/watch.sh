@@ -43,7 +43,11 @@
 # watcher on the same key, from any session or account of the same user on
 # this machine, follows it without calling the API and prints the leader's
 # result with the same exit code. If the leader dies, a follower takes over.
-# State lives in $WATCH_CI_STATE_DIR (default ${TMPDIR:-/tmp}/watch-ci).
+# State lives in $WATCH_CI_STATE_DIR (default ${TMPDIR:-/tmp}/watch-ci-<uid>).
+# It is used only if it is a real directory (not a symlink) owned by this
+# user with mode 700; otherwise the watch runs without dedupe and says so on
+# stderr. Result files and the leader lock are trusted only if this user owns
+# them, so another user cannot plant a fake verdict.
 #
 # Exit: 0 GREEN, 1 RED, 2 NO CI / TIMEOUT / ERROR, 3 SUPERSEDED. The last line always
 # starts with "WATCH RESULT:".
@@ -63,7 +67,7 @@ while [ $# -gt 0 ]; do
     --interval) INTERVAL="$2"; shift 2;;
     --merge) MERGE=1; shift;;
     --no-dedupe) DEDUPE=0; shift;;
-    -h|--help) sed -n '2,49p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
+    -h|--help) sed -n '2,53p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
     -*) echo; echo "WATCH RESULT: ERROR unknown option $1 (see --help)"; exit 2;;
     *) TARGET="$1"; shift;;
   esac
@@ -130,14 +134,36 @@ fi
 # user). The leader holds a symlink "leader" -> "<pid>-<nonce>" (ln -s is
 # atomic); followers read files only. The leader writes "result.<token>"
 # (exit code, then its full output) with an atomic rename before it lets go.
-STATE_BASE="${WATCH_CI_STATE_DIR:-${TMPDIR:-/tmp}/watch-ci}"; STATE_BASE="${STATE_BASE%/}"
-KEYDIR=""; TOKEN="$$-$(date +%s)-$RANDOM"
+MY_UID=$(id -u)
+STATE_BASE="${WATCH_CI_STATE_DIR:-${TMPDIR:-/tmp}/watch-ci-$MY_UID}"; STATE_BASE="${STATE_BASE%/}"
+KEYDIR=""; TOKEN="$$-$(date +%s)-$RANDOM"; LOGF=""; CODEF=""
+# Permission bits as octal digits: GNU stat first, then BSD/macOS stat.
+file_mode() { stat -c %a "$1" 2>/dev/null || stat -f %Lp "$1" 2>/dev/null; }
+# The state dir is shared state that decides verdicts, so it must be private:
+# a real directory (not a symlink), owned by this user, mode 700. Created so
+# if missing; anything else (someone else's dir, a symlink, a wider mode) is
+# refused rather than repaired.
+state_base_ok() {
+  [ -e "$STATE_BASE" ] || [ -L "$STATE_BASE" ] || mkdir -p -m 700 "$STATE_BASE" 2>/dev/null
+  [ -d "$STATE_BASE" ] && [ ! -L "$STATE_BASE" ] && [ -O "$STATE_BASE" ] && [ "$(file_mode "$STATE_BASE")" = 700 ]
+}
+# A file another process left in the state dir: trusted only if it is a
+# regular file owned by this user, never a symlink.
+trusted_file() { [ -f "$1" ] && [ ! -L "$1" ] && [ -O "$1" ]; }
+if [ "$DEDUPE" -eq 1 ] && ! state_base_ok; then
+  echo "watch-ci: $STATE_BASE is not a private directory of yours (owned by you, mode 700, not a symlink); watching without dedupe." >&2
+  DEDUPE=0
+fi
 key_dir() { # $1 = sha. Options that change the verdict are part of the key.
   local opts
   opts=$(printf '%s\n' "g:${GATES[@]+${GATES[*]}}" "s:${SUPERSEDED[@]+${SUPERSEDED[*]}}" "t:${GATED[@]+${GATED[*]}}" | cksum | awk '{print $1}')
   printf '%s/%s/%s/%s' "$STATE_BASE" "$(printf '%s' "$REPO" | tr 'A-Z/' 'a-z_')" "$(printf '%s' "$1" | tr 'A-Z' 'a-z')" "$opts"
 }
-lock_owner() { readlink "$KEYDIR/leader" 2>/dev/null; }
+# The lock is a symlink by design: trusted only if this user created it.
+lock_owner() {
+  [ -n "$(find "$KEYDIR/leader" -maxdepth 0 -type l -user "$MY_UID" 2>/dev/null)" ] || return 1
+  readlink "$KEYDIR/leader" 2>/dev/null
+}
 token_alive() { local pid="${1%%-*}"; [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; }
 live_leader() { local o; o=$(lock_owner) && [ -n "$o" ] && token_alive "$o"; }
 # Replace a dead leader's lock. A short "takeover" mutex (mkdir is atomic)
@@ -156,7 +182,7 @@ take_over() { # $1 = the dead token seen
   return $rc
 }
 kill_tree() { local c; for c in $(pgrep -P "$1" 2>/dev/null); do kill_tree "$c"; done; kill -TERM "$1" 2>/dev/null; }
-release() { [ "$(lock_owner)" = "$TOKEN" ] && rm -f "$KEYDIR/leader"; rm -f "$KEYDIR/code.$TOKEN" "$KEYDIR/log.$TOKEN"; }
+release() { [ "$(lock_owner)" = "$TOKEN" ] && rm -f "$KEYDIR/leader"; rm -f ${LOGF:+"$LOGF"} ${CODEF:+"$CODEF"}; }
 # Wait for the leader with token $1. Prints its result and exits with its
 # code; returns 1 if it went away without one (the caller then takes over).
 follow() {
@@ -166,11 +192,11 @@ follow() {
   say "Another watcher (pid ${owner%%-*}) already watches $LABEL in $REPO. Following it: no GitHub API calls from this one."
   while :; do
     r="$KEYDIR/result.$owner"
-    if [ -f "$r" ]; then
+    if trusted_file "$r"; then
       tail -n +2 "$r"; exit "$(head -n 1 "$r")"
     fi
     if [ "$(lock_owner)" != "$owner" ] || ! token_alive "$owner"; then
-      [ -f "$r" ] && continue
+      trusted_file "$r" && continue
       say "The watcher it followed (pid ${owner%%-*}) stopped without a result. Taking over."
       return 1
     fi
@@ -180,12 +206,16 @@ follow() {
 }
 # Lead: run the watch, stream its output, store the result for followers.
 lead() {
-  local code
+  local code tmp
   trap 'for c in $(pgrep -P $$ 2>/dev/null); do kill_tree "$c"; done; release; exit 130' TERM INT HUP
-  { ( watch_commit ); echo $? > "$KEYDIR/code.$TOKEN"; } 2>&1 | tee "$KEYDIR/log.$TOKEN" &
+  # Temp files get unpredictable names (mktemp) in the verified dir; the
+  # result appears under its fixed name only by an atomic rename.
+  LOGF=$(mktemp "$KEYDIR/.log.XXXXXX") && CODEF=$(mktemp "$KEYDIR/.code.XXXXXX") \
+    || { echo "watch-ci: cannot write in $KEYDIR; watching without dedupe." >&2; release; trap - TERM INT HUP; watch_commit; }
+  { ( watch_commit ); echo $? > "$CODEF"; } 2>&1 | tee "$LOGF" &
   wait $!
-  code=$(cat "$KEYDIR/code.$TOKEN" 2>/dev/null) || code=2; [ -n "$code" ] || code=2
-  { echo "$code"; cat "$KEYDIR/log.$TOKEN"; } > "$KEYDIR/result.$TOKEN.tmp" && mv -f "$KEYDIR/result.$TOKEN.tmp" "$KEYDIR/result.$TOKEN"
+  code=$(cat "$CODEF" 2>/dev/null) || code=2; [ -n "$code" ] || code=2
+  tmp=$(mktemp "$KEYDIR/.result.XXXXXX") && { echo "$code"; cat "$LOGF"; } > "$tmp" && mv -f "$tmp" "$KEYDIR/result.$TOKEN"
   release
   exit "$code"
 }

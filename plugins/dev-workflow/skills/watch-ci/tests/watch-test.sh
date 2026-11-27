@@ -154,6 +154,8 @@ fresh stale; export WATCH_CI_STATE_DIR="$TMP/state-stale"
 run 1 completed success > "$FAKE/runs.1"
 "$WATCH" "$SHA" --repo acme/shop --interval 0 --timeout 1 > /dev/null 2>&1   # creates the key dir
 kdir=$(dirname "$(find "$WATCH_CI_STATE_DIR" -name 'result.*' | head -n 1)")
+# Never plant a lock outside the state dir (a missing result made this ".").
+case "$kdir" in "$WATCH_CI_STATE_DIR"/*) ;; *) echo "FAIL stale: no key dir found (got '$kdir')"; exit 1;; esac
 sh -c 'exit 0' & dead=$!; wait "$dead"
 ln -s "$dead-1-1" "$kdir/leader"; : > "$FAKE/calls"
 out=$(WATCH_ID=D "$WATCH" "$SHA" --repo acme/shop --interval 0 --timeout 1 2>&1); code=$?
@@ -171,5 +173,57 @@ sleep 1; kill -TERM "$apid"; wait "$apid"; wait "$bpid"; bcode=$?
 if [ "$bcode" -eq 0 ] && grep -q "Taking over" "$TMP/b.out" && grep -q "WATCH RESULT: GREEN" "$TMP/b.out" && [ "$(calls_by B)" -gt 0 ]; then
   echo "ok   a follower takes over when the leader is stopped"
 else echo "FAIL leader stopped (B exit $bcode)"; sed 's/^/     /' "$TMP/b.out"; fails=$((fails+1)); fi
+
+# 14-16. An unsafe state dir is never used: someone else's dir, a symlink to a
+#        dir, or a dir others can read. The watch runs alone (it polls GitHub
+#        itself), warns once on stderr, and writes nothing there.
+unsafe_case() { # name, dir to use, dir that must stay untouched
+  fresh "unsafe-$1"; run 1 completed success > "$FAKE/runs.1"
+  local before; before=$(find "$3" 2>/dev/null | wc -l)
+  out=$(WATCH_CI_STATE_DIR="$2" WATCH_ID=U "$WATCH" "$SHA" --repo acme/shop --interval 0 --timeout 1 2>"$TMP/err"); code=$?
+  if [ "$code" -eq 0 ] && grep -q "WATCH RESULT: GREEN" <<< "$out" && [ "$(grep -c 'watching without dedupe' "$TMP/err")" -eq 1 ] \
+    && [ "$(calls_by U)" -gt 0 ] && [ "$(find "$3" 2>/dev/null | wc -l)" -eq "$before" ]; then
+    echo "ok   $1: no dedupe, one warning"
+  else echo "FAIL $1 (exit $code)"; printf '%s\n' "$out" | sed 's/^/     /'; sed 's/^/     err| /' "$TMP/err"; fails=$((fails+1)); fi
+}
+# /usr is owned by root (and mode 755, so even a root run refuses it).
+unsafe_case "a state dir owned by someone else" /usr /usr/bin
+mkdir -m 700 "$TMP/real-state"; ln -s "$TMP/real-state" "$TMP/link-state"
+unsafe_case "a symlinked state dir" "$TMP/link-state" "$TMP/real-state"
+mkdir -m 755 "$TMP/open-state"
+unsafe_case "a state dir with mode 755" "$TMP/open-state" "$TMP/open-state"
+# The default dir is per user.
+grep -q 'watch-ci-$MY_UID' "$WATCH" || { echo "FAIL default state dir is not per user"; fails=$((fails+1)); }
+
+# 17-18. A planted result for a live leader is ignored unless this user owns a
+#        regular file: the follower waits, takes over when the leader dies, and
+#        reports the real verdict (RED), never the planted GREEN.
+planted_case() { # name, how to plant ("symlink" or "foreign")
+  fresh "plant-$2"; export WATCH_CI_STATE_DIR="$TMP/state-plant-$2"
+  run 1 completed failure > "$FAKE/runs.1"
+  "$WATCH" "$SHA" --repo acme/shop --interval 0 --timeout 1 > /dev/null 2>&1   # creates the key dir
+  local kdir; kdir=$(dirname "$(find "$WATCH_CI_STATE_DIR" -name 'result.*' | head -n 1)")
+  case "$kdir" in "$WATCH_CI_STATE_DIR"/*) ;; *) echo "FAIL $1: no key dir"; fails=$((fails+1)); return;; esac
+  sleep 30 & local lpid=$!
+  printf '0\nWATCH RESULT: GREEN planted\n' > "$TMP/fake-result-$2"
+  if [ "$2" = symlink ]; then
+    ln -s "$TMP/fake-result-$2" "$kdir/result.$lpid-1-1"
+  else
+    sudo -n cp "$TMP/fake-result-$2" "$kdir/result.$lpid-1-1" && sudo -n chown 0:0 "$kdir/result.$lpid-1-1"
+  fi
+  ln -s "$lpid-1-1" "$kdir/leader"
+  ( sleep 2; kill "$lpid" 2>/dev/null ) &
+  out=$(WATCH_ID=P "$WATCH" "$SHA" --repo acme/shop --interval 0 --timeout 1 2>&1); code=$?
+  kill "$lpid" 2>/dev/null; wait "$lpid" 2>/dev/null
+  if [ "$code" -eq 1 ] && grep -q "WATCH RESULT: RED" <<< "$out" && ! grep -q planted <<< "$out" && grep -q "Taking over" <<< "$out"; then
+    echo "ok   $1 is ignored"
+  else echo "FAIL $1 (exit $code)"; printf '%s\n' "$out" | sed 's/^/     /'; fails=$((fails+1)); fi
+}
+planted_case "a symlinked result file" symlink
+if sudo -n true 2>/dev/null && [ "$(id -u)" -ne 0 ]; then
+  planted_case "a result file owned by someone else" foreign
+else
+  echo "skip a result file owned by someone else (needs passwordless sudo, not root)"
+fi
 
 [ "$fails" -eq 0 ] && echo "all passed" || { echo "$fails failed"; exit 1; }

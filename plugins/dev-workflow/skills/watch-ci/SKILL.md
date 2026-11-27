@@ -71,7 +71,9 @@ without a result, a follower takes over. So starting a watch that another sessio
 run is safe and costs nothing: the hourly limit of 5,000 GitHub calls is per user, and on
 27 Nov 2026 38 watchers (six on one commit) used it up. A PR watched again after a new push
 resolves to the new head commit, so it watches that one. State lives in
-`${TMPDIR:-/tmp}/watch-ci` (override with `WATCH_CI_STATE_DIR`).
+`${TMPDIR:-/tmp}/watch-ci-<uid>` (override with `WATCH_CI_STATE_DIR`). It is used only if it is
+a directory you own with mode 700 and not a symlink; otherwise the watch runs alone and says so
+on stderr, and result files you do not own are ignored.
 
 Tell the user in one line that the watch is running, then stop. Do not poll it yourself or
 read the output file in between: the notification will come.
