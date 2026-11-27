@@ -189,6 +189,9 @@ the same day a handover compressed a live request until it was lost.
   correct it first, then run the project's investigator agent if one exists (the `investigator`
   key, else an agent named `*-investigator` in the project or user agents folder) and put its one
   proposed fix to the person for a yes. Fixes that belong to a skill go into that skill.
+- **A line checked only later carries its follow-up** (who checks, when, the reminder in the
+  person's calendar and tasks, the figures' source, where it is written), in the same message as
+  the proposal: see `conduct`, Done when, step 7. No yes is asked without it.
 
 ## Questions for the person
 
