@@ -144,9 +144,54 @@ def wants_chrome(pid, src_dir):
     return "--chrome" in args or bool(read_seat(src_dir).get("claudeInChromeDefaultEnabled"))
 
 
-def resume_body(cwd, tdir, sid, chrome=False):
+def wants_remote_control(pid):
+    """Reopen with --remote-control when the old process was started with it."""
+    return any(a == "--remote-control" or a.startswith("--remote-control=") for a in ps(pid, "command=").split())
+
+
+def clean_name(name):
+    """A name that is safe on one shell line: no control characters, no line breaks, at most 200 characters."""
+    if not isinstance(name, str):
+        return None
+    name = " ".join("".join(ch if ch.isprintable() else " " for ch in name).split())[:200].strip()
+    return name or None
+
+
+def custom_title(cfg_dir, sid):
+    """The last name a person or a flag gave this session (`/rename`, `-n`), from its transcript."""
+    title = None
+    for path in glob.glob(os.path.join(cfg_dir, "projects", "*", f"{sid}.jsonl")):
+        try:
+            with open(path, "rb") as f:
+                for line in f:
+                    if b'"custom-title"' not in line:
+                        continue
+                    try:
+                        row = json.loads(line)
+                    except ValueError:
+                        continue
+                    if row.get("type") == "custom-title" and row.get("customTitle"):
+                        title = row["customTitle"]
+        except OSError:
+            continue
+    return title
+
+
+def session_name(rec, cfg_dir):
+    """The session's real name, to pass with -n so the reopened session keeps it (Remote Control
+    takes its title from -n first). The pid record's name counts only when a person or a flag set it
+    (`nameSource` "user"); otherwise the transcript's last custom title. None for a session that only
+    ever had an automatic name, so it keeps getting one."""
+    if rec.get("nameSource") == "user" and clean_name(rec.get("name")):
+        return clean_name(rec.get("name"))
+    return clean_name(custom_title(cfg_dir, rec.get("sessionId") or ""))
+
+
+def resume_body(cwd, tdir, sid, chrome=False, name=None, remote_control=False):
     """The resume script's one line. An optional env file (config `resume_env_file`) is sourced first:
-    a shell opened before that file existed lacks its variables, and MCP servers need them."""
+    a shell opened before that file existed lacks its variables, and MCP servers need them.
+    `name` goes in as `-n <name>` (and as the Remote Control name when that flag is on), so the
+    reopened session keeps its title in the terminal, the resume picker and the Remote Control list."""
     env = "unset CLAUDE_CONFIG_DIR" if tdir == real("~/.claude") else f"export CLAUDE_CONFIG_DIR={shlex.quote(tdir)}"
     pre = ""
     ef = read_config().get("resume_env_file")
@@ -154,6 +199,11 @@ def resume_body(cwd, tdir, sid, chrome=False):
         q = shlex.quote(os.path.expanduser(ef))
         pre = f"[ -f {q} ] && {{ set -a; . {q}; set +a; }}; "
     flag = "--chrome " if chrome else ""
+    name = clean_name(name)
+    if name:
+        flag += f"-n {shlex.quote(name)} "
+    if remote_control:
+        flag += f"--remote-control {shlex.quote(name)} " if name else "--remote-control "
     return f"{pre}cd {shlex.quote(cwd)} && {env} && exec claude {flag}--resume {sid} '/orca-move:after-move'\n"
 
 
@@ -292,7 +342,8 @@ def plan(target=None):
         "cwd": cwd,
         "script": str(script),
         "line": f"sh ~/{script.relative_to(HOME)}",
-        "body": resume_body(cwd, tdir, sid, wants_chrome(rec["pid"], cur_dir)),
+        "body": resume_body(cwd, tdir, sid, wants_chrome(rec["pid"], cur_dir), session_name(rec, cur_dir),
+                            wants_remote_control(rec["pid"])),
         "note": str(MOVES / f"{sid}.md"),
         "autoExit": mod_loaded(rec["pid"], rec.get("procStart"), cur_dir),
         "fromDir": cur_dir,
@@ -395,7 +446,7 @@ def go(target, skip_preflight=False):
                   "or move anyway with --skip-preflight.")
             return 1
     MOVES.mkdir(parents=True, exist_ok=True)
-    Path(p["script"]).write_text("#!/bin/sh\n# orca-move: resume this session in " + p["to"] + "\n" + p["body"])
+    Path(p["script"]).write_text("#!/bin/sh\n# orca-move: resume this session in " + p["to"] + "\n" + p["body"], encoding="utf-8")
     (MOVES / f"{p['session'][:8]}.json").write_text(json.dumps(p, indent=2))
     (MOVES / f"{p['session'][:8]}.exit").write_text(p["session"] + "\n")
     subprocess.Popen([sys.executable, "-I", os.path.abspath(__file__), "_helper", p["session"]],
@@ -746,10 +797,11 @@ def prepare(rec, src, target, accs):
          "from": src, "to": target, "toDir": tdir, "tty": tty if tty and tty != "??" else None,
          "terminal": "", "cwd": cwd, "script": str(script), "via": "move-all",
          "line": f"sh ~/{script.relative_to(HOME)}" if str(script).startswith(str(HOME)) else f"sh {script}",
-         "body": resume_body(cwd, tdir, sid, wants_chrome(rec["pid"], src_dir)),
+         "body": resume_body(cwd, tdir, sid, wants_chrome(rec["pid"], src_dir), session_name(rec, src_dir),
+                          wants_remote_control(rec["pid"])),
          "note": str(MOVES / f"{sid}.md")}
     MOVES.mkdir(parents=True, exist_ok=True)
-    script.write_text("#!/bin/sh\n# orca-move: resume this session in " + target + "\n" + p["body"])
+    script.write_text("#!/bin/sh\n# orca-move: resume this session in " + target + "\n" + p["body"], encoding="utf-8")
     (MOVES / f"{sid[:8]}.json").write_text(json.dumps(p, indent=2))
     note = Path(p["note"])
     if not note.exists():  # a note the session wrote itself (switch) is better than ours
