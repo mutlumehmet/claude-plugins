@@ -214,6 +214,12 @@ empty queue. Say nothing to the person unless a lane is blocked.
 
 ## Rules
 
+- **Job registry:** when `.claude/orca-strator.json` has `jobRegistry` (a description of where the
+  project lists everything that runs on its own, for example a Notion data source), every cron,
+  loop, timer, watcher or scheduled job you create, change, pause or stop gets its row added or
+  updated there in the same turn: what it does, schedule, where it runs, owner, how to stop it,
+  status. A stopped job keeps its row, marked stopped with the date. Why: session crons die with
+  their session, and nobody can find or stop a job that is written down nowhere.
 - With several fleets: never message another fleet's lanes with orders, never merge without the
   lock, never close a session outside your fleet.
 - Never build or edit the project's code here. Lanes do; the orchestrator routes, merges what it
