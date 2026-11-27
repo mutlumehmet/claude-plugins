@@ -51,6 +51,7 @@ Options:
 | `--timeout MIN` | Give up watching CI after this many minutes | 60 |
 | `--merge-timeout MIN` | Give up waiting for the merge after this many minutes | 240 |
 | `--interval SEC` | Seconds between polls (60 keeps several watchers inside GitHub's 5,000 calls an hour; each poll costs 3 or more calls) | 60 |
+| `--no-dedupe` | Poll GitHub even when another watcher on this machine already watches the same commit | off |
 
 **Check which repo you mean.** The default is the repo of the folder the session runs in.
 If the code being merged lives in a different repo (a notes folder that is its own repo, a
@@ -60,6 +61,17 @@ repo or gate jobs for this skill, use them.
 **The `--merge` form is the point of the skill.** Start it in the same turn you hand over a
 merge command. The user then only runs the merge; the session learns about the merge and
 the result without them saying anything.
+
+**One watcher per commit.** Once the commit is known (a PR head, a branch tip, a sha, or the
+merge commit after `--merge`), the first watcher on it becomes the leader and polls GitHub.
+Any later watcher on the same repo, commit and options, from any session or account of the
+same user on this machine, prints `Following it: no GitHub API calls from this one`, waits for
+the leader's result and ends with the same verdict, output and exit code. If the leader stops
+without a result, a follower takes over. So starting a watch that another session may already
+run is safe and costs nothing: the hourly limit of 5,000 GitHub calls is per user, and on
+27 Nov 2026 38 watchers (six on one commit) used it up. A PR watched again after a new push
+resolves to the new head commit, so it watches that one. State lives in
+`${TMPDIR:-/tmp}/watch-ci` (override with `WATCH_CI_STATE_DIR`).
 
 Tell the user in one line that the watch is running, then stop. Do not poll it yourself or
 read the output file in between: the notification will come.

@@ -31,7 +31,10 @@ session when a background job ends, so the result arrives without anyone asking.
    the verdict.
 6. **Gives up honestly.** Nothing reported after 4 minutes means CI will never run, so it says
    `NO CI` instead of waiting forever.
-7. **Explains a red.** It names the failing job and step, tells an infrastructure hiccup (only
+7. **One watcher per commit.** When several sessions watch the same commit, only the first
+   one polls GitHub. The others wait for its result and report the same verdict, so ten
+   sessions cost the API calls of one. If the first one stops, another takes over.
+8. **Explains a red.** It names the failing job and step, tells an infrastructure hiccup (only
    setup, install, download, cache or service-start steps failed) from a real failure, and prints the rerun
    command.
 
@@ -65,7 +68,8 @@ No config file. Everything is an option with a default.
 | `--gated-status NAME` | A commit status that fails only because the gate failed (a deploy waiting for the gate); ignored while a gate job has failed, a real failure otherwise. Repeatable | none |
 | `--timeout MIN` | Give up watching CI after this long | 60 |
 | `--merge-timeout MIN` | Give up waiting for the merge after this long | 240 |
-| `--interval SEC` | Seconds between polls | 20 |
+| `--interval SEC` | Seconds between polls | 60 |
+| `--no-dedupe` | Poll GitHub even when another watcher already watches the same commit | off |
 
 If your project's repo is not the folder Claude runs in, or it has a gate job, put a line in
 that project's `CLAUDE.md`, for example: "watch-ci: use `--repo acme/shop --gate-job "ci gate"`".
