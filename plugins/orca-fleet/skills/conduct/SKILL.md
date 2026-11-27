@@ -227,6 +227,10 @@ down at the start, and checked at the end, catches both.
    `.claude/orca-strator.json`, else an agent named `*-investigator` in the project or user agents
    folder), and pass its proposed fix to the person for a yes. Without one, say in one line what was
    missed and which source would have caught it.
+7. **A line that can only be checked later carries its follow-up, in the same message as the proposal.** For a trial, a pilot, a 'revert if' or anything judged after a wait, the Done when list ends with one line: `Checked on <date> by <role>, reminder in <the person's calendar event + task>, figures from <script or query>, written in <open item id> and <the role's state file>`. Do not ask for a yes on a proposal whose list lacks this line. No session's memory or timer counts as the reminder: both die with the session.
+   Why: a trial of compacting the Admiral instead of handing it over was proposed with six measures
+   but no owner, no check date and no reminder, so nothing would have judged it once the proposing
+   session ended.
 
 ## Status answers the person may act on
 
