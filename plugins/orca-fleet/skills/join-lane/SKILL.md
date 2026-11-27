@@ -92,7 +92,8 @@ must not collide are claimed first: `fleets.py next migration --floor <highest i
 
 - **Push once per finished change**, not per edit: CI runs per push and costs the whole fleet.
 - **When a PR is ready**, send exactly: `ready to merge #<N>, head <sha>, SAFE` (SAFE meaning the
-  project's validation passed on that head). If the rules let lanes merge their own, merge, then
+  project's validation passed on that head), then on the next line the Done when lines this PR
+  makes hold and any still left (see Done when). If the rules let lanes merge their own, merge, then
   send `merged #<N> as <sha>`.
 - **Merged and visible to people?** Add a ledger row (`files.ledger`) for the checkers.
 - **Job registry:** when `.claude/orca-strator.json` has `jobRegistry` (a description of where the
@@ -112,6 +113,26 @@ must not collide are claimed first: `fleets.py next migration --floor <highest i
   anything that does not depend on it; stop only when nothing does. On the `orchestrator` or
   `parent` line, do not ask the person directly unless the rules file says lanes may. A question
   for the person follows Questions for the person below.
+
+## Done when
+
+Every piece of work this lane takes on has a **Done when** list (3 to 8 checkable lines) in its
+brief, its orders entry or its open item. Why: a status built from memory or a nearby summary
+misses things, and the person finds out only when they check.
+
+- **No list?** Before building, write one from the primary source the rules file names for the
+  topic (the specification, the export of the system being replaced, the person's words, the live
+  system), citing each line's source, and send it to your reporter to agree with the person. Build
+  what is not in doubt meanwhile.
+- **Report against it.** Every progress report and every `ready to merge` names the lines that
+  hold, with evidence (a PR, a link, a query result), and the lines left.
+- **Never say done** (or "probably done") until every line holds, measured now. A line you cannot
+  check yourself is reported as "not checked", with who can check it.
+- **A handover copies the list word for word** into the note, with each line's state.
+- **Corrected by the person** ("you forgot", "that is wrong"): fix the status, then tell your
+  reporter, who runs the project's investigator agent if one exists. An independent lane runs it
+  itself (the `investigator` key in `.claude/orca-strator.json`, else an agent named
+  `*-investigator` in the project or user agents folder).
 
 ## Questions for the person
 

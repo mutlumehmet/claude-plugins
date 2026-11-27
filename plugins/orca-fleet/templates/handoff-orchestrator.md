@@ -18,6 +18,9 @@ Written at <percent>% context. Start with `/orca-fleet:conduct <this file>`.
 |---|---|---|---|---|
 | <Lane 1 #2 · label> | uds:... | <n>% | <PR, branch, sha> | <next item> |
 
+## Done when, per piece of work
+<for each open piece of work: its open-items id, its Done when list word for word, each line holds / left / not checked. Never summarised.>
+
 ## Waiting on the person
 1. <decision or action, with the exact command or link>
 
