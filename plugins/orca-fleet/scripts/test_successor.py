@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Tests for successor.py: the new session always gets its name with -n, on every path.
+"""Tests for successor.py: the new session always gets its name with -n, and by default the same
+name as its Remote Control name, on every path.
 
 Run: python3 -I plugins/orca-fleet/scripts/test_successor.py
 Nothing opens: the Terminal and clipboard calls are replaced in the module.
@@ -25,12 +26,17 @@ def words(line):
 class Command(unittest.TestCase):
     def test_name_goes_in_with_n(self):
         line = successor.command("Lane 38 #4 · page access", "/orca-fleet:join-lane note.md", "/p")
-        self.assertEqual(words(line)[:2], ["-n", "Lane 38 #4 · page access"])
-        self.assertNotIn("--remote-control", line)
+        self.assertEqual(words(line)[:4], ["-n", "Lane 38 #4 · page access",
+                                           "--remote-control", "Lane 38 #4 · page access"])
 
     def test_name_with_quotes_stays_one_word(self):
-        line = successor.command("Lane 2 · it's \"done\"", "go", "/p")
-        self.assertEqual(words(line), ["-n", "Lane 2 · it's \"done\"", "go"])
+        name = "Lane 2 · it's \"done\""
+        line = successor.command(name, "go", "/p")
+        self.assertEqual(words(line), ["-n", name, "--remote-control", name, "go"])
+
+    def test_opt_out_leaves_remote_control_out(self):
+        line = successor.command("Lane 3", "go", "/p", remote_control=False)
+        self.assertEqual(words(line), ["-n", "Lane 3", "go"])
 
     def test_account_path_keeps_the_name(self):
         line = successor.command("Checker A #3", "go", "/p", "export CLAUDE_CONFIG_DIR=/seat && ")
@@ -43,7 +49,7 @@ class Command(unittest.TestCase):
 
 
 class Main(unittest.TestCase):
-    PATCHED = ("account_env", "started_with_remote_control", "open_tab")
+    PATCHED = ("account_env", "open_tab")
 
     def setUp(self):
         self.saved = {k: getattr(successor, k) for k in self.PATCHED}
@@ -51,7 +57,6 @@ class Main(unittest.TestCase):
         successor.subprocess.run = lambda *a, **k: None  # no clipboard
         successor.open_tab = lambda line: False
         successor.account_env = lambda acc: "export CLAUDE_CONFIG_DIR=/seat && "
-        successor.started_with_remote_control = lambda: False
 
     def tearDown(self):
         for k, v in self.saved.items():
@@ -71,12 +76,16 @@ class Main(unittest.TestCase):
             line = self.run_it("--name", "Lane v1 5 · page access", "--prompt", "go", *extra)
             self.assertEqual(words(line)[:2], ["-n", "Lane v1 5 · page access"], extra)
 
-    def test_remote_control_by_flag_or_inherited(self):
-        line = self.run_it("--name", "Lane 5", "--prompt", "go", "--remote-control")
-        self.assertEqual(words(line)[:4], ["-n", "Lane 5", "--remote-control", "Lane 5"])
-        successor.started_with_remote_control = lambda: True
-        line = self.run_it("--name", "Lane 6", "--prompt", "go", "--account", "twin")
-        self.assertEqual(words(line)[:4], ["-n", "Lane 6", "--remote-control", "Lane 6"])
+    def test_remote_control_name_is_the_session_name_by_default(self):
+        for extra in ([], ["--remote-control"], ["--account", "twin"], ["--fleet", "v1"]):
+            line = self.run_it("--name", "Orchestrator onboarding #6", "--prompt", "go", *extra)
+            self.assertEqual(words(line)[:4], ["-n", "Orchestrator onboarding #6",
+                                               "--remote-control", "Orchestrator onboarding #6"], extra)
+
+    def test_no_remote_control_opts_out(self):
+        line = self.run_it("--name", "Lane 6", "--prompt", "go", "--account", "twin", "--no-remote-control")
+        self.assertEqual(words(line)[:2], ["-n", "Lane 6"])
+        self.assertNotIn("--remote-control", line)
 
 
 if __name__ == "__main__":
