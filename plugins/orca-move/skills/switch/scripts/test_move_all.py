@@ -170,7 +170,7 @@ class MoveAll(unittest.TestCase):
         self.add(r)
         self.run_it(wait=0)
         body = (move.MOVES / "00000014.sh").read_text(encoding="utf-8")
-        self.assertIn("exec claude -n 'Orchestrator v2 #7' --resume 00000014-", body)
+        self.assertIn("exec claude -n 'Orchestrator v2 #7' --remote-control 'Orchestrator v2 #7' --resume 00000014-", body)
 
     def test_busy_that_goes_idle_within_the_wait_is_moved(self):
         r = rec(13, "busy")
@@ -317,9 +317,22 @@ class Resume(unittest.TestCase):
     def test_body_keeps_the_session_name(self):
         move.read_config = lambda: {}
         body = move.resume_body("/p", "/seat", "abc", chrome=True, name="Lane 38 #4 \u00b7 it's \"done\"")
-        self.assertIn("exec claude --chrome -n 'Lane 38 #4 \u00b7 it'\"'\"'s \"done\"' --resume abc", body)
-        self.assertEqual(move.shlex.split(body.split("exec ", 1)[1])[:4],
-                         ["claude", "--chrome", "-n", "Lane 38 #4 \u00b7 it's \"done\""])
+        name = "Lane 38 #4 \u00b7 it's \"done\""
+        self.assertEqual(move.shlex.split(body.split("exec ", 1)[1])[:6],
+                         ["claude", "--chrome", "-n", name, "--remote-control", name])
+
+    def test_named_session_gets_its_remote_control_name_by_default(self):
+        move.read_config = lambda: {}
+        body = move.resume_body("/p", "/seat", "abc", name="Orchestrator onboarding #5")
+        self.assertIn("exec claude -n 'Orchestrator onboarding #5' --remote-control 'Orchestrator onboarding #5'"
+                      " --resume abc", body)
+
+    def test_config_can_leave_the_remote_control_name_out(self):
+        move.read_config = lambda: {"remote_control_name": "false"}
+        body = move.resume_body("/p", "/seat", "abc", name="Lane 4")
+        self.assertIn("exec claude -n 'Lane 4' --resume abc", body)
+        body = move.resume_body("/p", "/seat", "abc", name="Lane 4", remote_control=True)
+        self.assertIn("exec claude -n 'Lane 4' --remote-control 'Lane 4' --resume abc", body)
 
     def test_body_names_remote_control_too(self):
         move.read_config = lambda: {}

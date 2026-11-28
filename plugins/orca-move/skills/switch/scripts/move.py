@@ -190,8 +190,11 @@ def session_name(rec, cfg_dir):
 def resume_body(cwd, tdir, sid, chrome=False, name=None, remote_control=False):
     """The resume script's one line. An optional env file (config `resume_env_file`) is sourced first:
     a shell opened before that file existed lacks its variables, and MCP servers need them.
-    `name` goes in as `-n <name>` (and as the Remote Control name when that flag is on), so the
-    reopened session keeps its title in the terminal, the resume picker and the Remote Control list."""
+    `name` goes in as `-n <name>` and as `--remote-control <name>`, so the reopened session keeps its
+    title in the terminal, the resume picker and the Remote Control list: with Remote Control on by
+    the account setting, `-n` alone left the list showing an automatic host name. Config
+    `remote_control_name: false` leaves the named flag out (then only an old `--remote-control`
+    process gets it back)."""
     env = "unset CLAUDE_CONFIG_DIR" if tdir == real("~/.claude") else f"export CLAUDE_CONFIG_DIR={shlex.quote(tdir)}"
     pre = ""
     ef = read_config().get("resume_env_file")
@@ -202,8 +205,11 @@ def resume_body(cwd, tdir, sid, chrome=False, name=None, remote_control=False):
     name = clean_name(name)
     if name:
         flag += f"-n {shlex.quote(name)} "
-    if remote_control:
-        flag += f"--remote-control {shlex.quote(name)} " if name else "--remote-control "
+    name_rc = str(read_config().get("remote_control_name", "true")).lower() not in ("false", "no", "off", "0")
+    if name and (remote_control or name_rc):
+        flag += f"--remote-control {shlex.quote(name)} "
+    elif remote_control:
+        flag += "--remote-control "
     return f"{pre}cd {shlex.quote(cwd)} && {env} && exec claude {flag}--resume {sid} '/orca-move:after-move'\n"
 
 

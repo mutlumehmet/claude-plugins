@@ -7,7 +7,7 @@ same account as this session (the same CLAUDE_CONFIG_DIR). The same script start
 
 Usage: successor.py --name "<Lane 4 #4 · page access>" --prompt "<first prompt>" [--cwd <folder>] [--dry-run]
                     [--account <id>] [--reports-to orchestrator|parent|independent|admiral] [--fleet <id>]
-                    [--remote-control]
+                    [--no-remote-control]
 
 --account takes an id from `accounts_file:` in ~/.config/orca-strator/config.yaml (the same lookup
 as orca-peers), so nobody sets CLAUDE_CONFIG_DIR by hand. --reports-to adds a `reports-to:` line to
@@ -21,9 +21,12 @@ new fleet's orchestrator.
 work, but a label longer than three words or carrying an id is refused before anything opens.
 
 The name always goes in as `-n`, on every path (with or without --account), so the session keeps
-its title in the terminal, the resume picker and the Remote Control list. With --remote-control,
-or when this session itself was started with that flag, the new session starts Remote Control
-under the same name.
+its title in the terminal and the resume picker. It also goes in as `--remote-control <name>` by
+default: when Remote Control is switched on by the account setting ("Enable Remote Control for all
+sessions") rather than by the flag, `-n` alone did not reach the Remote Control list, which showed
+an automatic host name (`myhost-graceful-unicorn`) instead. The flag names that same one remote
+session (one per process), it does not open a second. --no-remote-control leaves the flag out, for
+a seat where Remote Control is not allowed. (--remote-control is still accepted, as the default.)
 
 Outside macOS Terminal.app (or with --dry-run) it does not open anything: it prints the command
 and copies it to the clipboard, for the person to paste in a new terminal tab.
@@ -102,29 +105,16 @@ def reports_to_line(kind, fleet=None):
     return f'reports-to: parent "{name}" {me["address"]} session:{me["sessionId"]}{tail}'
 
 
-def started_with_remote_control():
-    """True when this session's own process was started with --remote-control, so its successor is too."""
-    rec = reporting.this_session()
-    if not rec or not rec.get("pid"):
-        return False
-    try:
-        args = subprocess.run(["ps", "-p", str(rec["pid"]), "-o", "command="],
-                              capture_output=True, text=True, timeout=5).stdout
-    except (OSError, subprocess.SubprocessError):
-        return False
-    return any(a == "--remote-control" or a.startswith("--remote-control=") for a in args.split())
-
-
-def command(name, prompt, cwd, account_prefix=None, remote_control=False):
+def command(name, prompt, cwd, account_prefix=None, remote_control=True):
     cfg = os.environ.get("CLAUDE_CONFIG_DIR")
     env = f"CLAUDE_CONFIG_DIR={shlex.quote(cfg)} " if cfg and account_prefix is None else ""
     dev = os.environ.get("CLAUDE_CODE_PLUGIN_DIRS")  # plugins loaded from folders while developing
     if dev:
         env += f"CLAUDE_CODE_PLUGIN_DIRS={shlex.quote(dev)} "
     # `command claude` skips any shell function or alias named claude, so the account stays this one
-    # -n always: the name is the session's title in the terminal, the resume picker and the Remote
-    # Control list (which falls back to an automatic name without it). Remote Control by flag gets the
-    # same name, so the phone shows the lane's name, not the host's.
+    # -n always: the name is the session's title in the terminal and the resume picker. The Remote
+    # Control name goes in by the flag too (on by default): with Remote Control on by the account
+    # setting, -n alone left the phone's list showing an automatic host name.
     rc = f"--remote-control {shlex.quote(name)} " if remote_control else ""
     return (f"cd {shlex.quote(cwd)} && {account_prefix or ''}{env}command claude -n {shlex.quote(name)} "
             f"{rc}{shlex.quote(prompt)}")
@@ -146,7 +136,8 @@ def main():
     ap.add_argument("--account")
     ap.add_argument("--reports-to", choices=reporting.KINDS)
     ap.add_argument("--fleet")
-    ap.add_argument("--remote-control", action="store_true")
+    ap.add_argument("--remote-control", dest="remote_control", action="store_true", default=True)
+    ap.add_argument("--no-remote-control", dest="remote_control", action="store_false")
     a = ap.parse_args()
     problem = names.label_problem(names.parse(a.name)[2])
     if problem:
@@ -168,8 +159,7 @@ def main():
         prompt = f"{prompt} {extra}"
     elif a.fleet:
         prompt = f"{prompt} fleet:{a.fleet}"
-    rc = a.remote_control or started_with_remote_control()
-    line = command(a.name, prompt, os.path.abspath(os.path.expanduser(a.cwd)), prefix, rc)
+    line = command(a.name, prompt, os.path.abspath(os.path.expanduser(a.cwd)), prefix, a.remote_control)
     if not a.dry_run and os.environ.get("TERM_PROGRAM") == "Apple_Terminal" and open_tab(line):
         print(f"Opened a new Terminal window for {a.name}.")
         return 0
